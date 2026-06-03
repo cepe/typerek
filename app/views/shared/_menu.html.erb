@@ -24,13 +24,6 @@
             <% end %>
           </li>
         <% end %>
-        <% if can? :manage, Notification %>
-          <li>
-            <%= link_to notifications_path, class: "nav-link #{'nav-link-active' if s == 'notification'}" do %>
-              <i class='fa fa-bullhorn'></i> Komunikaty
-            <% end %>
-          </li>
-        <% end %>
       </ul>
 
       <div class='mt-2 flex items-center gap-1 border-t border-white/20 pt-2 lg:mt-0 lg:border-0 lg:pt-0'>

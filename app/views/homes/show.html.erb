@@ -1,78 +1,38 @@
 <%= render partial: 'shared/menu', locals: { s: 'info' } %>
 
-<div class='grid grid-cols-1 gap-6 lg:grid-cols-3'>
-  <div class='lg:col-span-2'>
-    <section class='card card-body space-y-4 leading-relaxed text-ink/90'>
-      <h1 class='flex items-center gap-2'><i class='fa fa-info-circle text-brand'></i> Informacje</h1>
-      <p>
-        Cześć! Strona powstała, aby w gronie przyjaciół można było typować wyniki nadchodzących
-        meczów Mistrzostw Świata 2026. System działa podobnie do klasycznych zakładów bukmacherskich, z tą
-        różnicą, że tutaj dostaje się punkty za każdy poprawnie wytypowany mecz.
-      </p>
-      <p>Dla każdego spotkania możemy wskazać jeden spośród 6 wyników:</p>
-      <dl class='divide-y divide-line/60 overflow-hidden rounded-lg border border-line'>
-        <% [
-             ['1',  'wygrana pierwszej drużyny'],
-             ['X',  'remis'],
-             ['2',  'wygrana drugiej drużyny'],
-             ['1X', 'wygrana pierwszej drużyny lub remis'],
-             ['X2', 'wygrana drugiej drużyny lub remis'],
-             ['12', 'wygrana którejś z drużyn (nie dojdzie do remisu)']
-           ].each do |key, desc| %>
-          <div class='flex items-center gap-3 px-3 py-2'>
-            <span class='flex w-10 shrink-0 justify-center rounded-md bg-brand-tint py-1 text-sm font-bold text-brand'><%= key %></span>
-            <span class='text-sm'><%= desc %></span>
-          </div>
-        <% end %>
-      </dl>
-      <p>Po poprawnym wytypowaniu dostajemy punkty przypisane do zakładu, który wybraliśmy.</p>
-      <p>
-        Możemy zmieniać typy do momentu rozpoczęcia spotkania. Gdy mecz się rozpocznie, widzimy
-        typy wszystkich uczestników dla danego meczu. Nie możemy wtedy modyfikować swojego wyboru.
-      </p>
-      <div class='rounded-lg bg-amber-50 p-3 text-sm text-amber-800'>
-        <strong>UWAGA!</strong>
-        W meczach fazy pucharowej typujemy wyniki tylko do 90. minuty spotkania.
-        Typ „remis” jest jak najbardziej poprawny.
-        Oznacza to, że drużyny po rozegraniu regulaminowych 90 minut będą miały dogrywkę.
+<section class='card card-body mx-auto max-w-3xl space-y-4 leading-relaxed text-ink/90'>
+  <h1 class='flex items-center gap-2'><i class='fa fa-info-circle text-brand'></i> Informacje</h1>
+  <p>
+    Cześć! Strona powstała, aby w gronie przyjaciół można było typować wyniki nadchodzących
+    meczów Mistrzostw Świata 2026. System działa podobnie do klasycznych zakładów bukmacherskich, z tą
+    różnicą, że tutaj dostaje się punkty za każdy poprawnie wytypowany mecz.
+  </p>
+  <p>Dla każdego spotkania możemy wskazać jeden spośród 6 wyników:</p>
+  <dl class='divide-y divide-line/60 overflow-hidden rounded-lg border border-line'>
+    <% [
+         ['1',  'wygrana pierwszej drużyny'],
+         ['X',  'remis'],
+         ['2',  'wygrana drugiej drużyny'],
+         ['1X', 'wygrana pierwszej drużyny lub remis'],
+         ['X2', 'wygrana drugiej drużyny lub remis'],
+         ['12', 'wygrana którejś z drużyn (nie dojdzie do remisu)']
+       ].each do |key, desc| %>
+      <div class='flex items-center gap-3 px-3 py-2'>
+        <span class='flex w-10 shrink-0 justify-center rounded-md bg-brand-tint py-1 text-sm font-bold text-brand'><%= key %></span>
+        <span class='text-sm'><%= desc %></span>
       </div>
-      <h3>Punktacje będą aktualizowane na bieżąco, każdego dnia w godzinach nocnych.</h3>
-    </section>
+    <% end %>
+  </dl>
+  <p>Po poprawnym wytypowaniu dostajemy punkty przypisane do zakładu, który wybraliśmy.</p>
+  <p>
+    Możemy zmieniać typy do momentu rozpoczęcia spotkania. Gdy mecz się rozpocznie, widzimy
+    typy wszystkich uczestników dla danego meczu. Nie możemy wtedy modyfikować swojego wyboru.
+  </p>
+  <div class='rounded-lg bg-amber-50 p-3 text-sm text-amber-800'>
+    <strong>UWAGA!</strong>
+    W meczach fazy pucharowej typujemy wyniki tylko do 90. minuty spotkania.
+    Typ „remis” jest jak najbardziej poprawny.
+    Oznacza to, że drużyny po rozegraniu regulaminowych 90 minut będą miały dogrywkę.
   </div>
-
-  <aside>
-    <section class='card'>
-      <div class='card-header'>
-        <h3 class='flex items-center gap-2'><i class='fa fa-comments text-brand'></i> Komentarze</h3>
-      </div>
-      <div class='card-body'>
-        <% if @comments.blank? %>
-          <p class='text-sm text-muted'>Brak komentarzy</p>
-        <% else %>
-          <ul class='space-y-3'>
-            <% @comments.each do |comment| %>
-              <li class='rounded-lg bg-surface/60 p-3'>
-                <div class='mb-1 flex items-center justify-between gap-2 text-sm'>
-                  <span class='font-semibold text-ink'>
-                    <%= display_username(comment.username) %>
-                    <% unless comment.match.blank? %>
-                      <span class='text-muted'>|</span>
-                      <%= link_to "#{(comment.match.team_a || '').first(3)}:#{(comment.match.team_b || '').first(3)}", match_path(comment.match) %>
-                    <% end %>
-                  </span>
-                  <span class='text-xs text-muted'><%= l(comment.created_at, format: :short) %></span>
-                </div>
-                <p class='text-sm text-ink/90'><%= comment.content %></p>
-                <% unless comment.match.blank? %>
-                  <div class='mt-1 text-right text-xs'>
-                    <%= link_to 'czytaj dalej', match_path(comment.match, anchor: comment.id) %>
-                  </div>
-                <% end %>
-              </li>
-            <% end %>
-          </ul>
-        <% end %>
-      </div>
-    </section>
-  </aside>
-</div>
+  <h3>Punktacje będą aktualizowane na bieżąco, każdego dnia w godzinach nocnych.</h3>
+</section>

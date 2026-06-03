@@ -35,8 +35,6 @@ RSpec.feature 'Matches', type: :feature do
       visit "/matches/#{match.id}"
       expect(page).not_to have_selector('#others-bets')
     end
-
-    scenario 'can comment'
   end
 
   feature 'when user opens present match' do
@@ -60,8 +58,6 @@ RSpec.feature 'Matches', type: :feature do
       visit "/matches/#{match.id}"
       expect(page).to have_selector('#others-bets')
     end
-
-    scenario 'can comment'
   end
 
   feature 'when user opens past match' do
@@ -85,7 +81,5 @@ RSpec.feature 'Matches', type: :feature do
       visit "/matches/#{match.id}"
       expect(page).to have_selector('#others-bets')
     end
-
-    scenario 'can comment'
   end
 end
