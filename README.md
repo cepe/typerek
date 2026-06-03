@@ -77,6 +77,25 @@ Welcome to Typerek! This application allows you and your friends to predict the 
    Open your browser and navigate to `http://localhost:8000`
 
 
+### Running a Beta Instance
+
+You can run a second instance of the app on port `8001` connected to the same database, useful for beta testing new changes before deploying to production.
+
+1. **Create `.env.beta`** based on your `.env` file. You can keep the same `SECRET_KEY_BASE` and database credentials — just make sure `PORT=8000` stays as is (the host port mapping handles the difference).
+
+2. **Start the beta instance**
+   ```bash
+   docker compose -f docker-compose.beta.yaml up --build -d
+   ```
+   The beta app will be available at `http://localhost:8001`. Logs go to `./log-beta/`.
+
+3. **Stop the beta instance**
+   ```bash
+   docker compose -f docker-compose.beta.yaml down
+   ```
+
+> **Note:** The beta instance joins the `typerek_default` network, so it connects to the same Postgres container as the main app. Run database migrations with care — a migration on beta may affect production if it's not backwards-compatible.
+
 ### Securing the Application with SSL
 
 You can use [Caddy](https://caddyserver.com) to secure the application with SSL.

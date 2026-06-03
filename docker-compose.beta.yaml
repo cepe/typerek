@@ -1,0 +1,23 @@
+services:
+  web-beta:
+    build:
+      context: "."
+      args:
+        - "UID=${UID:-1000}"
+        - "GID=${GID:-1000}"
+        - "RAILS_ENV=${RAILS_ENV:-production}"
+    env_file:
+      - ".env.beta"
+    restart: "unless-stopped"
+    stop_grace_period: "3s"
+    tty: true
+    volumes:
+      - "./log-beta:/app/log"
+    ports:
+      - "127.0.0.1:8001:8000"
+    networks:
+      - typerek_default
+
+networks:
+  typerek_default:
+    external: true
