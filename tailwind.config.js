@@ -19,7 +19,7 @@ module.exports = {
           tint: '#FDEFEF',
         },
         ink: '#1D2420',
-        muted: '#969B9D',
+        muted: '#5F6A6D',
         line: '#E4E4E4',
         surface: '#ECEDEE',
       },

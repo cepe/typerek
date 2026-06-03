@@ -27,11 +27,17 @@
       </ul>
 
       <div class='mt-2 flex items-center gap-1 border-t border-white/20 pt-2 lg:mt-0 lg:border-0 lg:pt-0'>
-        <span class='px-3 text-sm font-medium text-white/90'>
-          <i class='fa fa-user'></i> <%= Current.user.username %>
-        </span>
+        <% standing = current_user_standing %>
+        <div class='px-3 text-sm leading-tight text-white/90'>
+          <div class='font-semibold'><i class='fa fa-user'></i> <%= Current.user.username %></div>
+          <% if standing && standing[:rank] %>
+            <%= link_to ranking_path, class: 'block text-xs text-white/70 hover:text-white' do %>
+              <%= standing[:rank] %>. miejsce · <%= points_display(standing[:points]) %> pkt
+            <% end %>
+          <% end %>
+        </div>
         <%= link_to sign_out_path, method: 'delete', class: 'nav-link' do %>
-          <i class='fa fa-sign-out'></i> wyloguj
+          <i class='fa fa-sign-out'></i> Wyloguj
         <% end %>
       </div>
     </div>

@@ -107,6 +107,12 @@ npm run build:css
 > **Note:** [Node.js](https://nodejs.org) is only needed to build CSS locally — the
 > running app does not require it. The Docker build handles CSS on its own.
 
+**Team flags:** country flags in `app/assets/images/flags/` are vendored SVGs from the
+[`flag-icons`](https://github.com/lipis/flag-icons) package (only the ~48 teams in play).
+The Polish-name → ISO-code map lives in `MatchesHelper::TEAM_FLAGS`. To add a flag:
+`cp node_modules/flag-icons/flags/4x3/<code>.svg app/assets/images/flags/` and add the
+mapping.
+
 
 ### Running a Beta Instance
 
