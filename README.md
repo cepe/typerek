@@ -77,6 +77,37 @@ Welcome to Typerek! This application allows you and your friends to predict the 
    Open your browser and navigate to `http://localhost:8000`
 
 
+### Frontend / Styling (Tailwind CSS)
+
+The UI is built with [Tailwind CSS](https://tailwindcss.com), compiled by a Node-based
+toolchain that is intentionally framework-agnostic so it can carry over to a future
+React + Vite frontend.
+
+- **Source files**
+  - `app/frontend/styles/application.tailwind.css` — input (design tokens + `@layer components`)
+  - `tailwind.config.js` — theme (brand colors, Roboto) and content globs
+- **Compiled output**: `app/assets/stylesheets/application.css` — served by the Rails asset pipeline.
+
+**Docker (production):** the CSS is built automatically inside the image — the
+`builder` stage runs `npm ci` and `npm run build:css` before `assets:precompile`.
+So `docker-compose up --build` produces fresh styles with no manual step; just commit
+your view changes.
+
+**Local development:** a copy of `application.css` is committed so the app renders
+without Node. While editing views/helpers (i.e. the Tailwind classes used), run the
+watcher so styles rebuild on save:
+
+```bash
+npm install        # once, installs Tailwind (see package.json)
+npm run watch:css  # rebuild on change while developing views
+# or a one-off build:
+npm run build:css
+```
+
+> **Note:** [Node.js](https://nodejs.org) is only needed to build CSS locally — the
+> running app does not require it. The Docker build handles CSS on its own.
+
+
 ### Running a Beta Instance
 
 You can run a second instance of the app on port `8001` connected to the same database, useful for beta testing new changes before deploying to production.

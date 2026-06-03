@@ -21,12 +21,6 @@ class MatchesController < ApplicationController
   def edit
     @match = Match.find(params[:id])
     authorize! :update, @match
-    @answer = @match.answers.find_or_initialize_by(user_id: current_user.id)
-
-    respond_to do |format|
-      format.html { render 'edit' }
-      format.js {}
-    end
   end
 
   def set_type
@@ -50,17 +44,10 @@ class MatchesController < ApplicationController
       attributes: match_params.to_h
     )
     if handler.call
-      flash[:notice] = 'Zapisano zmiany'
-      respond_to do |format|
-        format.html { redirect_to matches_path }
-        format.js {}
-      end
+      redirect_to matches_path, notice: 'Zapisano zmiany'
     else
       flash.now[:alert] = 'Wystąpił błąd'
-      respond_to do |format|
-        format.html { render action: 'edit' }
-        format.js {}
-      end
+      render action: 'edit'
     end
   end
 

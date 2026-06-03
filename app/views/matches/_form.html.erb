@@ -1,81 +1,52 @@
-<%= form_for @match, html: { class: 'form-horizontal' }, remote: request.xhr? do |f| %>
-  <fieldset>
-    <div class="form-group row">
-      <%= f.label :team_a, 'Drużyna 1', class: 'col-lg-2 col-form-label' %>
-      <div class="col-lg-10"><%= f.text_field :team_a, class: 'form-control' %></div>
+<%= form_for @match do |f| %>
+  <div class='space-y-5'>
+    <div class='grid grid-cols-1 gap-4 sm:grid-cols-2'>
+      <div>
+        <%= f.label :team_a, 'Drużyna 1', class: 'label' %>
+        <%= f.text_field :team_a, class: 'field' %>
+      </div>
+      <div>
+        <%= f.label :team_b, 'Drużyna 2', class: 'label' %>
+        <%= f.text_field :team_b, class: 'field' %>
+      </div>
     </div>
-    <div class="form-group row">
-      <%= f.label :team_b, 'Drużyna 2', class: 'col-lg-2 col-form-label' %>
-      <div class="col-lg-10"><%= f.text_field :team_b, class: 'form-control' %></div>
+
+    <div>
+      <span class='label'>Kursy</span>
+      <div class='grid grid-cols-3 gap-3 sm:grid-cols-6'>
+        <% { win_a: '1', tie: 'X', win_b: '2', win_tie_a: '1X', win_tie_b: 'X2', not_tie: '12' }.each do |attr, lbl| %>
+          <div>
+            <%= f.label attr, lbl, class: 'mb-1 block text-center text-xs font-bold text-muted' %>
+            <%= f.number_field attr, step: 0.01, min: 0, class: 'field text-center', disabled: @match.started? && @match.persisted? %>
+          </div>
+        <% end %>
+      </div>
     </div>
-    <div class="form-group row">
-      <%= f.label :win_a, 'Kursy', class: 'col-lg-2 col-form-label' %>
-      <div class="col-lg-10 form-inline">
-        <div class="input-group">
-          <div class="input-group-prepend">
-            <span class="input-group-text">1</span>
-          </div>
-          <%= f.number_field :win_a, step: 0.01, min: 0, class: 'form-control', size: 5, disabled: @match.started? && @match.persisted? %>
+
+    <div>
+      <%= f.label :start, 'Data rozpoczęcia', class: 'label' %>
+      <%= f.datetime_select :start, {}, class: 'field mr-1 inline-block w-auto', disabled: @match.started? && @match.persisted? %>
+    </div>
+
+    <hr class='border-line'>
+
+    <div>
+      <span class='label'>Wynik</span>
+      <div class='grid grid-cols-2 gap-3 sm:max-w-xs'>
+        <div>
+          <%= f.label :result_a, 'Drużyna 1', class: 'mb-1 block text-center text-xs font-bold text-muted' %>
+          <%= f.number_field :result_a, step: 1, min: 0, class: 'field text-center', disabled: !@match.started? && @match.persisted? %>
         </div>
-        <div class="input-group">
-          <div class="input-group-prepend">
-            <span class="input-group-text">X</span>
-          </div>
-          <%= f.number_field :tie, step: 0.01, min: 0, class: 'form-control', size: 5, disabled: @match.started? && @match.persisted? %>
-        </div>
-        <div class="input-group">
-          <div class="input-group-prepend">
-            <span class="input-group-text">2</span>
-          </div>
-          <%= f.number_field :win_b, step: 0.01, min: 0, class: 'form-control', size: 5, disabled: @match.started? && @match.persisted? %>
-        </div>
-        <div class="input-group">
-          <div class="input-group-prepend">
-            <span class="input-group-text">1X</span>
-          </div>
-          <%= f.number_field :win_tie_a, step: 0.01, min: 0, class: 'form-control', size: 5, disabled: @match.started? && @match.persisted? %>
-        </div>
-        <div class="input-group">
-          <div class="input-group-prepend">
-            <span class="input-group-text">X2</span>
-          </div>
-          <%= f.number_field :win_tie_b, step: 0.01, min: 0, class: 'form-control', size: 5, disabled: @match.started? && @match.persisted? %>
-        </div>
-        <div class="input-group">
-          <div class="input-group-prepend">
-            <span class="input-group-text">12</span>
-          </div>
-          <%= f.number_field :not_tie, step: 0.01, min: 0, class: 'form-control', size: 5, disabled: @match.started? && @match.persisted? %>
+        <div>
+          <%= f.label :result_b, 'Drużyna 2', class: 'mb-1 block text-center text-xs font-bold text-muted' %>
+          <%= f.number_field :result_b, step: 1, min: 0, class: 'field text-center', disabled: !@match.started? && @match.persisted? %>
         </div>
       </div>
     </div>
-    <div class="form-group row">
-      <%= f.label :start, 'Data rozpoczęcia', class: 'col-lg-2 col-form-label' %>
-      <div class="col-lg-10"><%= f.datetime_select :start, class: 'form-control', disabled: @match.started? && @match.persisted? %></div>
+
+    <div class='flex justify-end gap-2'>
+      <%= link_to 'Anuluj', matches_path, class: 'btn btn-ghost' %>
+      <%= f.submit 'Zapisz', class: 'btn btn-brand', data: { disable_with: 'Zapisuję…' } %>
     </div>
-    <hr>
-    <div class="form-group row">
-      <%= f.label :result_a, 'Wyniki', class: 'col-lg-2 col-form-label' %>
-      <div class="col-lg-10 form-inline">
-        <div class="input-group">
-          <div class="input-group-prepend">
-            <span class="input-group-text">Drużyna 1</span>
-          </div>
-          <%= f.number_field :result_a, step: 1, min: 0, class: 'form-control', size: 5, disabled: !@match.started? && @match.persisted? %>
-        </div>
-        <div class="input-group">
-          <div class="input-group-prepend">
-            <span class="input-group-text">Drużyna 2</span>
-          </div>
-          <%= f.number_field :result_b, step: 1, min: 0, class: 'form-control', size: 5, disabled: !@match.started? && @match.persisted? %>
-        </div>
-      </div>
-    </div>
-    <div class="form-group row">
-      <div class="col-lg-10 offset-lg-2">
-        <%= link_to 'Anuluj', matches_path, class: 'btn btn-secondary', 'data-dismiss' => 'modal' %>
-        <%= f.submit 'Zapisz', class: 'btn btn-primary', data: { disable_with: 'Zapisuję ...' } %>
-      </div>
-    </div>
-  </fieldset>
+  </div>
 <% end %>

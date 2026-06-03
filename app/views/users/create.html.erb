@@ -1,5 +1,8 @@
 <%= render partial: 'shared/menu', locals: { s: 'users' } %>
-<h2>Zaproszenia</h2>
 
-<p>Utworzono konto, link aktywacyjny:</p>
-<pre><%= invitation_url(token: @token) %></pre>
+<h1 class='mb-4 flex items-center gap-2'><i class='fa fa-envelope-o text-brand'></i> Zaproszenia</h1>
+
+<section class='card card-body'>
+  <p class='mb-2 text-muted'>Utworzono konto. Link aktywacyjny:</p>
+  <pre class='overflow-x-auto rounded-lg bg-surface p-3 text-sm text-ink'><%= invitation_url(token: @token) %></pre>
+</section>

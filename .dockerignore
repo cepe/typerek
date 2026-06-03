@@ -1,0 +1,12 @@
+# Keep the build context small and prevent host artifacts from clobbering the
+# image (e.g. node_modules is installed via `npm ci` inside the build).
+.git
+.gitignore
+node_modules
+tmp
+log
+/public/assets
+.env
+.env.*
+.idea
+*.swp

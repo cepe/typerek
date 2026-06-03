@@ -9,6 +9,9 @@
 /.idea
 /.env
 
+# Node / Tailwind toolchain (the compiled app/assets/stylesheets/application.css is committed)
+/node_modules
+
 # Ignore the default SQLite database.
 /db/*.sqlite3
 

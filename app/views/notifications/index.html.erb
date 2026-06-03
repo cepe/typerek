@@ -1,33 +1,32 @@
 <%= render partial: 'shared/menu', locals: { s: 'notification' } %>
 
-<h2>
-  <i class="fa fa-exclamation-triangle"></i>
-  Komunikaty
-</h2>
+<h1 class='mb-4 flex items-center gap-2'><i class='fa fa-bullhorn text-brand'></i> Komunikaty</h1>
 
 <% if @notifications.empty? %>
-  <div class="text-center">Brak komunikatów</div>
+  <div class='card card-body text-center text-muted'>Brak komunikatów</div>
 <% else %>
-  <div class="table-responsive">
-    <table class="table table-striped table-hover table-bordered">
-      <thead>
-      <tr>
-        <th>Treść komunikatu</th>
-        <th class="col-1 text-nowrap text-center">Status</th>
-      </tr>
-      </thead>
-      <tbody>
-      <% @notifications.each do |notification| %>
-        <tr>
-          <td><%= notification.content %></td>
-          <td class="col-1 text-nowrap text-center">
-            <%= link_to display_notification_path(notification), method: :patch do %>
-              <%= notification_status(notification) %>
-            <% end %>
-          </td>
-        </tr>
-      <% end %>
-      </tbody>
-    </table>
-  </div>
+  <section class='card overflow-hidden'>
+    <div class='overflow-x-auto'>
+      <table class='w-full text-sm'>
+        <thead class='bg-surface text-left text-xs uppercase tracking-wide text-muted'>
+          <tr>
+            <th class='px-4 py-3'>Treść komunikatu</th>
+            <th class='px-4 py-3 text-center'>Status</th>
+          </tr>
+        </thead>
+        <tbody class='divide-y divide-line/60'>
+          <% @notifications.each do |notification| %>
+            <tr class='hover:bg-surface/50'>
+              <td class='px-4 py-3'><%= notification.content %></td>
+              <td class='whitespace-nowrap px-4 py-3 text-center'>
+                <%= link_to display_notification_path(notification), method: :patch do %>
+                  <%= notification_status(notification) %>
+                <% end %>
+              </td>
+            </tr>
+          <% end %>
+        </tbody>
+      </table>
+    </div>
+  </section>
 <% end %>
