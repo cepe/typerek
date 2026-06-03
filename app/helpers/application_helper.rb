@@ -31,9 +31,9 @@ module ApplicationHelper
 
   def user_fin(user)
     if user.fin?
-      content_tag :span, safe_join([tag.i(class: 'fa fa-check'), ' Opłacone']), class: 'badge badge-success cursor-pointer'
+      content_tag :span, safe_join([tag.i(class: 'fa fa-check'), ' potwierdzony']), class: 'badge badge-success cursor-pointer'
     else
-      content_tag :span, safe_join([tag.i(class: 'fa fa-times'), ' Nieopłacone']), class: 'badge badge-danger cursor-pointer'
+      content_tag :span, safe_join([tag.i(class: 'fa fa-times'), ' niepotwierdzony']), class: 'badge badge-danger cursor-pointer'
     end
   end
 end

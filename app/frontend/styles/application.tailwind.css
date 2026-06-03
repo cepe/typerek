@@ -64,15 +64,15 @@
     grid-template-areas: "user status" "pay actions";
   }
   @media (min-width: 640px) {
-    .user-head { display: grid; align-items: center; grid-template-columns: minmax(0, 1fr) 8rem 10rem 5rem; }
-    .user-row { grid-template-columns: minmax(0, 1fr) 8rem 10rem 5rem; grid-template-areas: "user status pay actions"; }
+    .user-head { display: grid; align-items: center; grid-template-columns: minmax(0, 1fr) 7rem 9rem 10.5rem; }
+    .user-row { grid-template-columns: minmax(0, 1fr) 7rem 9rem 10.5rem; grid-template-areas: "user status pay actions"; }
   }
   .ur-user { grid-area: user; @apply min-w-0; }
   .ur-status { grid-area: status; }
   .ur-pay { grid-area: pay; }
   .ur-actions { grid-area: actions; @apply flex items-center gap-1 justify-self-end; }
-  .btn-icon { @apply inline-flex h-8 w-8 items-center justify-center rounded-md text-muted transition-colors hover:bg-black/5 hover:text-ink; }
-  .btn-icon-danger { @apply hover:bg-danger-tint hover:text-danger; }
+  .btn-action { @apply inline-flex items-center gap-1.5 rounded-md px-2 py-1 text-xs font-medium text-muted transition-colors hover:bg-black/5 hover:text-ink; }
+  .btn-action-danger { @apply hover:bg-danger-tint hover:text-danger; }
 
   /* Tabs */
   .tab { @apply inline-flex cursor-pointer items-center gap-2 border-b-2 border-transparent px-4 py-3 text-sm font-semibold text-muted transition-colors hover:text-ink; }
