@@ -30,15 +30,10 @@ module ApplicationHelper
   end
 
   def user_fin(user)
-    klass = user.fin? ? 'badge badge-success cursor-pointer' : 'badge badge-danger cursor-pointer'
-    content_tag :span, '$$$', class: klass
-  end
-
-  def reset_button
-    content_tag :span, 'resetuj dostęp', class: 'badge badge-warning cursor-pointer'
-  end
-
-  def delete_button
-    content_tag :span, 'usuń', class: 'badge badge-danger cursor-pointer'
+    if user.fin?
+      content_tag :span, safe_join([tag.i(class: 'fa fa-check'), ' Opłacone']), class: 'badge badge-success cursor-pointer'
+    else
+      content_tag :span, safe_join([tag.i(class: 'fa fa-times'), ' Nieopłacone']), class: 'badge badge-danger cursor-pointer'
+    end
   end
 end
