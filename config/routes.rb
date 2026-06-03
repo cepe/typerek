@@ -16,15 +16,9 @@ Rails.application.routes.draw do
   resource :invitation, only: %i[show update]
   resource :home, only: :show
   resource :ranking, only: :show
-  resources :comments, only: :create
   resources :matches, except: %i[create destroy new] do
     member do
       post :set_type
-    end
-  end
-  resources :notifications, only: :index do
-    member do
-      patch :display
     end
   end
 

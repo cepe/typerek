@@ -9,7 +9,6 @@ class User < ApplicationRecord
 
   has_many :answers, dependent: :destroy
   has_many :matches, through: :answers
-  has_many :comments, dependent: :nullify
   belongs_to :invited_by, polymorphic: true, optional: true
 
   scope :active, -> { where.not(invitation_accepted_at: nil) }

@@ -68,7 +68,7 @@
   .bet { @apply flex flex-col items-center justify-center gap-0.5 rounded-lg border px-1 py-1.5 text-center leading-none transition-colors; }
   .bet-key { @apply text-[11px] font-bold uppercase tracking-wide; }
   .bet-odds { @apply text-xs font-semibold tabular-nums; }
-  .bet-idle { @apply border-brand/30 bg-white text-ink hover:border-brand hover:bg-brand-tint; }
-  .bet-active { @apply border-brand bg-brand text-white shadow-sm; }
+  .bet-idle { @apply border-brand/30 bg-white text-ink hover:border-brand hover:bg-brand-tint hover:text-ink; }
+  .bet-active { @apply border-brand bg-brand text-white shadow-sm hover:text-white; }
   .bet-locked { @apply pointer-events-none border-line bg-surface text-muted; }
 }

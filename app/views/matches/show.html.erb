@@ -1,106 +1,70 @@
 <%= render partial: 'shared/menu', locals: { s: 'matches' } %>
 
-<div class='grid grid-cols-1 gap-6 lg:grid-cols-3'>
-  <div class='space-y-6 lg:col-span-2'>
-    <!-- Match header -->
-    <section class='card card-body'>
-      <% if can? :update, @match %>
-        <div class='mb-3 flex justify-end'>
-          <%= link_to edit_match_path(@match), class: 'btn btn-outline btn-sm' do %>
-            <i class='fa fa-pencil'></i> Edytuj
-          <% end %>
-        </div>
-      <% end %>
-
-      <div class='flex items-center justify-center gap-4 sm:gap-8'>
-        <div class='flex-1 text-right text-lg font-bold text-ink'><%= @match.team_a %></div>
-        <div class='shrink-0 rounded-lg bg-surface px-4 py-2 text-2xl font-bold tabular-nums text-ink'>
-          <%= formatted_score(@match) %>
-        </div>
-        <div class='flex-1 text-left text-lg font-bold text-ink'><%= @match.team_b %></div>
-      </div>
-      <p class='mt-3 text-center text-sm text-muted'>
-        <i class='fa fa-clock-o'></i> <%= l(@match.start, format: :short) %>
-      </p>
-    </section>
-
-    <!-- Your bet -->
-    <section class='card'>
-      <div class='card-header'>
-        <h3 class='flex items-center gap-2'><i class='fa fa-user text-brand'></i> Twój typ</h3>
-      </div>
-      <div class='card-body'>
-        <% unless @match.started? %>
-          <p class='mb-3 text-sm text-muted'>Wybierz swój typ, klikając w kurs:</p>
+<div class='mx-auto max-w-3xl space-y-6'>
+  <!-- Match header -->
+  <section class='card card-body'>
+    <% if can? :update, @match %>
+      <div class='mb-3 flex justify-end'>
+        <%= link_to edit_match_path(@match), class: 'btn btn-outline btn-sm' do %>
+          <i class='fa fa-pencil'></i> Edytuj
         <% end %>
-        <%= render partial: 'buttons', locals: { match: @match, answer: @answer } %>
       </div>
-    </section>
-
-    <!-- Other participants -->
-    <% if @match.started? %>
-      <section class='card overflow-hidden'>
-        <div class='card-header'>
-          <h3 class='flex items-center gap-2'><i class='fa fa-users text-brand'></i> Typy uczestników</h3>
-        </div>
-        <div class='divide-y divide-line/60'>
-          <% @users.each do |user| %>
-            <% answer = @answers[user.id] %>
-            <div class='flex flex-col gap-2 px-4 py-3 sm:flex-row sm:items-center sm:gap-4 sm:px-5'>
-              <div class='font-medium'>
-                <%= link_to user.username, user_path(user), class: 'text-ink hover:text-brand' %>
-              </div>
-              <% if answer.blank? %>
-                <span class='text-sm text-muted sm:ml-auto'>brak typu</span>
-              <% else %>
-                <div class='bet-grid sm:ml-auto sm:w-[340px]'>
-                  <% MatchesHelper::BET_TYPES.each do |result, label| %>
-                    <% chosen = answer.result == result %>
-                    <div class="bet <%= chosen ? 'bet-active' : 'border-line bg-surface/60 text-muted' %>">
-                      <span class='bet-key'><%= label %></span>
-                      <span class='bet-odds'><%= formatted_odds(@match.public_send(result)) %></span>
-                    </div>
-                  <% end %>
-                </div>
-              <% end %>
-            </div>
-          <% end %>
-        </div>
-      </section>
     <% end %>
-  </div>
 
-  <!-- Comments -->
-  <aside class='space-y-4'>
-    <section class='card'>
-      <div class='card-header'>
-        <h3 class='flex items-center gap-2'><i class='fa fa-comments text-brand'></i> Komentarze</h3>
+    <div class='flex items-center justify-center gap-4 sm:gap-8'>
+      <div class='flex-1 text-right text-lg font-bold text-ink'><%= @match.team_a %></div>
+      <div class='shrink-0 rounded-lg bg-surface px-4 py-2 text-2xl font-bold tabular-nums text-ink'>
+        <%= formatted_score(@match) %>
       </div>
-      <div class='card-body'>
-        <%= form_for @comment, html: { class: 'mb-4' } do |form| %>
-          <%= form.hidden_field :match_id %>
-          <div class='flex gap-2'>
-            <%= form.text_field :content, class: 'field', placeholder: 'Wyślij wiadomość…' %>
-            <%= form.submit 'Wyślij', class: 'btn btn-brand shrink-0' %>
+      <div class='flex-1 text-left text-lg font-bold text-ink'><%= @match.team_b %></div>
+    </div>
+    <p class='mt-3 text-center text-sm text-muted'>
+      <i class='fa fa-clock-o'></i> <%= l(@match.start, format: :short) %>
+    </p>
+  </section>
+
+  <!-- Your bet -->
+  <section class='card'>
+    <div class='card-header'>
+      <h3 class='flex items-center gap-2'><i class='fa fa-user text-brand'></i> Twój typ</h3>
+    </div>
+    <div id='my-bet' class='card-body'>
+      <% unless @match.started? %>
+        <p class='mb-3 text-sm text-muted'>Wybierz swój typ, klikając w kurs:</p>
+      <% end %>
+      <%= render partial: 'buttons', locals: { match: @match, answer: @answer } %>
+    </div>
+  </section>
+
+  <!-- Other participants -->
+  <% if @match.started? %>
+    <section id='others-bets' class='card overflow-hidden'>
+      <div class='card-header'>
+        <h3 class='flex items-center gap-2'><i class='fa fa-users text-brand'></i> Typy uczestników</h3>
+      </div>
+      <div class='divide-y divide-line/60'>
+        <% @users.each do |user| %>
+          <% answer = @answers[user.id] %>
+          <div class='flex flex-col gap-2 px-4 py-3 sm:flex-row sm:items-center sm:gap-4 sm:px-5'>
+            <div class='font-medium'>
+              <%= link_to user.username, user_path(user), class: 'text-ink hover:text-brand' %>
+            </div>
+            <% if answer.blank? %>
+              <span class='text-sm text-muted sm:ml-auto'>brak typu</span>
+            <% else %>
+              <div class='bet-grid sm:ml-auto sm:w-[340px]'>
+                <% MatchesHelper::BET_TYPES.each do |result, label| %>
+                  <% chosen = answer.result == result %>
+                  <div class="bet <%= chosen ? 'bet-active' : 'border-line bg-surface/60 text-muted' %>">
+                    <span class='bet-key'><%= label %></span>
+                    <span class='bet-odds'><%= formatted_odds(@match.public_send(result)) %></span>
+                  </div>
+                <% end %>
+              </div>
+            <% end %>
           </div>
         <% end %>
-
-        <% if @match.comments.blank? %>
-          <p class='text-sm text-muted'>Brak komentarzy</p>
-        <% else %>
-          <ul class='space-y-3'>
-            <% @match.comments.includes(:user).each do |comment| %>
-              <li class='rounded-lg bg-surface/60 p-3'>
-                <div class='mb-1 flex items-center justify-between gap-2 text-sm'>
-                  <span class='font-semibold text-ink'><%= display_username(comment.username) %></span>
-                  <span class='text-xs text-muted'><%= l(comment.created_at, format: :short) %></span>
-                </div>
-                <p class='text-sm text-ink/90'><%= comment.content %></p>
-              </li>
-            <% end %>
-          </ul>
-        <% end %>
       </div>
     </section>
-  </aside>
+  <% end %>
 </div>

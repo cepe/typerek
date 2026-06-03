@@ -8,11 +8,6 @@
 #   cities = City.create([{ :name => 'Chicago' }, { :name => 'Copenhagen' }])
 #   Mayor.create(:name => 'Emanuel', :city => cities.first)
 
-# Komunikaty
-Notification.create(
-  content: 'W meczach fazy pucharowej typujemy wyniki tylko do 90 minuty spotkania. Czyli typ "remis" jest jak najbardziej poprawny. Oznaczać to będzie że drużyny po zagraniu przepisowych 90 minut będą miały dogrywkę.'
-)
-
 User.create(
   username: ENV.fetch('TYPEREK_ADMIN_USERNAME'),
   password: ENV.fetch('TYPEREK_ADMIN_PASSWORD'),

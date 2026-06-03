@@ -63,13 +63,6 @@ RSpec.describe User, type: :model do
 
       it { is_expected.to be_able_to(:manage, Match) }
 
-      it { is_expected.to be_able_to(:read, Comment) }
-      it { is_expected.to be_able_to(:create, Comment) }
-      it { is_expected.not_to be_able_to(:update, Comment) }
-      it { is_expected.not_to be_able_to(:destroy, Comment) }
-
-      it { is_expected.to be_able_to(:manage, Notification) }
-
       it { is_expected.to be_able_to(:manage, User) }
     end
 
@@ -80,16 +73,6 @@ RSpec.describe User, type: :model do
       it { is_expected.not_to be_able_to(:update, Match) }
       it { is_expected.not_to be_able_to(:destroy, Match) }
       it { is_expected.not_to be_able_to(:create, Match) }
-
-      it { is_expected.to be_able_to(:read, Comment) }
-      it { is_expected.to be_able_to(:create, Comment) }
-      it { is_expected.not_to be_able_to(:update, Comment) }
-      it { is_expected.not_to be_able_to(:destroy, Comment) }
-
-      it { is_expected.to be_able_to(:read, Notification) }
-      it { is_expected.not_to be_able_to(:update, Notification) }
-      it { is_expected.not_to be_able_to(:destroy, Notification) }
-      it { is_expected.not_to be_able_to(:create, Notification) }
 
       it { is_expected.not_to be_able_to(:read, User) }
       it { is_expected.not_to be_able_to(:update, User) }
