@@ -2,11 +2,13 @@
   <div class='bet-grid'>
     <% MatchesHelper::BET_TYPES.each do |result, label| %>
       <% active = answer&.public_send("#{result}?") %>
+      <% odds = formatted_odds(match.public_send(result)) %>
       <%= link_to set_type_match_path(match, result: result),
                   data: { turbo_method: :post },
+                  aria: { label: "Typ #{label}, kurs #{odds}#{', wybrany' if active}" },
                   class: bet_pill_class(active: active, started: match.started?) do %>
         <span class='bet-key'><%= label %></span>
-        <span class='bet-odds'><%= formatted_odds(match.public_send(result)) %></span>
+        <span class='bet-odds'><%= odds %></span>
       <% end %>
     <% end %>
   </div>

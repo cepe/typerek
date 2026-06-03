@@ -1,4 +1,10 @@
+<% content_for :title, 'Zaloguj się' %>
 <div class='container-narrow py-10'>
+  <div class='mb-6 text-center'>
+    <div class='mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-xl bg-brand text-2xl font-bold text-white'>T</div>
+    <h1 class='text-2xl'>Typerek <span class='font-normal text-muted'>2026</span></h1>
+    <p class='mt-1 text-sm text-muted'>Typuj wyniki Mistrzostw Świata z przyjaciółmi.</p>
+  </div>
   <section class='card card-body'>
     <%= form_for @user, url: sign_in_path do |f| %>
       <h2 class='mb-6 text-center'>Zaloguj się</h2>

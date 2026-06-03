@@ -1,4 +1,5 @@
 <%= render partial: 'shared/menu', locals: { s: 'ranking' } %>
+<% content_for :title, 'Ranking' %>
 
 <h1 class='mb-4 flex items-center gap-2'><i class='fa fa-trophy text-brand'></i> Ranking</h1>
 
@@ -17,7 +18,7 @@
           <% if me %><span class='ml-1 text-xs font-normal text-brand'>(Ty)</span><% end %>
         </span>
         <span class='text-right leading-tight'>
-          <span class='font-bold text-ink tabular-nums'><%= number_with_precision(user.points) %></span>
+          <span class='font-bold text-ink tabular-nums'><%= points_display(user.points) %> <span class='text-xs font-normal text-muted'>pkt</span></span>
           <span class='block text-xs text-muted'><%= user.accuracy %> trafień</span>
         </span>
       </li>
