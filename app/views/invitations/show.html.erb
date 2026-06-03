@@ -1,21 +1,21 @@
-<div class="container">
-  <div class="row justify-content-center">
-    <div class="col-md-6 col-lg-4">
-      <%= form_for @user, url: invitation_path, html: { method: :put } do |f| %>
-        <h2 class="form-signin-heading text-center text-muted">Ustaw hasło</h2>
-        <h3 class="text-center">Cześć <%= @user.username %></h3>
+<div class='container-narrow py-10'>
+  <section class='card card-body'>
+    <%= form_for @user, url: invitation_path, html: { method: :put } do |f| %>
+      <h2 class='text-center'>Ustaw hasło</h2>
+      <p class='mb-6 mt-1 text-center text-muted'>Cześć <span class='font-semibold text-ink'><%= @user.username %></span>!</p>
 
-        <%= f.hidden_field :username %>
-        <div class="form-group">
-          <%= f.label :password, class: 'sr-only' %>
-          <%= f.password_field :password, class: 'form-control', autocomplete: 'off', placeholder: 'Password', tabindex: 1 %>
+      <%= f.hidden_field :username %>
+      <div class='space-y-4'>
+        <div>
+          <%= f.label :password, 'Hasło', class: 'label' %>
+          <%= f.password_field :password, class: 'field', autocomplete: 'off', placeholder: 'Hasło', tabindex: 1 %>
         </div>
-        <div class="form-group">
-          <%= f.label :password_confirmation, class: 'sr-only' %>
-          <%= f.password_field :password_confirmation, class: 'form-control', autocomplete: 'off', placeholder: 'Confirm Password', tabindex: 2 %>
+        <div>
+          <%= f.label :password_confirmation, 'Powtórz hasło', class: 'label' %>
+          <%= f.password_field :password_confirmation, class: 'field', autocomplete: 'off', placeholder: 'Powtórz hasło', tabindex: 2 %>
         </div>
-        <%= f.submit 'Zapisz hasło', class: 'btn btn-primary btn-block', tabindex: 3 %>
-      <% end %>
-    </div>
-  </div>
+        <%= f.submit 'Zapisz hasło', class: 'btn btn-brand btn-block', tabindex: 3 %>
+      </div>
+    <% end %>
+  </section>
 </div>

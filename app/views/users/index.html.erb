@@ -1,62 +1,62 @@
 <%= render partial: 'shared/menu', locals: { s: 'users' } %>
 
-<h2>
-  <i class="fa fa-envelope-o"></i>
-  Zaproszenia
-</h2>
+<h1 class='mb-4 flex items-center gap-2'><i class='fa fa-envelope-o text-brand'></i> Zaproszenia</h1>
 
-<div class="jumbotron">
+<section class='card card-body mb-8'>
   <%= form_for @user, url: users_path, html: { method: :post } do |f| %>
-    <div class="form-group row">
-      <%= f.label :username, 'Login', class: 'col-lg-2 col-form-label' %>
-      <div class="col-lg-10"><%= f.text_field :username, class: 'form-control' %></div>
-    </div>
-    <div class="form-group row">
-      <div class="col-lg-10 offset-lg-2">
-        <%= f.submit 'Generuj zaproszenie', class: 'btn btn-primary' %>
+    <div class='flex flex-col gap-3 sm:flex-row sm:items-end'>
+      <div class='flex-1'>
+        <%= f.label :username, 'Login', class: 'label' %>
+        <%= f.text_field :username, class: 'field' %>
       </div>
+      <%= f.submit 'Generuj zaproszenie', class: 'btn btn-brand' %>
     </div>
   <% end %>
-</div>
+</section>
 
-<h2>
-  <i class="fa fa-users"></i>
-  Lista użytkowników
-</h2>
+<h2 class='mb-4 flex items-center gap-2'><i class='fa fa-users text-brand'></i> Lista użytkowników</h2>
 
-<div class="table-responsive">
-  <table class="table table-hover table-striped table-sm" id="list-of-users">
-    <thead>
-    <tr>
-      <th>#</th>
-      <th>Nazwa użytkownika</th>
-      <th>Zaproszony przez</th>
-      <th>Stan konta</th>
-      <th>Ustawienia</th>
-    </tr>
-    </thead>
-    <tbody>
-    <% User.includes(:invited_by).order(:username).each_with_index do |user, index| %>
-      <tr>
-        <td class="align-middle"><%= index + 1 %></td>
-        <td class="align-middle"><%= link_to user.username, user_path(user) %></td>
-        <td class="align-middle"><%= user.invited_by_username %></td>
-        <td class="align-middle">
-          <%= user_status(user) %>
-          <%= turbo_frame_tag user do %>
-            <%= link_to fin_user_path(user), data: { turbo: true, turbo_method: :post } do %>
-              <%= user_fin(user) %>
-            <% end %>
-          <% end %>
-        </td>
-        <td class="align-middle">
-          <% if user != Current.user %>
-            <%= link_to reset_button(), resend_invitation_user_path(user), data: { confirm: 'Czy na pewno chcesz wygenerować ponownie link z zaproszeniem?' } %>
-            <%= link_to delete_button(), user_path(user), method: :delete, data: { confirm: 'Czy na pewno chcesz usunąć użytkownika?' } %>
-          <% end %>
-        </td>
-      </tr>
-    <% end %>
-    </tbody>
-  </table>
-</div>
+<section class='card overflow-hidden'>
+  <div class='overflow-x-auto'>
+    <table class='w-full text-sm' id='list-of-users'>
+      <thead class='bg-surface text-left text-xs uppercase tracking-wide text-muted'>
+        <tr>
+          <th class='px-4 py-3'>#</th>
+          <th class='px-4 py-3'>Nazwa użytkownika</th>
+          <th class='px-4 py-3'>Zaproszony przez</th>
+          <th class='px-4 py-3'>Stan konta</th>
+          <th class='px-4 py-3 text-right'>Ustawienia</th>
+        </tr>
+      </thead>
+      <tbody class='divide-y divide-line/60'>
+        <% User.includes(:invited_by).order(:username).each_with_index do |user, index| %>
+          <tr class='hover:bg-surface/50'>
+            <td class='px-4 py-3 text-muted'><%= index + 1 %></td>
+            <td class='px-4 py-3 font-medium'>
+              <%= link_to user.username, user_path(user), class: 'text-ink hover:text-brand' %>
+            </td>
+            <td class='px-4 py-3 text-muted'><%= user.invited_by_username %></td>
+            <td class='px-4 py-3'>
+              <span class='inline-flex items-center gap-2'>
+                <%= user_status(user) %>
+                <%= turbo_frame_tag user do %>
+                  <%= link_to fin_user_path(user), data: { turbo: true, turbo_method: :post } do %>
+                    <%= user_fin(user) %>
+                  <% end %>
+                <% end %>
+              </span>
+            </td>
+            <td class='px-4 py-3'>
+              <% if user != Current.user %>
+                <div class='flex items-center justify-end gap-2'>
+                  <%= link_to reset_button, resend_invitation_user_path(user), data: { confirm: 'Czy na pewno chcesz wygenerować ponownie link z zaproszeniem?' } %>
+                  <%= link_to delete_button, user_path(user), method: :delete, data: { confirm: 'Czy na pewno chcesz usunąć użytkownika?' } %>
+                </div>
+              <% end %>
+            </td>
+          </tr>
+        <% end %>
+      </tbody>
+    </table>
+  </div>
+</section>

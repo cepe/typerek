@@ -1,51 +1,42 @@
 <%= render partial: 'shared/menu', locals: { s: 'users' } %>
-<h2>
-  <i class="fa fa-futbol-o"></i>
-  Głosy użytkownika <%= @user.username %>
-</h2>
-<h3>
-  Liczba trafień: <%= @user.accuracy %>
-</h3>
-<h3>Szczegóły:</h3>
-<div class="table-responsive">
-  <% @matches_started.group_by(&:start_date).each do |start_date, games| %>
-    <div class="card mb-3">
-      <div class="card-header">
-        <div class="row align-items-center">
-          <div class="col-lg-6 col-12">
-            <strong>
-              <%= l(start_date, format: :only_date) %>
-            </strong>
-          </div>
-          <div class="col-lg-6 col-12"></div>
-        </div>
-      </div>
-      <div class="card-body pb-0 pt-0 text-center">
-        <ul class="list-group list-group-flush">
-          <% games.each do |match| %>
-            <li class="list-group-item pr-0 pl-0">
-              <div class="row align-items-center">
-                <div class="col-lg-1 col-3 align-middle pb-2 pt-2">
-                  <%= l(match.start, format: :only_time) %>
-                </div>
-                <div class="col-lg-1 col-3 align-middle pb-2 pt-2">
-                  <%= "#{match.result_a}:#{match.result_b}" %>
-                </div>
-                <div class="col-lg-4 col-6 align-middle pb-2 pt-2">
-                  <%= link_to match_path(match) do %>
-                    <%= match.team_a %>
-                    -
-                    <%= match.team_b %>
-                  <% end %>
-                </div>
-                <div class="col-lg-6 col-12">
-                  <%= render partial: "matches/buttons", locals: { match: match, answer: (match.answers & @answers).first } %>
-                </div>
-              </div>
-            </li>
-          <% end %>
-        </ul>
-      </div>
-    </div>
-  <% end %>
+
+<div class='mb-5'>
+  <h1 class='flex items-center gap-2'><i class='fa fa-user text-brand'></i> Typy użytkownika <%= @user.username %></h1>
+  <p class='mt-1 text-muted'>Liczba trafień: <span class='font-semibold text-ink'><%= @user.accuracy %></span></p>
 </div>
+
+<% if @matches_started.empty? %>
+  <div class='card card-body text-center text-muted'>Brak rozegranych meczów</div>
+<% else %>
+  <div class='space-y-4'>
+    <% @matches_started.group_by(&:start_date).each do |start_date, games| %>
+      <section class='card overflow-hidden'>
+        <div class='card-header'>
+          <h3 class='text-sm font-bold uppercase tracking-wide text-muted'>
+            <%= l(start_date, format: :only_date) %>
+          </h3>
+        </div>
+        <div class='divide-y divide-line/60'>
+          <% games.each do |match| %>
+            <div class='flex flex-col gap-3 px-4 py-3 sm:flex-row sm:items-center sm:gap-4 sm:px-5'>
+              <div class='flex items-center gap-3'>
+                <span class='w-11 shrink-0 text-sm font-semibold tabular-nums text-muted'>
+                  <%= l(match.start, format: :only_time) %>
+                </span>
+                <span class='inline-flex shrink-0 items-center rounded-md bg-surface px-2 py-1 text-sm font-bold tabular-nums text-ink'>
+                  <%= formatted_score(match) %>
+                </span>
+                <%= link_to match_path(match), class: 'font-semibold text-ink hover:text-brand' do %>
+                  <%= match.team_a %> <span class='text-muted'>–</span> <%= match.team_b %>
+                <% end %>
+              </div>
+              <div class='sm:ml-auto sm:w-[340px]'>
+                <%= render partial: 'matches/buttons', locals: { match: match, answer: (match.answers & @answers).first } %>
+              </div>
+            </div>
+          <% end %>
+        </div>
+      </section>
+    <% end %>
+  </div>
+<% end %>

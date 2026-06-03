@@ -2,7 +2,7 @@
 
 import "jquery"
 import "jquery_ujs"
-import "bootstrap"
 import "@hotwired/turbo-rails"
+import "ui"
 
 Turbo.session.drive = false
