@@ -17,45 +17,47 @@
 
 <h2 class='mb-4 flex items-center gap-2'><i class='fa fa-users text-brand'></i> Lista użytkowników</h2>
 
-<section class='card overflow-hidden'>
-  <table class='table-cards' id='list-of-users'>
-    <thead>
-      <tr>
-        <th class='w-px'>#</th>
-        <th>Nazwa użytkownika</th>
-        <th>Zaproszony przez</th>
-        <th>Stan konta</th>
-        <th class='sm:text-right'>Ustawienia</th>
-      </tr>
-    </thead>
-    <tbody>
-      <% User.includes(:invited_by).order(:username).each_with_index do |user, index| %>
-        <tr class='sm:hover:bg-surface/50'>
-          <td data-label='#' class='text-muted'><%= index + 1 %></td>
-          <td data-label='Użytkownik' class='font-medium'>
-            <%= link_to user.username, user_path(user), class: 'text-ink hover:text-brand' %>
-          </td>
-          <td data-label='Zaproszony przez' class='text-muted'><%= user.invited_by_username %></td>
-          <td data-label='Stan konta'>
-            <span class='inline-flex items-center gap-2'>
-              <%= user_status(user) %>
-              <%= turbo_frame_tag user do %>
-                <%= link_to fin_user_path(user), title: 'Status wpłaty — kliknij, aby przełączyć', data: { turbo: true, turbo_method: :post } do %>
-                  <%= user_fin(user) %>
-                <% end %>
-              <% end %>
-            </span>
-          </td>
-          <td data-label='Akcje' class='sm:text-right'>
-            <% if user != Current.user %>
-              <span class='inline-flex items-center gap-2'>
-                <%= link_to reset_button, resend_invitation_user_path(user), data: { confirm: 'Czy na pewno chcesz wygenerować ponownie link z zaproszeniem?' } %>
-                <%= link_to delete_button, user_path(user), method: :delete, data: { confirm: 'Czy na pewno chcesz usunąć użytkownika?' } %>
-              </span>
+<section class='card overflow-hidden' id='list-of-users'>
+  <div class='user-head'>
+    <span>Użytkownik</span>
+    <span>Stan konta</span>
+    <span>Wpłata</span>
+    <span class='justify-self-end'>Akcje</span>
+  </div>
+
+  <div class='divide-y divide-line/60'>
+    <% User.includes(:invited_by).order(:username).each do |user| %>
+      <div class='user-row'>
+        <div class='ur-user'>
+          <%= link_to user.username, user_path(user), class: 'font-semibold text-ink hover:text-brand' %>
+          <% if user.invited_by_username.present? %>
+            <div class='truncate text-xs text-muted'>zaproszony przez <%= user.invited_by_username %></div>
+          <% end %>
+        </div>
+
+        <div class='ur-status'><%= user_status(user) %></div>
+
+        <div class='ur-pay'>
+          <%= turbo_frame_tag user do %>
+            <%= link_to fin_user_path(user), title: 'Status wpłaty — kliknij, aby przełączyć', data: { turbo: true, turbo_method: :post } do %>
+              <%= user_fin(user) %>
             <% end %>
-          </td>
-        </tr>
-      <% end %>
-    </tbody>
-  </table>
+          <% end %>
+        </div>
+
+        <div class='ur-actions'>
+          <% if user != Current.user %>
+            <%= link_to resend_invitation_user_path(user), class: 'btn-icon', title: 'Wygeneruj nowy link zaproszenia',
+                        data: { confirm: 'Czy na pewno chcesz wygenerować ponownie link z zaproszeniem?' } do %>
+              <i class='fa fa-refresh'></i>
+            <% end %>
+            <%= link_to user_path(user), class: 'btn-icon btn-icon-danger', title: 'Usuń użytkownika', method: :delete,
+                        data: { confirm: 'Czy na pewno chcesz usunąć użytkownika?' } do %>
+              <i class='fa fa-trash'></i>
+            <% end %>
+          <% end %>
+        </div>
+      </div>
+    <% end %>
+  </div>
 </section>
