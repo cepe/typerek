@@ -4,5 +4,13 @@
 
 <section class='card card-body'>
   <p class='mb-2 text-muted'>Utworzono konto. Link aktywacyjny:</p>
-  <pre class='overflow-x-auto rounded-lg bg-surface p-3 text-sm text-ink'><%= invitation_url(token: @token) %></pre>
+  <div class='overflow-hidden rounded-lg border border-line bg-surface'>
+    <div class='flex items-center justify-between gap-3 border-b border-line px-3 py-2'>
+      <span class='text-xs font-semibold uppercase tracking-wide text-muted'>Link aktywacyjny</span>
+      <button class='btn btn-sm btn-outline' data-copy-target='invitation-url' type='button'>
+        <i class='fa fa-copy'></i> Kopiuj
+      </button>
+    </div>
+    <pre id='invitation-url' class='p-3 text-sm text-ink' style='white-space: pre-wrap; word-break: break-all; overflow-wrap: break-word;'><%= invitation_url(token: @token) %></pre>
+  </div>
 </section>
