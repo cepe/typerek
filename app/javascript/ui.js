@@ -39,6 +39,24 @@ function initTabs() {
   })
 }
 
+function initCopyButtons() {
+  document.querySelectorAll("[data-copy-target]").forEach((btn) => {
+    btn.addEventListener("click", () => {
+      const source = document.getElementById(btn.dataset.copyTarget)
+      if (!source) return
+      navigator.clipboard.writeText(source.innerText.trim()).then(() => {
+        const original = btn.textContent
+        btn.textContent = "Skopiowano!"
+        btn.disabled = true
+        setTimeout(() => {
+          btn.textContent = original
+          btn.disabled = false
+        }, 2000)
+      })
+    })
+  })
+}
+
 function initAlerts() {
   document.querySelectorAll("[data-alert]").forEach((alert) => {
     const close = alert.querySelector("[data-alert-close]")
@@ -53,6 +71,7 @@ function init() {
   initMobileNav()
   initTabs()
   initAlerts()
+  initCopyButtons()
 }
 
 document.addEventListener("DOMContentLoaded", init)
