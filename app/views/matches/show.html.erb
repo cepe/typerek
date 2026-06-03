@@ -16,9 +16,9 @@
       </div>
     <% end %>
 
-    <% flag_before = 'mr-1.5 inline-block h-5 w-7 rounded-sm align-[-0.2em]' %>
-    <% flag_after = 'ml-1.5 inline-block h-5 w-7 rounded-sm align-[-0.2em]' %>
-    <div class='flex items-center justify-center gap-4 sm:gap-8'>
+    <% flag_before = 'mr-4 inline-block h-5 w-7 rounded-sm align-[-0.2em]' %>
+    <% flag_after = 'ml-4 inline-block h-5 w-7 rounded-sm align-[-0.2em]' %>
+    <div class='flex items-center justify-center gap-2 sm:gap-3'>
       <div class='flex-1 text-right text-lg font-bold text-ink'><%= @match.team_a %><%= flag_icon(@match.team_a, classes: flag_after) %></div>
       <div class='shrink-0 rounded-lg bg-surface px-4 py-2 text-2xl font-bold tabular-nums text-ink'>
         <%= formatted_score(@match) %>
