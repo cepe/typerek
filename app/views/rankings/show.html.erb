@@ -5,8 +5,9 @@
 
 <div class='mx-auto max-w-xl'>
   <ul class='card divide-y divide-line/60 overflow-hidden'>
-    <% @users.each do |user| %>
-      <% position = @points.index(user.points) + 1 %>
+    <% @ranking.each do |entry| %>
+      <% user = entry.user %>
+      <% position = entry.position %>
       <% me = Current.user == user %>
       <% badge = { 1 => 'bg-yellow-400 text-white', 2 => 'bg-gray-300 text-ink', 3 => 'bg-amber-600 text-white' }[position] || 'bg-surface text-muted' %>
       <li class="flex items-center gap-3 px-4 py-3 <%= 'bg-brand-tint' if me %>">
@@ -18,8 +19,8 @@
           <% if me %><span class='ml-1 text-xs font-normal text-brand'>(Ty)</span><% end %>
         </span>
         <span class='text-right leading-tight'>
-          <span class='font-bold text-ink tabular-nums'><%= points_display(user.points) %> <span class='text-xs font-normal text-muted'>pkt</span></span>
-          <span class='block text-xs text-muted'><%= user.accuracy %> trafień</span>
+          <span class='font-bold text-ink tabular-nums'><%= points_display(entry.points) %> <span class='text-xs font-normal text-muted'>pkt</span></span>
+          <span class='block text-xs text-muted'><%= entry.accuracy %> trafień</span>
         </span>
       </li>
     <% end %>

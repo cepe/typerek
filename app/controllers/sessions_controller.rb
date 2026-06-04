@@ -8,7 +8,10 @@ class SessionsController < ApplicationController
   end
 
   def create
-    @user = User.authenticate_by(username: session_params[:username], password: session_params[:password])
+    @user = Typerek::Authenticate::Handler.new(
+      username: session_params[:username],
+      password: session_params[:password]
+    ).call
     if @user.present?
       session[:user_id] = @user.id
       redirect_to root_path, notice: I18n.t('sessions.create.logged_in')

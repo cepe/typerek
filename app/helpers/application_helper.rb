@@ -8,17 +8,15 @@ module ApplicationHelper
   end
 
   # Current user's standing (rank + points) for the header. Computed once per request.
-  # Ties share a rank, matching RankingsController.
+  # Delegates to Typerek::Ranking so ranking logic lives in one place.
   def current_user_standing
     return @current_user_standing if defined?(@current_user_standing)
 
     user = Current.user
     return @current_user_standing = nil unless user
 
-    points_by_id = User.active.includes(answers: :match).to_h { |u| [u.id, u.points] }
-    mine = points_by_id[user.id] || user.points
-    rank = points_by_id.values.sort.reverse.index(mine)
-    @current_user_standing = { rank: rank ? rank + 1 : nil, points: mine }
+    entry = Typerek::Ranking::Query.new.entry_for(user)
+    @current_user_standing = entry && { rank: entry.position, points: entry.points }
   end
 
   def user_status(user)
