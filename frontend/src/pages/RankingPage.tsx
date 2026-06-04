@@ -35,7 +35,7 @@ export default function RankingPage() {
         <span className="badge-count">{data.length}</span>
       </h1>
       <div className="mx-auto max-w-xl">
-        {drzewkoMode && meEntry && (
+        {meEntry && (
           <div className="card card-body mb-4 flex items-center justify-between gap-3 border border-brand bg-brand-tint">
             <span className="leading-tight">
               <i className="fa fa-star text-brand" aria-hidden="true" /> Twoja pozycja:{' '}
@@ -57,7 +57,9 @@ export default function RankingPage() {
               <li
                 key={entry.user.id}
                 ref={me ? meRowRef : undefined}
-                className={`flex items-center gap-3 px-4 py-3 ${me ? 'bg-brand-tint' : ''}`}
+                className={`flex items-center gap-3 px-4 py-3 ${
+                  me ? (drzewkoMode ? 'drzewko-flash' : 'bg-brand-tint') : ''
+                }`}
               >
                 <span
                   className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-sm font-bold tabular-nums ${badge}`}

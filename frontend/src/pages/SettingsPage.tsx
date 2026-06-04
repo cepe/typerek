@@ -44,7 +44,7 @@ export default function SettingsPage() {
             <span className="leading-snug">
               <span className="block font-semibold text-ink">Drzewko mode</span>
               <span className="block text-muted">
-                Wyróżnia Twoją pozycję w rankingu, żeby łatwiej było się odnaleźć.
+                Tło Twojego wiersza w rankingu mocno miga, żeby nie dało się go przeoczyć.
               </span>
             </span>
           </label>
