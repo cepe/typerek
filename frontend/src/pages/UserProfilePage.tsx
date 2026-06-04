@@ -34,13 +34,15 @@ export default function UserProfilePage() {
           {groupByDay(data.started_matches).map((group) => (
             <section key={group.start} className="card overflow-hidden">
               <div className="card-header">
-                <h3 className="text-sm font-bold uppercase tracking-wide text-muted">{formatDateLong(group.start)}</h3>
+                <h3 className="text-sm font-bold text-muted">{formatDateLong(group.start)}</h3>
               </div>
               <div className="divide-y divide-line/60">
                 {group.items.map((match) => (
                   <div
                     key={match.id}
-                    className="flex flex-col gap-3 px-4 py-3 sm:flex-row sm:items-center sm:gap-4 sm:px-5"
+                    className={`flex flex-col gap-3 px-4 py-3 sm:flex-row sm:items-center sm:gap-4 sm:px-5${
+                      match.started && !match.finished ? ' bg-amber-50/70' : ''
+                    }`}
                   >
                     <MatchLine match={match} />
                     <div className="sm:w-[340px]">

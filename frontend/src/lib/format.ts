@@ -20,7 +20,11 @@ export function formatTime(iso: string): string {
 }
 
 export function formatDateLong(iso: string): string {
-  return new Date(iso).toLocaleDateString(LOCALE, { weekday: 'long', day: 'numeric', month: 'long' })
+  // pl-PL yields a lowercase weekday ("czwartek, 4 czerwca"); capitalize just the
+  // first letter so it reads as a proper label ("Czwartek, 4 czerwca"). A CSS
+  // `capitalize` would wrongly upper-case the month too.
+  const text = new Date(iso).toLocaleDateString(LOCALE, { weekday: 'long', day: 'numeric', month: 'long' })
+  return text.charAt(0).toUpperCase() + text.slice(1)
 }
 
 // ISO timestamp -> value for an <input type="datetime-local"> (local wall time).
