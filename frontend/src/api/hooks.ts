@@ -1,4 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import axios from 'axios'
 import api from './client'
 import type {
   Answer,
@@ -77,6 +78,15 @@ export function usePlaceBet() {
       qc.invalidateQueries({ queryKey: queryKeys.matches })
       qc.invalidateQueries({ queryKey: queryKeys.match(variables.matchId) })
       qc.invalidateQueries({ queryKey: queryKeys.me })
+    },
+    // A 422 means our cached view is stale — typically the match has since
+    // started, so the server rejected the bet. Refetch to lock the now-started
+    // match instead of leaving the pills clickable.
+    onError: (error, variables) => {
+      if (axios.isAxiosError(error) && error.response?.status === 422) {
+        qc.invalidateQueries({ queryKey: queryKeys.matches })
+        qc.invalidateQueries({ queryKey: queryKeys.match(variables.matchId) })
+      }
     },
   })
 }
