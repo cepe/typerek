@@ -3,28 +3,8 @@
 Rails.application.routes.draw do
   get 'up' => 'rails/health#show', as: :rails_health_check
 
-  get 'sign_in', to: 'sessions#new'
-  post 'sign_in', to: 'sessions#create'
-  delete 'sign_out', to: 'sessions#destroy'
-
-  resources :users, only: %i[index create destroy show] do
-    member do
-      get :resend_invitation
-      post :fin
-    end
-  end
-  resource :invitation, only: %i[show update]
-  resource :home, only: :show
-  resource :ranking, only: :show
-  resources :matches, except: %i[create destroy new] do
-    member do
-      post :set_type
-    end
-  end
-
-  # Decoupled JSON API (see openapi.yaml). Runs in parallel with the HTML views
-  # during the frontend split; a future Spring Boot backend implements the same
-  # contract so the React frontend stays unchanged.
+  # Decoupled JSON API (see openapi.yaml). The React SPA talks to the backend only
+  # through this; a future Spring Boot backend implements the same contract.
   namespace :api do
     namespace :v1 do
       post 'auth/login', to: 'auth#login'
@@ -49,5 +29,11 @@ Rails.application.routes.draw do
     end
   end
 
-  root to: 'homes#show'
+  # Single-page app: the built index.html is served for the root and every
+  # client-side route. Real files in public/ (hashed JS/CSS, flags) are served by
+  # the static middleware before reaching the router; anything else (no dot in the
+  # path, not the API/health/internal routes) falls back to the SPA shell.
+  root to: 'spa#index'
+  get '*path', to: 'spa#index', format: false,
+                constraints: ->(req) { !req.path.start_with?('/api', '/up', '/rails') && req.path.exclude?('.') }
 end
