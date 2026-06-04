@@ -77,41 +77,17 @@ Welcome to Typerek! This application allows you and your friends to predict the 
    Open your browser and navigate to `http://localhost:8000`
 
 
-### Frontend / Styling (Tailwind CSS)
+### Frontend (React + Vite)
 
-The UI is built with [Tailwind CSS](https://tailwindcss.com), compiled by a Node-based
-toolchain that is intentionally framework-agnostic so it can carry over to a future
-React + Vite frontend.
+The UI is a React + Vite single-page app in [`frontend/`](frontend/). Rails is now an
+**API-only** backend: it exposes a JSON API under `/api/v1` (contract in
+[`openapi.yaml`](openapi.yaml)) and serves the SPA's built assets from `public/`. The
+Docker build compiles the SPA (a Node stage runs `vite build`) and copies the result
+into `public/`, so a single container serves both the app and the API on one origin —
+no separate web server or CORS needed.
 
-- **Source files**
-  - `app/frontend/styles/application.tailwind.css` — input (design tokens + `@layer components`)
-  - `tailwind.config.js` — theme (brand colors, Roboto) and content globs
-- **Compiled output**: `app/assets/stylesheets/application.css` — served by the Rails asset pipeline.
-
-**Docker (production):** the CSS is built automatically inside the image — the
-`builder` stage runs `npm ci` and `npm run build:css` before `assets:precompile`.
-So `docker-compose up --build` produces fresh styles with no manual step; just commit
-your view changes.
-
-**Local development:** a copy of `application.css` is committed so the app renders
-without Node. While editing views/helpers (i.e. the Tailwind classes used), run the
-watcher so styles rebuild on save:
-
-```bash
-npm install        # once, installs Tailwind (see package.json)
-npm run watch:css  # rebuild on change while developing views
-# or a one-off build:
-npm run build:css
-```
-
-> **Note:** [Node.js](https://nodejs.org) is only needed to build CSS locally — the
-> running app does not require it. The Docker build handles CSS on its own.
-
-**Team flags:** country flags in `app/assets/images/flags/` are vendored SVGs from the
-[`flag-icons`](https://github.com/lipis/flag-icons) package (only the ~48 teams in play).
-The Polish-name → ISO-code map lives in `MatchesHelper::TEAM_FLAGS`. To add a flag:
-`cp node_modules/flag-icons/flags/4x3/<code>.svg app/assets/images/flags/` and add the
-mapping.
+See [`frontend/README.md`](frontend/README.md) for local development (`npm run dev`,
+which proxies `/api` to the backend on `:8000`).
 
 
 ### Running a Beta Instance

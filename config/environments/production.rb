@@ -25,18 +25,6 @@ Rails.application.configure do
   # Disable serving static files from `public/`, relying on NGINX/Apache to do so instead.
   # config.public_file_server.enabled = false
 
-  # Compress CSS using a preprocessor.
-  # The stylesheet is already compiled & minified by Tailwind (npm run build:css),
-  # so we disable the SassC compressor — it would otherwise re-parse the minified
-  # output and choke on Tailwind's modern `rgb(r g b / a)` color syntax.
-  config.assets.css_compressor = false
-
-  # Do not fallback to assets pipeline if a precompiled asset is missed.
-  config.assets.compile = false
-
-  # Enable serving of images, stylesheets, and JavaScripts from an asset server.
-  # config.asset_host = "http://assets.example.com"
-
   # Specifies the header that your server uses for sending files.
   # config.action_dispatch.x_sendfile_header = "X-Sendfile" # for Apache
   # config.action_dispatch.x_sendfile_header = "X-Accel-Redirect" # for NGINX

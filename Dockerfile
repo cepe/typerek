@@ -18,18 +18,7 @@ RUN apt-get -q update \
 COPY Gemfile* ./
 RUN bundle install --jobs "$(nproc)" --retry 5
 
-# Install the Tailwind toolchain (cached unless package*.json change)
-COPY package.json package-lock.json ./
-RUN npm ci
-
 COPY . .
-
-# Compile Tailwind into app/assets/stylesheets/application.css so the build is
-# self-contained — no need to run `npm run build:css` by hand before deploying.
-RUN npm run build:css
-
-RUN if [ "${RAILS_ENV}" != "development" ]; then \
-    SECRET_KEY_BASE=dummyvalue rails assets:precompile; fi
 
 CMD ["bash"]
 
