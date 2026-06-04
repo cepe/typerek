@@ -8,6 +8,7 @@ import Alert from '@/components/Alert'
 import { BET_TYPES } from '@/lib/bets'
 import { toDateTimeLocalValue } from '@/lib/format'
 import type { BetType, MatchDetail } from '@/api/types'
+import { useDocumentTitle } from '@/lib/useDocumentTitle'
 
 const oddsString = (value: number | null) => (value == null ? '' : String(value))
 
@@ -165,6 +166,8 @@ export default function MatchEditPage() {
   const { id = '' } = useParams()
   const { isAdmin } = useAuth()
   const { data: match, isLoading, isError } = useMatch(id)
+
+  useDocumentTitle('Edycja meczu')
 
   if (!isAdmin) return <Navigate to={`/matches/${id}`} replace />
   if (isLoading) return <Loading />

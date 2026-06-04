@@ -3,6 +3,7 @@ import { Navigate, useLocation, useNavigate } from 'react-router-dom'
 import { useAuth } from '@/auth/AuthContext'
 import { apiErrorMessage } from '@/api/client'
 import Alert from '@/components/Alert'
+import { useDocumentTitle } from '@/lib/useDocumentTitle'
 
 // Mirrors sessions/new.html.erb.
 export default function LoginPage() {
@@ -13,6 +14,8 @@ export default function LoginPage() {
   const [password, setPassword] = useState('')
   const [error, setError] = useState<string | null>(null)
   const [submitting, setSubmitting] = useState(false)
+
+  useDocumentTitle('Zaloguj się')
 
   if (isAuthenticated) return <Navigate to="/" replace />
 

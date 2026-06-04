@@ -6,6 +6,7 @@ import { useAuth } from '@/auth/AuthContext'
 import Alert from '@/components/Alert'
 import { Loading } from '@/components/Status'
 import type { AuthResult } from '@/api/types'
+import { useDocumentTitle } from '@/lib/useDocumentTitle'
 
 // Mirrors invitations/show.html.erb — validate the token, then set the password.
 export default function InvitationPage() {
@@ -17,6 +18,8 @@ export default function InvitationPage() {
   const [confirmation, setConfirmation] = useState('')
   const [error, setError] = useState<string | null>(null)
   const [submitting, setSubmitting] = useState(false)
+
+  useDocumentTitle('Ustaw hasło')
 
   if (isLoading) return <Loading />
 

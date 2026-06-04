@@ -3,6 +3,7 @@ import { useRanking } from '@/api/hooks'
 import { useAuth } from '@/auth/AuthContext'
 import { ErrorBox, Loading } from '@/components/Status'
 import { pointsDisplay } from '@/lib/format'
+import { useDocumentTitle } from '@/lib/useDocumentTitle'
 
 const BADGES: Record<number, string> = {
   1: 'bg-yellow-400 text-white',
@@ -14,6 +15,8 @@ const BADGES: Record<number, string> = {
 export default function RankingPage() {
   const { data, isLoading, isError } = useRanking()
   const { user } = useAuth()
+
+  useDocumentTitle('Ranking')
 
   if (isLoading) return <Loading />
   if (isError || !data) return <ErrorBox />

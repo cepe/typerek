@@ -1,3 +1,5 @@
+import { useDocumentTitle } from '@/lib/useDocumentTitle'
+
 // Mirrors homes/show.html.erb — the static info page.
 const BET_DESCRIPTIONS: ReadonlyArray<readonly [string, string]> = [
   ['1', 'wygrana pierwszej drużyny'],
@@ -9,6 +11,8 @@ const BET_DESCRIPTIONS: ReadonlyArray<readonly [string, string]> = [
 ]
 
 export default function HomePage() {
+  useDocumentTitle('Informacje')
+
   return (
     <section className="card card-body mx-auto max-w-3xl space-y-4 leading-relaxed text-ink/90">
       <h1 className="flex items-center gap-2">
