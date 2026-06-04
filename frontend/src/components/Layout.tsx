@@ -76,6 +76,9 @@ export default function Layout({ children }: { children: ReactNode }) {
                   </Link>
                 )}
               </div>
+              <NavLink to="/settings" className={linkClass} onClick={() => setOpen(false)}>
+                <i className="fa fa-cog" aria-hidden="true" /> Ustawienia
+              </NavLink>
               <button type="button" onClick={handleSignOut} className="nav-link">
                 <i className="fa fa-sign-out" aria-hidden="true" /> Wyloguj
               </button>
