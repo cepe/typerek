@@ -1,4 +1,4 @@
-import { BET_TYPES, betPillClass } from '@/lib/bets'
+import { BET_TYPES, betPillClass, winningBets } from '@/lib/bets'
 import { formattedOdds } from '@/lib/format'
 import type { BetType, Match } from '@/api/types'
 
@@ -11,22 +11,28 @@ interface Props {
 }
 
 // The 1 / X / 2 / 1X / X2 / 12 row. Mirrors matches/_buttons.html.erb: a started
-// match locks the pills; the chosen pill is highlighted.
+// match locks the pills, the chosen pill is highlighted, and a finished match
+// marks the viewer's own pick as a hit or a miss.
 export default function BetGrid({ match, myAnswer, onBet, pending }: Props) {
+  const interactive = Boolean(onBet) && !match.started
+  const scored = match.finished ? new Set(winningBets(match.result_a, match.result_b)) : null
+
   return (
     <div className="bet-grid">
       {BET_TYPES.map(([result, label]) => {
         const active = myAnswer === result
+        const isScored = scored?.has(result) ?? false
         const odds = formattedOdds(match.odds[result])
-        const locked = match.started
         return (
           <button
             key={result}
             type="button"
-            disabled={locked || pending || !onBet}
+            disabled={!interactive || pending}
             onClick={() => onBet?.(result)}
-            aria-label={`Typ ${label}, kurs ${odds}${active ? ', wybrany' : ''}`}
-            className={betPillClass(active, locked)}
+            aria-label={`Typ ${label}, kurs ${odds}${
+              active ? `, wybrany${match.finished ? (isScored ? ', trafiony' : ', nietrafiony') : ''}` : ''
+            }`}
+            className={betPillClass({ active, scored: isScored, finished: match.finished, interactive })}
           >
             <span className="bet-key">{label}</span>
             <span className="bet-odds">{odds}</span>

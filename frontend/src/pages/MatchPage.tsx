@@ -4,7 +4,7 @@ import { useAuth } from '@/auth/AuthContext'
 import { ErrorBox, Loading } from '@/components/Status'
 import Flag from '@/components/Flag'
 import BetGrid from '@/components/BetGrid'
-import { BET_TYPES } from '@/lib/bets'
+import { BET_TYPES, betPillClass, winningBets } from '@/lib/bets'
 import { formatShort, formattedOdds, formattedScore } from '@/lib/format'
 import { useDocumentTitle } from '@/lib/useDocumentTitle'
 
@@ -19,6 +19,9 @@ export default function MatchPage() {
 
   if (isLoading) return <Loading />
   if (isError || !match) return <ErrorBox />
+
+  const scored = match.finished ? new Set(winningBets(match.result_a, match.result_b)) : null
+  const live = match.started && !match.finished
 
   return (
     <div className="mx-auto max-w-3xl space-y-6">
@@ -47,6 +50,14 @@ export default function MatchPage() {
             {match.team_b}
           </div>
         </div>
+        {live && (
+          <p className="mt-3 text-center">
+            <span className="inline-flex items-center gap-1.5 rounded-full bg-amber-100 px-2.5 py-0.5 text-xs font-bold text-amber-700">
+              <span className="h-2 w-2 rounded-full bg-amber-500 motion-safe:animate-pulse" aria-hidden="true" />
+              Trwa
+            </span>
+          </p>
+        )}
         <p className="mt-3 text-center text-sm text-muted">
           <i className="fa fa-clock-o" aria-hidden="true" /> {formatShort(match.start)}
         </p>
@@ -88,15 +99,21 @@ export default function MatchPage() {
                   </Link>
                 </div>
                 {participant.result == null ? (
-                  <span className="text-sm text-muted sm:ml-auto">brak typu</span>
+                  <span className="text-sm text-muted sm:ml-auto">Brak typu</span>
                 ) : (
                   <div className="bet-grid sm:ml-auto sm:w-[340px]">
                     {BET_TYPES.map(([result, label]) => {
                       const chosen = participant.result === result
+                      const isScored = scored?.has(result) ?? false
                       return (
                         <div
                           key={result}
-                          className={`bet ${chosen ? 'bet-active' : 'border-line bg-surface/60 text-muted'}`}
+                          className={betPillClass({
+                            active: chosen,
+                            scored: isScored,
+                            finished: match.finished,
+                            interactive: false,
+                          })}
                         >
                           <span className="bet-key">{label}</span>
                           <span className="bet-odds">{formattedOdds(match.odds[result])}</span>

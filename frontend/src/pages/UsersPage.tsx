@@ -16,9 +16,9 @@ import { useDocumentTitle } from '@/lib/useDocumentTitle'
 
 function StatusBadge({ user }: { user: User }) {
   return user.active ? (
-    <span className="badge badge-success">aktywny</span>
+    <span className="badge badge-success">Aktywny</span>
   ) : (
-    <span className="badge badge-warning">zaproszony</span>
+    <span className="badge badge-warning">Zaproszony</span>
   )
 }
 
@@ -27,13 +27,9 @@ function FinToggle({ user }: { user: User }) {
   return (
     <button type="button" title="Kliknij, aby przełączyć" disabled={toggle.isPending} onClick={() => toggle.mutate(user.id)}>
       {user.fin ? (
-        <span className="badge badge-success cursor-pointer">
-          <i className="fa fa-check" aria-hidden="true" /> potwierdzony
-        </span>
+        <span className="badge badge-success cursor-pointer">Potwierdzony</span>
       ) : (
-        <span className="badge badge-danger cursor-pointer">
-          <i className="fa fa-times" aria-hidden="true" /> niepotwierdzony
-        </span>
+        <span className="badge badge-danger cursor-pointer">Niepotwierdzony</span>
       )}
     </button>
   )
@@ -129,7 +125,7 @@ export default function UsersPage() {
           <p className="mb-2 text-muted">Utworzono konto. Link aktywacyjny:</p>
           <div className="overflow-hidden rounded-lg border border-line bg-surface">
             <div className="flex items-center justify-between gap-3 border-b border-line px-3 py-2">
-              <span className="text-xs font-semibold uppercase tracking-wide text-muted">Link aktywacyjny</span>
+              <span className="text-xs font-semibold text-muted">Link aktywacyjny</span>
               <button type="button" className="btn btn-sm btn-outline" onClick={copyLink}>
                 <i className="fa fa-copy" aria-hidden="true" /> {copied ? 'Skopiowano!' : 'Kopiuj'}
               </button>
