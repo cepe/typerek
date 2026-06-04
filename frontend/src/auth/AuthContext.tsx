@@ -26,7 +26,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       return
     }
     try {
-      const { data } = await api.get<CurrentUser>('/me')
+      const data = await api.get<CurrentUser>('/me')
       setUser(data)
     } catch {
       setToken(null)
@@ -48,7 +48,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, [])
 
   const signIn = useCallback(async (username: string, password: string) => {
-    const { data } = await api.post<AuthResult>('/auth/login', { username, password })
+    const data = await api.post<AuthResult>('/auth/login', { username, password })
     setToken(data.token)
     setUser(data.user)
   }, [])
@@ -65,7 +65,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, [])
 
   const refresh = useCallback(async () => {
-    const { data } = await api.get<CurrentUser>('/me')
+    const data = await api.get<CurrentUser>('/me')
     setUser(data)
   }, [])
 
