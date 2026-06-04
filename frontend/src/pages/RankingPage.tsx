@@ -24,7 +24,8 @@ export default function RankingPage() {
   return (
     <>
       <h1 className="mb-4 flex items-center gap-2">
-        <i className="fa fa-trophy text-brand" aria-hidden="true" /> Ranking
+        <i className="fa fa-trophy text-brand" aria-hidden="true" /> Ranking{' '}
+        <span className="badge-count">{data.length}</span>
       </h1>
       <div className="mx-auto max-w-xl">
         <ul className="card divide-y divide-line/60 overflow-hidden">
