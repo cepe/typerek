@@ -4,11 +4,14 @@ import { ErrorBox, Loading } from '@/components/Status'
 import MatchLine from '@/components/MatchLine'
 import BetGrid from '@/components/BetGrid'
 import { formatDateLong, groupByDay } from '@/lib/format'
+import { useDocumentTitle } from '@/lib/useDocumentTitle'
 
 // Mirrors users/show.html.erb — a participant's bets on matches that have started.
 export default function UserProfilePage() {
   const { id = '' } = useParams()
   const { data, isLoading, isError } = useUserProfile(id)
+
+  useDocumentTitle(data ? `Typy: ${data.user.username}` : undefined)
 
   if (isLoading) return <Loading />
   if (isError || !data) return <ErrorBox />

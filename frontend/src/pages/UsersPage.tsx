@@ -12,6 +12,7 @@ import { apiErrorMessage } from '@/api/client'
 import { ErrorBox, Loading } from '@/components/Status'
 import Alert from '@/components/Alert'
 import type { InvitationCreated, User } from '@/api/types'
+import { useDocumentTitle } from '@/lib/useDocumentTitle'
 
 function StatusBadge({ user }: { user: User }) {
   return user.active ? (
@@ -49,6 +50,8 @@ export default function UsersPage() {
   const [created, setCreated] = useState<InvitationCreated | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [copied, setCopied] = useState(false)
+
+  useDocumentTitle('Zaproszenia')
 
   const onCreate = async (event: FormEvent) => {
     event.preventDefault()

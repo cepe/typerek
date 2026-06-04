@@ -5,6 +5,7 @@ import MatchLine from '@/components/MatchLine'
 import BetGrid from '@/components/BetGrid'
 import { ErrorBox, Loading } from '@/components/Status'
 import type { BetType, Match } from '@/api/types'
+import { useDocumentTitle } from '@/lib/useDocumentTitle'
 
 function MatchSection({ matches }: { matches: Match[] }) {
   const placeBet = usePlaceBet()
@@ -48,6 +49,8 @@ function MatchSection({ matches }: { matches: Match[] }) {
 export default function MatchesPage() {
   const { data, isLoading, isError } = useMatches()
   const [tab, setTab] = useState<'future' | 'finished'>('future')
+
+  useDocumentTitle('Mecze')
 
   if (isLoading) return <Loading />
   if (isError || !data) return <ErrorBox />

@@ -6,6 +6,7 @@ import Flag from '@/components/Flag'
 import BetGrid from '@/components/BetGrid'
 import { BET_TYPES } from '@/lib/bets'
 import { formatShort, formattedOdds, formattedScore } from '@/lib/format'
+import { useDocumentTitle } from '@/lib/useDocumentTitle'
 
 // Mirrors matches/show.html.erb.
 export default function MatchPage() {
@@ -13,6 +14,8 @@ export default function MatchPage() {
   const { isAdmin } = useAuth()
   const { data: match, isLoading, isError } = useMatch(id)
   const placeBet = usePlaceBet()
+
+  useDocumentTitle(match ? `${match.team_a} – ${match.team_b}` : undefined)
 
   if (isLoading) return <Loading />
   if (isError || !match) return <ErrorBox />
