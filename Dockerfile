@@ -33,6 +33,17 @@ RUN if [ "${RAILS_ENV}" != "development" ]; then \
 
 CMD ["bash"]
 
+# ── Build the React SPA; Rails serves it from public/ (same origin, no CORS) ─────
+FROM node:20-slim AS frontend
+
+WORKDIR /frontend
+
+COPY frontend/package.json frontend/package-lock.json ./
+RUN npm ci
+
+COPY frontend/ ./
+RUN npm run build
+
 FROM ruby:3.3.6 AS app
 
 WORKDIR /app
@@ -54,6 +65,10 @@ USER ruby
 COPY --chown=ruby:ruby --from=builder /usr/local/bundle /usr/local/bundle
 COPY --chown=ruby:ruby --from=builder /app/public public
 COPY --chown=ruby:ruby . .
+
+# Overlay the built SPA into public/ (index.html + hashed assets + team flags),
+# served statically by Rails alongside the /api/v1 JSON API.
+COPY --chown=ruby:ruby --from=frontend /frontend/dist/. public/
 
 EXPOSE 8000
 CMD ["bin/rails", "server", "-b", "0.0.0.0"]
