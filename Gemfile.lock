@@ -135,6 +135,8 @@ GEM
       railties (>= 4.2.0)
       thor (>= 0.14, < 2.0)
     json (2.7.2)
+    jwt (3.2.0)
+      base64
     language_server-protocol (3.17.0.3)
     listen (3.9.0)
       rb-fsevent (~> 0.10, >= 0.10.3)
@@ -316,6 +318,7 @@ DEPENDENCIES
   font-awesome-rails
   importmap-rails (~> 2.0)
   jquery-rails
+  jwt
   listen
   pg
   puma

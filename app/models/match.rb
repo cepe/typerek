@@ -37,6 +37,10 @@ class Match < ApplicationRecord
     start.present? && start < DateTime.now
   end
 
+  def finished?
+    result_a.present? && result_b.present?
+  end
+
   def winning_list
     if result_a.blank? || result_b.blank?
       []
