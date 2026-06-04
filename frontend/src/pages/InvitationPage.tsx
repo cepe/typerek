@@ -36,7 +36,7 @@ export default function InvitationPage() {
     setSubmitting(true)
     setError(null)
     try {
-      const { data: result } = await api.post<AuthResult>(`/invitations/${token}/accept`, {
+      const result = await api.post<AuthResult>(`/invitations/${token}/accept`, {
         password,
         password_confirmation: confirmation,
       })

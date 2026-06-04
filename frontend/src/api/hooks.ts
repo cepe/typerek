@@ -1,6 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import axios from 'axios'
-import api from './client'
+import api, { ApiClientError } from './client'
 import type {
   Answer,
   BetType,
@@ -28,42 +27,42 @@ export const queryKeys = {
 export function useMatches() {
   return useQuery({
     queryKey: queryKeys.matches,
-    queryFn: async () => (await api.get<MatchList>('/matches')).data,
+    queryFn: () => api.get<MatchList>('/matches'),
   })
 }
 
 export function useMatch(id: number | string) {
   return useQuery({
     queryKey: queryKeys.match(id),
-    queryFn: async () => (await api.get<MatchDetail>(`/matches/${id}`)).data,
+    queryFn: () => api.get<MatchDetail>(`/matches/${id}`),
   })
 }
 
 export function useRanking() {
   return useQuery({
     queryKey: queryKeys.ranking,
-    queryFn: async () => (await api.get<RankingEntry[]>('/ranking')).data,
+    queryFn: () => api.get<RankingEntry[]>('/ranking'),
   })
 }
 
 export function useUsers() {
   return useQuery({
     queryKey: queryKeys.users,
-    queryFn: async () => (await api.get<User[]>('/users')).data,
+    queryFn: () => api.get<User[]>('/users'),
   })
 }
 
 export function useUserProfile(id: number | string) {
   return useQuery({
     queryKey: queryKeys.user(id),
-    queryFn: async () => (await api.get<UserProfile>(`/users/${id}`)).data,
+    queryFn: () => api.get<UserProfile>(`/users/${id}`),
   })
 }
 
 export function useInvitation(token: string) {
   return useQuery({
     queryKey: queryKeys.invitation(token),
-    queryFn: async () => (await api.get<InvitationInfo>(`/invitations/${token}`)).data,
+    queryFn: () => api.get<InvitationInfo>(`/invitations/${token}`),
     retry: false,
   })
 }
@@ -72,8 +71,8 @@ export function useInvitation(token: string) {
 export function usePlaceBet() {
   const qc = useQueryClient()
   return useMutation({
-    mutationFn: async ({ matchId, result }: { matchId: number; result: BetType }) =>
-      (await api.put<Answer>(`/matches/${matchId}/bet`, { result })).data,
+    mutationFn: ({ matchId, result }: { matchId: number; result: BetType }) =>
+      api.put<Answer>(`/matches/${matchId}/bet`, { result }),
     onSuccess: (_data, variables) => {
       qc.invalidateQueries({ queryKey: queryKeys.matches })
       qc.invalidateQueries({ queryKey: queryKeys.match(variables.matchId) })
@@ -83,7 +82,7 @@ export function usePlaceBet() {
     // started, so the server rejected the bet. Refetch to lock the now-started
     // match instead of leaving the pills clickable.
     onError: (error, variables) => {
-      if (axios.isAxiosError(error) && error.response?.status === 422) {
+      if (error instanceof ApiClientError && error.status === 422) {
         qc.invalidateQueries({ queryKey: queryKeys.matches })
         qc.invalidateQueries({ queryKey: queryKeys.match(variables.matchId) })
       }
@@ -94,8 +93,7 @@ export function usePlaceBet() {
 export function useUpdateMatch(id: number) {
   const qc = useQueryClient()
   return useMutation({
-    mutationFn: async (attributes: Record<string, unknown>) =>
-      (await api.put<MatchDetail>(`/matches/${id}`, attributes)).data,
+    mutationFn: (attributes: Record<string, unknown>) => api.put<MatchDetail>(`/matches/${id}`, attributes),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: queryKeys.matches })
       qc.invalidateQueries({ queryKey: queryKeys.match(id) })
@@ -106,23 +104,21 @@ export function useUpdateMatch(id: number) {
 export function useCreateInvitation() {
   const qc = useQueryClient()
   return useMutation({
-    mutationFn: async (username: string) =>
-      (await api.post<InvitationCreated>('/users', { username })).data,
+    mutationFn: (username: string) => api.post<InvitationCreated>('/users', { username }),
     onSuccess: () => qc.invalidateQueries({ queryKey: queryKeys.users }),
   })
 }
 
 export function useResendInvitation() {
   return useMutation({
-    mutationFn: async (id: number) =>
-      (await api.post<InvitationCreated>(`/users/${id}/resend-invitation`)).data,
+    mutationFn: (id: number) => api.post<InvitationCreated>(`/users/${id}/resend-invitation`),
   })
 }
 
 export function useToggleFin() {
   const qc = useQueryClient()
   return useMutation({
-    mutationFn: async (id: number) => (await api.patch<User>(`/users/${id}/fin`)).data,
+    mutationFn: (id: number) => api.patch<User>(`/users/${id}/fin`),
     onSuccess: () => qc.invalidateQueries({ queryKey: queryKeys.users }),
   })
 }
@@ -130,14 +126,12 @@ export function useToggleFin() {
 export function useDeleteUser() {
   const qc = useQueryClient()
   return useMutation({
-    mutationFn: async (id: number) => {
-      await api.delete(`/users/${id}`)
-    },
+    mutationFn: (id: number) => api.delete(`/users/${id}`),
     onSuccess: () => qc.invalidateQueries({ queryKey: queryKeys.users }),
   })
 }
 
 // Used by the standing in the header; exported for explicit refreshes.
-export async function fetchMe(): Promise<CurrentUser> {
-  return (await api.get<CurrentUser>('/me')).data
+export function fetchMe(): Promise<CurrentUser> {
+  return api.get<CurrentUser>('/me')
 }
