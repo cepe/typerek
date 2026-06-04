@@ -1,4 +1,4 @@
-import { useState, type FormEvent } from 'react'
+import { useEffect, useRef, useState, type FormEvent } from 'react'
 import { Link } from 'react-router-dom'
 import { useAuth } from '@/auth/AuthContext'
 import {
@@ -46,8 +46,16 @@ export default function UsersPage() {
   const [created, setCreated] = useState<InvitationCreated | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [copied, setCopied] = useState(false)
+  const createdRef = useRef<HTMLElement>(null)
 
   useDocumentTitle('Zaproszenia')
+
+  // The link card renders at the top of the page, but "Nowy link" can be
+  // clicked far down the user list — scroll the card into view so it's clear a
+  // fresh invitation was generated.
+  useEffect(() => {
+    if (created) createdRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' })
+  }, [created])
 
   const onCreate = async (event: FormEvent) => {
     event.preventDefault()
@@ -121,7 +129,7 @@ export default function UsersPage() {
       </section>
 
       {created && (
-        <section className="card card-body mb-8">
+        <section ref={createdRef} className="card card-body mb-8">
           <p className="mb-2 text-muted">Utworzono konto. Link aktywacyjny:</p>
           <div className="overflow-hidden rounded-lg border border-line bg-surface">
             <div className="flex items-center justify-between gap-3 border-b border-line px-3 py-2">
