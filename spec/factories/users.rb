@@ -8,5 +8,9 @@ FactoryBot.define do
     trait :admin do
       admin { true }
     end
+
+    trait :active do
+      invitation_accepted_at { Time.current }
+    end
   end
 end
