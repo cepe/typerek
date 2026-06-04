@@ -14,7 +14,6 @@ gem 'rails', '~> 7.1.0'
 gem 'rails-i18n', '~> 7.0'
 
 group :development, :test do
-  gem 'capybara'
   gem 'factory_bot_rails'
   gem 'faker'
   gem 'listen'
