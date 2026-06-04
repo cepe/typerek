@@ -10,6 +10,9 @@
 @layer base {
   html {
     -webkit-text-size-adjust: 100%;
+    /* Always reserve the scrollbar gutter so switching between short pages (e.g.
+       Info) and long ones (e.g. Mecze) doesn't shift the centered layout / header. */
+    scrollbar-gutter: stable;
   }
 
   body {
