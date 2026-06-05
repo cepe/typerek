@@ -23,6 +23,8 @@ export interface CurrentUser {
   username: string
   admin: boolean
   standing: Standing | null
+  // Community Discord invite, served only to signed-in users; null when unset.
+  discord_url: string | null
 }
 
 export interface User {

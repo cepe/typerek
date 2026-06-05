@@ -3,7 +3,8 @@
 module Api
   module V1
     # The `CurrentUser` schema — the signed-in user plus their ranking standing
-    # (for the app header).
+    # (for the app header). `discord_url` carries the community invite link, kept
+    # behind authentication so it is only ever exposed to signed-in members.
     class CurrentUserSerializer
       def self.call(user)
         entry = Typerek::Ranking::Query.new.entry_for(user)
@@ -11,7 +12,8 @@ module Api
           id: user.id,
           username: user.username,
           admin: user.admin?,
-          standing: entry && { rank: entry.position, points: entry.points }
+          standing: entry && { rank: entry.position, points: entry.points },
+          discord_url: ENV['TYPEREK_DISCORD_URL'].presence
         }
       end
     end

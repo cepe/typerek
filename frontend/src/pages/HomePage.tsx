@@ -1,3 +1,4 @@
+import { useAuth } from '@/auth/AuthContext'
 import { useDocumentTitle } from '@/lib/useDocumentTitle'
 
 // Mirrors homes/show.html.erb — the static info page.
@@ -12,12 +13,27 @@ const BET_DESCRIPTIONS: ReadonlyArray<readonly [string, string]> = [
 
 export default function HomePage() {
   useDocumentTitle('Informacje')
+  // Served by the backend (GET /api/v1/me) and therefore only available to
+  // signed-in users; null when no invite link is configured.
+  const discordUrl = useAuth().user?.discord_url
 
   return (
     <section className="card card-body mx-auto max-w-3xl space-y-4 leading-relaxed text-ink/90">
-      <h1 className="flex items-center gap-2">
-        <i className="fas fa-info-circle text-brand" aria-hidden="true" /> Informacje
-      </h1>
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <h1 className="flex items-center gap-2">
+          <i className="fas fa-info-circle text-brand" aria-hidden="true" /> Informacje
+        </h1>
+        {discordUrl && (
+          <a
+            href={discordUrl}
+            target="_blank"
+            rel="noreferrer"
+            className="inline-flex items-center gap-2 rounded-lg bg-[#5865F2] px-4 py-2 font-semibold text-white hover:bg-[#4752c4] hover:text-white"
+          >
+            <i className="fab fa-discord" aria-hidden="true" /> Dołącz do nas na Discordzie
+          </a>
+        )}
+      </div>
       <p>
         Cześć! Strona powstała, aby w gronie przyjaciół można było typować wyniki nadchodzących meczów
         Mistrzostw Świata 2026. System działa podobnie do klasycznych zakładów bukmacherskich, z tą różnicą,
