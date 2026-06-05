@@ -16,7 +16,7 @@ export default function Alert({
       <span>{children}</span>
       {onClose && (
         <button type="button" onClick={onClose} className="shrink-0 opacity-70 hover:opacity-100" aria-label="Zamknij">
-          <i className="fa fa-times" aria-hidden="true" />
+          <i className="fas fa-times" aria-hidden="true" />
         </button>
       )}
     </div>

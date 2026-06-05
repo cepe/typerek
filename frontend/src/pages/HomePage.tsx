@@ -16,7 +16,7 @@ export default function HomePage() {
   return (
     <section className="card card-body mx-auto max-w-3xl space-y-4 leading-relaxed text-ink/90">
       <h1 className="flex items-center gap-2">
-        <i className="fa fa-info-circle text-brand" aria-hidden="true" /> Informacje
+        <i className="fas fa-info-circle text-brand" aria-hidden="true" /> Informacje
       </h1>
       <p>
         Cześć! Strona powstała, aby w gronie przyjaciół można było typować wyniki nadchodzących meczów

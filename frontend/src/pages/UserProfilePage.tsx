@@ -20,7 +20,7 @@ export default function UserProfilePage() {
     <>
       <div className="mb-5">
         <h1 className="flex items-center gap-2">
-          <i className="fa fa-user text-brand" aria-hidden="true" /> Typy użytkownika {data.user.username}
+          <i className="fas fa-user text-brand" aria-hidden="true" /> Typy użytkownika {data.user.username}
         </h1>
         <p className="mt-1 text-muted">
           Liczba trafień: <span className="font-semibold text-ink">{data.user.accuracy}</span>

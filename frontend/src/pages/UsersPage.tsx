@@ -97,7 +97,7 @@ export default function UsersPage() {
   return (
     <>
       <h1 className="mb-4 flex items-center gap-2">
-        <i className="fa fa-envelope-o text-brand" aria-hidden="true" /> Zaproszenia
+        <i className="far fa-envelope text-brand" aria-hidden="true" /> Zaproszenia
       </h1>
 
       {error && (
@@ -135,7 +135,7 @@ export default function UsersPage() {
             <div className="flex items-center justify-between gap-3 border-b border-line px-3 py-2">
               <span className="text-xs font-semibold text-muted">Link aktywacyjny</span>
               <button type="button" className="btn btn-sm btn-outline" onClick={copyLink}>
-                <i className="fa fa-copy" aria-hidden="true" /> {copied ? 'Skopiowano!' : 'Kopiuj'}
+                <i className="fas fa-copy" aria-hidden="true" /> {copied ? 'Skopiowano!' : 'Kopiuj'}
               </button>
             </div>
             <pre
@@ -149,7 +149,7 @@ export default function UsersPage() {
       )}
 
       <h2 className="mb-4 flex items-center gap-2">
-        <i className="fa fa-users text-brand" aria-hidden="true" /> Lista użytkowników{' '}
+        <i className="fas fa-users text-brand" aria-hidden="true" /> Lista użytkowników{' '}
         <span className="badge-count">{users?.length ?? 0}</span>
       </h2>
 
@@ -186,10 +186,10 @@ export default function UsersPage() {
                   {me?.id !== user.id && (
                     <>
                       <button type="button" className="btn-action" onClick={() => onResend(user.id)}>
-                        <i className="fa fa-refresh" aria-hidden="true" /> Nowy link
+                        <i className="fas fa-arrows-rotate" aria-hidden="true" /> Nowy link
                       </button>
                       <button type="button" className="btn-action btn-action-danger" onClick={() => onDelete(user.id)}>
-                        <i className="fa fa-trash" aria-hidden="true" /> Usuń
+                        <i className="fas fa-trash" aria-hidden="true" /> Usuń
                       </button>
                     </>
                   )}

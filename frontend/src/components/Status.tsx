@@ -1,7 +1,7 @@
 export function Loading() {
   return (
     <div className="py-10 text-center text-muted">
-      <i className="fa fa-spinner fa-spin text-2xl" aria-hidden="true" />
+      <i className="fas fa-spinner fa-spin text-2xl" aria-hidden="true" />
     </div>
   )
 }

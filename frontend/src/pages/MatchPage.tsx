@@ -26,14 +26,14 @@ export default function MatchPage() {
   return (
     <div className="mx-auto max-w-3xl space-y-6">
       <Link to="/matches" className="inline-flex items-center gap-1 text-sm text-muted hover:text-brand">
-        <i className="fa fa-angle-left" aria-hidden="true" /> Mecze
+        <i className="fas fa-angle-left" aria-hidden="true" /> Mecze
       </Link>
 
       <section className="card card-body">
         {isAdmin && (
           <div className="mb-3 flex justify-end">
             <Link to={`/matches/${match.id}/edit`} className="btn btn-outline btn-sm">
-              <i className="fa fa-pencil" aria-hidden="true" /> Edytuj
+              <i className="fas fa-pencil" aria-hidden="true" /> Edytuj
             </Link>
           </div>
         )}
@@ -59,14 +59,14 @@ export default function MatchPage() {
           </p>
         )}
         <p className="mt-3 text-center text-sm text-muted">
-          <i className="fa fa-clock-o" aria-hidden="true" /> {formatShort(match.start)}
+          <i className="far fa-clock" aria-hidden="true" /> {formatShort(match.start)}
         </p>
       </section>
 
       <section className="card">
         <div className="card-header">
           <h3 className="flex items-center gap-2">
-            <i className="fa fa-user text-brand" aria-hidden="true" /> Twój typ
+            <i className="fas fa-user text-brand" aria-hidden="true" /> Twój typ
           </h3>
         </div>
         <div className="card-body">
@@ -84,7 +84,7 @@ export default function MatchPage() {
         <section className="card overflow-hidden">
           <div className="card-header">
             <h3 className="flex items-center gap-2">
-              <i className="fa fa-users text-brand" aria-hidden="true" /> Typy uczestników
+              <i className="fas fa-users text-brand" aria-hidden="true" /> Typy uczestników
             </h3>
           </div>
           <div className="divide-y divide-line/60">

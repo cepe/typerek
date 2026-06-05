@@ -176,7 +176,7 @@ export default function MatchEditPage() {
   return (
     <>
       <h1 className="mb-4 flex items-center gap-2">
-        <i className="fa fa-pencil text-brand" aria-hidden="true" /> Edycja meczu
+        <i className="fas fa-pencil text-brand" aria-hidden="true" /> Edycja meczu
       </h1>
       <section className="card card-body max-w-3xl">
         <EditForm match={match} />
