@@ -131,6 +131,15 @@ RSpec.describe 'API V1 authorization & bet visibility', type: :request do
       expect(match.reload.team_a).not_to eq('Hacked')
     end
 
+    it 'cannot delete a match — deletion is not an exposed action for anyone' do
+      # Matches are index/show/update only; there is no destroy route, so a delete
+      # is rejected before any controller runs. The match must survive regardless.
+      delete "/api/v1/matches/#{match.id}", headers: auth_headers(me)
+
+      expect(response).to have_http_status(:not_found)
+      expect(Match.exists?(match.id)).to be(true)
+    end
+
     it 'are forbidden for a regular user — user management' do
       get '/api/v1/users', headers: auth_headers(me)
       expect(response).to have_http_status(:forbidden)
