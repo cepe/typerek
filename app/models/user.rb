@@ -3,7 +3,7 @@
 class User < ApplicationRecord
   has_secure_password validations: false
 
-  generates_token_for :invitation, expires_in: 24.hours do
+  generates_token_for :invitation, expires_in: 72.hours do
     password_salt&.last(10)
   end
 
