@@ -1,28 +1,11 @@
+# Polish attribute names so ActiveRecord validation messages read naturally
+# (e.g. "Hasło jest za krótkie"). The message templates themselves come from the
+# rails-i18n gem; the API emits no other localized strings (dates/numbers are
+# formatted client-side).
 pl:
-  date:
-    formats:
-      only_date: "%A, %-d %B"
-  time:
-    formats:
-      only_time: "%H:%M"
-  number:
-    format:
-      precision: 2
-      separator: '.'
   activerecord:
     attributes:
       user:
         username: Login
         password: Hasło
         password_confirmation: Powtórz hasło
-  sessions:
-    create:
-      logged_in: "Zalogowano!"
-      invalid_credentials: "Niepoprawny login lub hasło"
-    destroy:
-      logged_out: "Wylogowano!"
-    required: "Musisz być zalogowany"
-  users:
-    destroy:
-      success: "Usunięto użytkownika"
-      error: "Nie udało się usunąć użytkownika"

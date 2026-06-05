@@ -16,7 +16,6 @@ gem 'rails-i18n', '~> 7.0'
 group :development, :test do
   gem 'factory_bot_rails'
   gem 'faker'
-  gem 'listen'
   gem 'rspec-rails'
   gem 'rubocop'
   gem 'rubocop-rails', require: false
