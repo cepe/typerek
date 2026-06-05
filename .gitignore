@@ -9,7 +9,7 @@
 /.idea
 /.env
 
-# Node / Tailwind toolchain (the compiled app/assets/stylesheets/application.css is committed)
+# The frontend (frontend/) has its own node_modules; this guards any stray root install.
 /node_modules
 
 # Ignore the default SQLite database.

@@ -6,10 +6,7 @@ module Api
       skip_before_action :authenticate!, only: :login
 
       def login
-        user = Typerek::Authenticate::Handler.new(
-          username: params[:username],
-          password: params[:password]
-        ).call
+        user = User.authenticate_by(username: params[:username], password: params[:password])
 
         unless user
           return render_error(:unauthorized, 'invalid_credentials', 'Niepoprawny login lub hasło')
@@ -18,8 +15,7 @@ module Api
         render json: auth_result(user)
       end
 
-      # Stateless JWT: the client simply discards the token. Endpoint kept for
-      # symmetry / future token revocation.
+      # Stateless JWT: the client simply discards the token.
       def logout
         head :no_content
       end

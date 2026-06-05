@@ -3,8 +3,8 @@
 module Api
   module V1
     # Shared base for the API controllers: JWT (Bearer) authentication, CanCan
-    # authorization and a consistent JSON error shape (see the Error schema in
-    # openapi.yaml). No session and no CSRF — the API is stateless.
+    # authorization and a consistent JSON error shape. No session and no CSRF —
+    # the API is stateless.
     class BaseController < ActionController::API
       include CanCan::ControllerAdditions
 
@@ -20,7 +20,6 @@ module Api
       def authenticate!
         payload = Typerek::AccessToken.decode(bearer_token)
         @current_user = User.find_by(id: payload['sub']) if payload
-        Current.user = @current_user
         unauthorized! unless @current_user
       end
 

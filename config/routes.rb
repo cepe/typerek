@@ -3,8 +3,7 @@
 Rails.application.routes.draw do
   get 'up' => 'rails/health#show', as: :rails_health_check
 
-  # Decoupled JSON API (see openapi.yaml). The React SPA talks to the backend only
-  # through this; a future Spring Boot backend implements the same contract.
+  # Decoupled JSON API. The React SPA talks to the backend only through this.
   namespace :api do
     namespace :v1 do
       post 'auth/login', to: 'auth#login'
@@ -30,7 +29,7 @@ Rails.application.routes.draw do
   end
 
   # Single-page app: the built index.html is served for the root and every
-  # client-side route. Real files in public/ (hashed JS/CSS, flags) are served by
+  # client-side route. Real files in public/ (hashed JS/CSS) are served by
   # the static middleware before reaching the router; anything else (no dot in the
   # path, not the API/health/internal routes) falls back to the SPA shell.
   root to: 'spa#index'

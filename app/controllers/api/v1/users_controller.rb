@@ -10,10 +10,8 @@ module Api
 
       def create
         authorize! :manage, User
-        user = Typerek::CreateInvitation::Handler.new(
-          username: params[:username],
-          invited_by: current_user
-        ).call
+        # Invited user has no password yet — it is set when they accept.
+        user = User.create(username: params[:username], invited_by: current_user)
 
         if user.persisted?
           render json: invitation_for(user), status: :created
@@ -59,8 +57,7 @@ module Api
         InvitationSerializer.created(user, token: token, url: accept_url(token))
       end
 
-      # Activation link the frontend will handle (SPA route). Served from the
-      # same origin in Phase 3.
+      # Activation link the frontend will handle (SPA route, same origin).
       def accept_url(token)
         "#{request.base_url}/invitations/#{token}"
       end

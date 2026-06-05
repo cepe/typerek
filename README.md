@@ -2,8 +2,8 @@
 
 Predict the outcomes of football-championship matches with your friends.
 
-Rails is an **API-only** backend — it exposes a JSON API under `/api/v1` (contract in
-[`openapi.yaml`](openapi.yaml)) and serves the built React SPA from `public/`. The Docker
+Rails is an **API-only** backend — it exposes a JSON API under `/api/v1` and serves the
+built React SPA from `public/`. The Docker
 build compiles the SPA (`vite build`) into `public/`, so a single container serves both
 the app and the API on one origin — no separate web server or CORS.
 
