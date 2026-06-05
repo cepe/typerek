@@ -10,6 +10,13 @@ export default defineConfig({
   resolve: {
     alias: { '@': fileURLToPath(new URL('./src', import.meta.url)) },
   },
+  build: {
+    // flag-icons ships ~250 country SVGs referenced from its CSS. Don't inline them
+    // as base64 (Vite's default for <4 kB assets), or every flag bloats the CSS that
+    // loads on first paint. Kept as separate files, each flag is fetched lazily only
+    // when its `fi fi-<code>` element actually renders. Other assets keep the default.
+    assetsInlineLimit: (filePath) => (filePath.includes('flag-icons') ? false : undefined),
+  },
   server: {
     port: 5173,
     proxy: {

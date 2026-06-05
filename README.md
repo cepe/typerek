@@ -58,3 +58,9 @@ deploying to production.
 > The beta instance shares the `typerek_default` network and Postgres container with the
 > main app, so run migrations with care — a non-backwards-compatible migration on beta can
 > affect production.
+
+## Credits
+
+Team flags come from [flag-icons](https://github.com/lipis/flag-icons) (MIT). The package is
+a frontend dependency, so all ~250 country flags are available; mapping a new team's name to
+its ISO code in [`frontend/src/lib/flags.ts`](frontend/src/lib/flags.ts) is all that's needed.
