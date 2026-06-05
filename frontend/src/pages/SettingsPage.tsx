@@ -16,7 +16,7 @@ export default function SettingsPage() {
   return (
     <>
       <h1 className="mb-4 flex items-center gap-2">
-        <i className="fa fa-cog text-brand" aria-hidden="true" /> Ustawienia
+        <i className="fas fa-cog text-brand" aria-hidden="true" /> Ustawienia
       </h1>
 
       <div className="mb-5 flex border-b border-line">

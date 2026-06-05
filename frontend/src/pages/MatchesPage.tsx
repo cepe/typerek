@@ -75,7 +75,7 @@ export default function MatchesPage() {
   return (
     <div>
       <h1 className="mb-4 flex items-center gap-2">
-        <i className="fa fa-futbol-o text-brand" aria-hidden="true" /> Mecze
+        <i className="fas fa-futbol text-brand" aria-hidden="true" /> Mecze
       </h1>
 
       <div className="mb-5 flex border-b border-line">

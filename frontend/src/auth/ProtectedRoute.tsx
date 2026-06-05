@@ -9,7 +9,7 @@ export default function ProtectedRoute() {
   if (loading) {
     return (
       <div className="flex min-h-screen items-center justify-center text-muted">
-        <i className="fa fa-spinner fa-spin text-2xl" aria-hidden="true" />
+        <i className="fas fa-spinner fa-spin text-2xl" aria-hidden="true" />
       </div>
     )
   }

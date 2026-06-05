@@ -31,21 +31,21 @@ export default function RankingPage() {
   return (
     <>
       <h1 className="mb-4 flex items-center gap-2">
-        <i className="fa fa-trophy text-brand" aria-hidden="true" /> Ranking{' '}
+        <i className="fas fa-trophy text-brand" aria-hidden="true" /> Ranking{' '}
         <span className="badge-count">{data.length}</span>
       </h1>
       <div className="mx-auto max-w-xl">
         {meEntry && (
           <div className="card card-body mb-4 flex items-center justify-between gap-3 border border-brand bg-brand-tint">
             <span className="leading-tight">
-              <i className="fa fa-star text-brand" aria-hidden="true" /> Twoja pozycja:{' '}
+              <i className="fas fa-star text-brand" aria-hidden="true" /> Twoja pozycja:{' '}
               <span className="font-bold text-ink">
                 {meEntry.position} / {data.length}
               </span>{' '}
               · <span className="font-bold text-ink tabular-nums">{pointsDisplay(meEntry.points)}</span> pkt
             </span>
             <button type="button" className="btn btn-brand btn-sm shrink-0" onClick={scrollToMe}>
-              <i className="fa fa-location-arrow" aria-hidden="true" /> Pokaż mnie
+              <i className="fas fa-location-arrow" aria-hidden="true" /> Pokaż mnie
             </button>
           </div>
         )}
