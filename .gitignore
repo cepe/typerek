@@ -8,6 +8,7 @@
 /.bundle
 /.idea
 /.env
+/.env.beta
 
 # The frontend (frontend/) has its own node_modules; this guards any stray root install.
 /node_modules
