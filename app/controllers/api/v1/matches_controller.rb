@@ -23,10 +23,9 @@ module Api
       def update
         match = Match.find(params[:id])
         authorize! :update, match
-        handler = Typerek::UpdateMatch::Handler.new(match_id: match.id, attributes: match_params.to_h)
 
-        if handler.call
-          render json: MatchDetailSerializer.call(match.reload, my_answer: my_answer(match))
+        if match.update(match_params)
+          render json: MatchDetailSerializer.call(match, my_answer: my_answer(match))
         else
           unprocessable!(match)
         end

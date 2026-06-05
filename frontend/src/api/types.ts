@@ -38,8 +38,6 @@ export interface Match {
   id: number
   team_a: string
   team_b: string
-  team_a_flag: string | null
-  team_b_flag: string | null
   start: string
   started: boolean
   finished: boolean

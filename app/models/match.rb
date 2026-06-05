@@ -42,16 +42,14 @@ class Match < ApplicationRecord
   end
 
   def winning_list
-    if result_a.blank? || result_b.blank?
-      []
-    elsif result_a > result_b
+    return [] if result_a.blank? || result_b.blank?
+
+    if result_a > result_b
       %w[win_a win_tie_a not_tie]
     elsif result_a < result_b
       %w[win_b win_tie_b not_tie]
-    elsif result_a == result_b
-      %w[tie win_tie_a win_tie_b]
     else
-      []
+      %w[tie win_tie_a win_tie_b]
     end
   end
 end

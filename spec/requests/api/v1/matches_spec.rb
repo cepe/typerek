@@ -89,6 +89,15 @@ RSpec.describe 'API V1 Matches', type: :request do
       expect(json['odds']['win_a']).to eq(1.5)
     end
 
+    it 'returns 422 with field errors for invalid attributes' do
+      admin = create(:user, :active, :admin)
+
+      put "/api/v1/matches/#{match.id}", params: { team_a: '' }, headers: auth_headers(admin), as: :json
+
+      expect(response).to have_http_status(:unprocessable_entity)
+      expect(json.dig('error', 'fields')).to have_key('team_a')
+    end
+
     it 'is forbidden for a non-admin' do
       put "/api/v1/matches/#{match.id}", params: { team_a: 'Polska' }, headers: auth_headers(user), as: :json
 

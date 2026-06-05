@@ -2,10 +2,7 @@
 
 module Typerek
   module Ranking
-    # The single source of truth for the participant ranking. This logic used to
-    # be spread across RankingsController, the ranking view and the
-    # current_user_standing helper — now it lives in one place (easy to mirror in
-    # a future Spring Boot @Service).
+    # The single source of truth for the participant ranking.
     #
     # Ordering: points descending, ties broken by username ascending.
     # Position is shared for equal point totals, e.g. 1, 1, 3.

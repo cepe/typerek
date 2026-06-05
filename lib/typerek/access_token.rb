@@ -1,10 +1,7 @@
 # frozen_string_literal: true
 
 module Typerek
-  # Stateless access token (JWT, HS256) used by the /api/v1 API.
-  # The claims are deliberately simple and portable — the same set will be
-  # reproduced later by Spring Security, so the frontend won't notice the backend
-  # swap:
+  # Stateless access token (JWT, HS256) used by the /api/v1 API. Claims:
   #   sub   - user id
   #   admin - role (bool)
   #   exp   - expiry (Unix epoch)
