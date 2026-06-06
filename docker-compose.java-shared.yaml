@@ -1,13 +1,17 @@
-# Run the Java backend against the EXISTING Postgres from the main `typerek` stack
-# (container typerek-postgres-1, reachable as `postgres` on the typerek_default
-# network) — i.e. the real Rails dev database, with its existing schema and data.
-# The app runs with `ddl-auto: validate`, so it never alters that schema.
+# Java equivalent of the beta instance: run the Java backend ALONGSIDE the main
+# stack, talking to its EXISTING Postgres (container typerek-postgres-1, reachable
+# as `postgres` on the typerek_default network). Point POSTGRES_DB at
+# typerek_production in .env.java-shared to run on the SAME data as the live Rails
+# app. The app runs with `ddl-auto: validate`, so it NEVER alters the schema.
 #
 #   cp .env.java-shared.example .env.java-shared   # then edit to match your .env
 #   docker compose -f docker-compose.java-shared.yaml --env-file .env.java-shared up --build -d
-#   open http://localhost:8002
+#   # reachable on 127.0.0.1:8002 (Rails stays on 8000, beta on 8001)
 #
-# Requires the main `typerek` stack's network to exist (its Postgres must be up).
+# --env-file is REQUIRED: it bypasses the repo's root .env (which sets
+# COMPOSE_PROJECT_NAME=typerek), keeping this in its own `typerek-java` project so it
+# can never disturb the production stack. Requires the main `typerek` stack's network
+# to exist (its Postgres must be up).
 name: typerek-java
 
 services:
