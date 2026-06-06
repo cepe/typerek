@@ -1,0 +1,53 @@
+# Standalone stack to build and run the Java (Spring Boot) backend in isolation —
+# its own Postgres, its own volume, its own project name and port (8002). It never
+# touches the production database or network, so it is safe to run alongside prod.
+#
+#   docker compose -f docker-compose.java.yaml --env-file .env.java up --build -d
+#   open http://localhost:8002          # SPA + /api/v1 served by the Java app
+#   docker compose -f docker-compose.java.yaml down            # (add -v to wipe data)
+#
+# The Postgres container is seeded on first boot with the REAL schema
+# (backend/src/test/resources/schema.sql, a 1:1 mirror of db/schema.rb), so the app
+# runs with `ddl-auto: validate` exactly like it will against production. APP_SEED
+# then creates an admin + a few sample matches.
+name: typerek-java
+
+services:
+  postgres-java:
+    image: "postgres:15.0-bullseye"
+    environment:
+      POSTGRES_USER: "${POSTGRES_USER}"
+      POSTGRES_PASSWORD: "${POSTGRES_PASSWORD}"
+      POSTGRES_DB: "${POSTGRES_DB}"
+    volumes:
+      - "postgres-java:/var/lib/postgresql/data"
+      # Loaded once, on an empty data dir, into ${POSTGRES_DB}.
+      - "./backend/src/test/resources/schema.sql:/docker-entrypoint-initdb.d/schema.sql:ro"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
+      interval: "5s"
+      timeout: "3s"
+      retries: 10
+    restart: "unless-stopped"
+
+  web-java:
+    build:
+      context: "."
+      dockerfile: "backend/Dockerfile"
+    env_file:
+      - ".env.java"
+    depends_on:
+      postgres-java:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f localhost:8000/up || exit 1"]
+      interval: "30s"
+      timeout: "3s"
+      start_period: "40s"
+      retries: 5
+    ports:
+      - "127.0.0.1:8002:8000"
+    restart: "unless-stopped"
+
+volumes:
+  postgres-java: {}

@@ -1,0 +1,38 @@
+spring:
+  application:
+    name: typerek
+
+  datasource:
+    # Rails appends the environment to the DB name (config/database.yml): production
+    # is `typerek_production`. Set POSTGRES_DB explicitly at the cutover.
+    url: jdbc:postgresql://${POSTGRES_HOST:postgres}:${POSTGRES_PORT:5432}/${POSTGRES_DB:typerek_development}
+    username: ${POSTGRES_USER:postgres}
+    password: ${POSTGRES_PASSWORD:password}
+
+  jpa:
+    hibernate:
+      # Never touch the schema — it is owned by the existing Rails migrations.
+      ddl-auto: validate
+    open-in-view: false
+    properties:
+      hibernate:
+        jdbc:
+          time_zone: UTC
+
+  jackson:
+    property-naming-strategy: SNAKE_CASE
+    serialization:
+      write-dates-as-timestamps: false
+
+server:
+  port: ${PORT:8000}
+  # Behind nginx terminating SSL — trust X-Forwarded-* so generated invite URLs
+  # use the public https host.
+  forward-headers-strategy: framework
+
+app:
+  jwt:
+    secret: ${SECRET_KEY_BASE}
+  discord-url: ${TYPEREK_DISCORD_URL:}
+  # Dev-only convenience seeding; never enabled in production.
+  seed: ${APP_SEED:false}

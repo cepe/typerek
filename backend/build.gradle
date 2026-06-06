@@ -1,0 +1,73 @@
+plugins {
+    id 'java'
+    id 'org.springframework.boot' version '3.3.5'
+    id 'io.spring.dependency-management' version '1.1.6'
+}
+
+group = 'pl.typerek'
+version = '1.0.0'
+
+// Spring Boot 3.3.5 pins Testcontainers 1.19.x, which is incompatible with Docker
+// Engine 29 (API 1.52+) — /info returns HTTP 400. 1.21.3 + a pinned client API
+// version (src/test/resources/docker-java.properties) is the known-good combo.
+ext['testcontainers.version'] = '1.21.3'
+
+java {
+    toolchain {
+        languageVersion = JavaLanguageVersion.of(21)
+    }
+}
+
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+    implementation 'org.springframework.boot:spring-boot-starter-web'
+    implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
+    implementation 'org.springframework.boot:spring-boot-starter-security'
+    implementation 'org.springframework.boot:spring-boot-starter-validation'
+
+    runtimeOnly 'org.postgresql:postgresql'
+
+    // JWT (HS256) — same secret as Rails so tokens stay valid across the cutover.
+    implementation 'io.jsonwebtoken:jjwt-api:0.12.6'
+    runtimeOnly 'io.jsonwebtoken:jjwt-impl:0.12.6'
+    runtimeOnly 'io.jsonwebtoken:jjwt-jackson:0.12.6'
+
+    compileOnly 'org.projectlombok:lombok'
+    annotationProcessor 'org.projectlombok:lombok'
+    testCompileOnly 'org.projectlombok:lombok'
+    testAnnotationProcessor 'org.projectlombok:lombok'
+
+    // Versions for testcontainers come from Spring Boot's dependency management.
+    testImplementation 'org.springframework.boot:spring-boot-starter-test'
+    testImplementation 'org.springframework.boot:spring-boot-testcontainers'
+    testImplementation 'org.springframework.security:spring-security-test'
+    testImplementation 'org.testcontainers:junit-jupiter'
+    testImplementation 'org.testcontainers:postgresql'
+}
+
+// Only the executable bootJar is needed; skip the extra plain library jar so the
+// Docker image can COPY a single *.jar.
+tasks.named('jar') {
+    enabled = false
+}
+
+tasks.named('test') {
+    useJUnitPlatform()
+
+    // Docker Desktop on macOS exposes its socket under ~/.docker/run, not the
+    // default /var/run/docker.sock, so Testcontainers can't auto-discover it.
+    // Point it there for local runs; leave CI (Linux, default socket, or an
+    // explicit DOCKER_HOST) untouched.
+    def desktopSocket = "${System.getProperty('user.home')}/.docker/run/docker.sock"
+    if (System.getenv('DOCKER_HOST') == null && file(desktopSocket).exists()) {
+        environment 'DOCKER_HOST', "unix://${desktopSocket}"
+    }
+
+    testLogging {
+        exceptionFormat = 'full'
+        events 'failed'
+    }
+}

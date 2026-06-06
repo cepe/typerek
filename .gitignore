@@ -9,6 +9,8 @@
 /.idea
 /.env
 /.env.beta
+/.env.java
+/.env.java-shared
 
 # The frontend (frontend/) has its own node_modules; this guards any stray root install.
 /node_modules
