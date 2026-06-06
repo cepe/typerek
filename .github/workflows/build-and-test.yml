@@ -14,8 +14,8 @@ jobs:
           echo POSTGRES_PASSWORD=password >> .env
           cat .env
       - name: Build docker
-        run: docker-compose build
+        run: docker compose build
       - name: Setup test environment
-        run: docker-compose run --rm web ./bin/setup
+        run: docker compose run --rm web ./bin/setup
       - name: Run tests
-        run: docker-compose run --rm web bundle exec rspec
+        run: docker compose run --rm web bundle exec rspec
