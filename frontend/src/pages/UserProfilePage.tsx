@@ -3,6 +3,7 @@ import { useUserProfile } from '@/api/hooks'
 import { ErrorBox, Loading } from '@/components/Status'
 import MatchLine from '@/components/MatchLine'
 import BetGrid from '@/components/BetGrid'
+import UserPositionChart from '@/components/UserPositionChart'
 import { formatDateLong, groupByDay } from '@/lib/format'
 import { useDocumentTitle } from '@/lib/useDocumentTitle'
 
@@ -25,6 +26,10 @@ export default function UserProfilePage() {
         <p className="mt-1 text-muted">
           Liczba trafień: <span className="font-semibold text-ink">{data.user.accuracy}</span>
         </p>
+      </div>
+
+      <div className="mb-5">
+        <UserPositionChart userId={data.user.id} />
       </div>
 
       {data.started_matches.length === 0 ? (
