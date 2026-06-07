@@ -9,6 +9,7 @@ import type {
   MatchDetail,
   MatchList,
   RankingEntry,
+  RankingHistory,
   User,
   UserProfile,
 } from './types'
@@ -18,6 +19,7 @@ export const queryKeys = {
   matches: ['matches'] as const,
   match: (id: number | string) => ['matches', String(id)] as const,
   ranking: ['ranking'] as const,
+  rankingHistory: ['ranking', 'history'] as const,
   users: ['users'] as const,
   user: (id: number | string) => ['users', String(id)] as const,
   invitation: (token: string) => ['invitations', token] as const,
@@ -42,6 +44,14 @@ export function useRanking() {
   return useQuery({
     queryKey: queryKeys.ranking,
     queryFn: () => api.get<RankingEntry[]>('/ranking'),
+  })
+}
+
+export function useRankingHistory(enabled: boolean) {
+  return useQuery({
+    queryKey: queryKeys.rankingHistory,
+    queryFn: () => api.get<RankingHistory>('/ranking/history'),
+    enabled,
   })
 }
 
@@ -97,6 +107,8 @@ export function useUpdateMatch(id: number) {
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: queryKeys.matches })
       qc.invalidateQueries({ queryKey: queryKeys.match(id) })
+      qc.invalidateQueries({ queryKey: queryKeys.ranking })
+      qc.invalidateQueries({ queryKey: queryKeys.rankingHistory })
     },
   })
 }

@@ -94,6 +94,26 @@ export interface InvitationCreated {
   url: string
 }
 
+export interface RankingHistoryMatch {
+  id: number
+  team_a: string
+  team_b: string
+  result_a: number | null
+  result_b: number | null
+  start: string
+}
+
+export interface RankingHistorySeries {
+  user: { id: number; username: string }
+  positions: number[]
+  points: number[]
+}
+
+export interface RankingHistory {
+  matches: RankingHistoryMatch[]
+  series: RankingHistorySeries[]
+}
+
 export interface AuthResult {
   token: string
   user: CurrentUser

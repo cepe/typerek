@@ -15,6 +15,7 @@ Rails.application.routes.draw do
       end
 
       get 'ranking', to: 'rankings#show'
+      get 'ranking/history', to: 'rankings#history'
 
       resources :users, only: %i[index create show destroy] do
         member do
