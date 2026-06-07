@@ -7,8 +7,11 @@ import { formatDateLong, formattedScore } from '@/lib/format'
 import type { RankingHistoryMatch } from '@/api/types'
 
 const COL_PX = 20
-const MIN_CHART_HEIGHT = 400
 const MAX_X_TICKS = 12
+// Shorter chart on mobile, taller on desktop where the legend sits beside it
+const MOBILE_CHART_HEIGHT = 320
+const DESKTOP_CHART_HEIGHT_PER_USER = 14
+const DESKTOP_CHART_MIN_HEIGHT = 500
 
 function hslColor(index: number, total: number): string {
   const hue = Math.round((index / Math.max(total, 1)) * 360)
@@ -42,6 +45,7 @@ function CustomTooltip({ active, label, payload, matches, userMap, meId, hovered
       : '–:–'
 
   const entry = hoveredUserId ? payload.find((p) => p.dataKey === hoveredUserId) : null
+
   return (
     <div className="card card-body w-48 py-2 text-xs shadow-lg">
       <p className="mb-1 font-semibold text-ink">
@@ -70,6 +74,47 @@ function xTicks(matchCount: number): number[] {
   return ticks
 }
 
+interface LegendProps {
+  sortedSeries: { user: { id: number; username: string } }[]
+  colorIndex: Map<number, number>
+  totalUsers: number
+  highlightedId: number | null
+  meId?: number
+  onToggle: (id: number) => void
+  maxHeight?: number
+}
+
+function Legend({ sortedSeries, colorIndex, totalUsers, highlightedId, meId, onToggle, maxHeight }: LegendProps) {
+  return (
+    <ul className="divide-y divide-line/60" style={maxHeight ? { maxHeight, overflowY: 'auto' } : undefined}>
+      {sortedSeries.map((s) => {
+        const idx = colorIndex.get(s.user.id) ?? 0
+        const color = hslColor(idx, totalUsers)
+        const isMe = s.user.id === meId
+        const isHighlighted = highlightedId === s.user.id
+
+        return (
+          <li key={s.user.id}>
+            <button
+              type="button"
+              onClick={() => onToggle(s.user.id)}
+              className={`flex w-full items-center gap-2 px-3 py-2 text-left text-xs transition-colors hover:bg-surface ${
+                isHighlighted ? 'bg-surface font-semibold' : ''
+              }`}
+            >
+              <span className="inline-block h-2.5 w-4 shrink-0 rounded-sm" style={{ backgroundColor: color }} />
+              <span className={`truncate ${isMe ? 'font-semibold text-brand' : 'text-ink'}`}>
+                {s.user.username}
+                {isMe && <span className="ml-1 text-[10px] font-normal">(Ty)</span>}
+              </span>
+            </button>
+          </li>
+        )
+      })}
+    </ul>
+  )
+}
+
 interface Props {
   enabled: boolean
 }
@@ -79,6 +124,7 @@ export default function RankingBumpChart({ enabled }: Props) {
   const { user: me } = useAuth()
   const [highlightedId, setHighlightedId] = useState<number | null>(null)
   const [hoveredUserId, setHoveredUserId] = useState<string | null>(null)
+  const [legendOpen, setLegendOpen] = useState(false)
 
   if (isLoading) return <Loading />
   if (isError || !data) return <ErrorBox />
@@ -104,114 +150,140 @@ export default function RankingBumpChart({ enabled }: Props) {
 
   const totalUsers = series.length
   const chartWidth = Math.max(matches.length * COL_PX, 600)
-  const chartHeight = Math.max(MIN_CHART_HEIGHT, totalUsers * 14)
+  const desktopChartHeight = Math.max(DESKTOP_CHART_MIN_HEIGHT, totalUsers * DESKTOP_CHART_HEIGHT_PER_USER)
   const yTicks = Array.from({ length: totalUsers }, (_, i) => i + 1)
 
+  const toggleHighlight = (id: number) => setHighlightedId((prev) => (prev === id ? null : id))
+
+  const chart = (height: number) => (
+    <LineChart
+      data={rows}
+      margin={{ top: 16, right: 24, bottom: 16, left: 8 }}
+      onMouseLeave={() => setHoveredUserId(null)}
+    >
+      <XAxis dataKey="x" type="number" domain={[1, matches.length]} ticks={xTicks(matches.length)} />
+      <YAxis reversed domain={[1, totalUsers]} ticks={yTicks} allowDecimals={false} width={32} />
+      <Tooltip
+        content={
+          <CustomTooltip matches={matches} userMap={userMap} meId={me?.id} hoveredUserId={hoveredUserId} />
+        }
+      />
+      {series.map((s) => {
+        const uid = String(s.user.id)
+        const idx = colorIndex.get(s.user.id) ?? 0
+        const color = hslColor(idx, totalUsers)
+        const isMe = s.user.id === me?.id
+        const isHighlighted = highlightedId === s.user.id
+        const isDimmed = highlightedId !== null && !isHighlighted && !isMe
+
+        return (
+          <Line
+            key={uid}
+            dataKey={uid}
+            stroke={color}
+            strokeWidth={isMe || isHighlighted ? 2.5 : 1.5}
+            dot={false}
+            activeDot={{ r: 4, onMouseEnter: () => setHoveredUserId(uid), onMouseLeave: () => setHoveredUserId(null) }}
+            strokeOpacity={isDimmed ? 0.1 : 1}
+            isAnimationActive={false}
+            connectNulls
+          />
+        )
+      })}
+    </LineChart>
+  )
+
   return (
-    <div className="flex flex-col gap-4 lg:flex-row lg:items-start">
-      <div className="min-w-0 flex-1">
+    <>
+      {/* ── Mobile layout ── */}
+      <div className="lg:hidden">
         <div className="flex items-stretch">
-          <div className="flex shrink-0 items-center justify-center" style={{ width: 20 }}>
+          <div className="flex shrink-0 items-center justify-center" style={{ width: 16 }}>
             <span
-              className="text-xs font-medium text-muted"
+              className="text-[10px] font-medium text-muted"
               style={{ writingMode: 'vertical-rl', transform: 'rotate(180deg)', whiteSpace: 'nowrap' }}
             >
-              Pozycja w rankingu
+              Pozycja
             </span>
           </div>
           <div className="min-w-0 flex-1 overflow-x-auto">
             <div style={{ minWidth: chartWidth }}>
-              <ResponsiveContainer width="100%" height={chartHeight}>
-                <LineChart
-                  data={rows}
-                  margin={{ top: 16, right: 24, bottom: 16, left: 8 }}
-                  onMouseLeave={() => setHoveredUserId(null)}
-                >
-                  <XAxis
-                    dataKey="x"
-                    type="number"
-                    domain={[1, matches.length]}
-                    ticks={xTicks(matches.length)}
-                  />
-                  <YAxis
-                    reversed
-                    domain={[1, totalUsers]}
-                    ticks={yTicks}
-                    allowDecimals={false}
-                    width={32}
-                  />
-                  <Tooltip
-                    content={
-                      <CustomTooltip
-                        matches={matches}
-                        userMap={userMap}
-                        meId={me?.id}
-                        hoveredUserId={hoveredUserId}
-                      />
-                    }
-                  />
-                  {series.map((s) => {
-                    const uid = String(s.user.id)
-                    const idx = colorIndex.get(s.user.id) ?? 0
-                    const color = hslColor(idx, totalUsers)
-                    const isMe = s.user.id === me?.id
-                    const isHighlighted = highlightedId === s.user.id
-                    const isDimmed = highlightedId !== null && !isHighlighted && !isMe
-
-                    return (
-                      <Line
-                        key={uid}
-                        dataKey={uid}
-                        stroke={color}
-                        strokeWidth={isMe || isHighlighted ? 2.5 : 1.5}
-                        dot={false}
-                        activeDot={{
-                          r: 4,
-                          onMouseEnter: () => setHoveredUserId(uid),
-                          onMouseLeave: () => setHoveredUserId(null),
-                        }}
-                        strokeOpacity={isDimmed ? 0.1 : 1}
-                        isAnimationActive={false}
-                        connectNulls
-                      />
-                    )
-                  })}
-                </LineChart>
+              <ResponsiveContainer width="100%" height={MOBILE_CHART_HEIGHT}>
+                {chart(MOBILE_CHART_HEIGHT)}
               </ResponsiveContainer>
             </div>
           </div>
         </div>
-        <p className="mt-1 text-center text-xs font-medium text-muted">Numer meczu</p>
+        <p className="mt-1 text-center text-[10px] font-medium text-muted">Numer meczu</p>
+
+        {/* Collapsible legend */}
+        <div className="card mt-3 overflow-hidden">
+          <button
+            type="button"
+            onClick={() => setLegendOpen((o) => !o)}
+            className="flex w-full items-center justify-between px-4 py-3 text-sm font-semibold text-ink"
+          >
+            <span>
+              <i className="fas fa-list mr-2 text-muted" aria-hidden="true" />
+              Gracze
+              {highlightedId !== null && (
+                <span className="ml-2 text-xs font-normal text-brand">
+                  (zaznaczony: {userMap.get(String(highlightedId))})
+                </span>
+              )}
+            </span>
+            <i className={`fas fa-chevron-${legendOpen ? 'up' : 'down'} text-muted`} aria-hidden="true" />
+          </button>
+          {legendOpen && (
+            <div className="border-t border-line">
+              <Legend
+                sortedSeries={sortedSeries}
+                colorIndex={colorIndex}
+                totalUsers={totalUsers}
+                highlightedId={highlightedId}
+                meId={me?.id}
+                onToggle={toggleHighlight}
+              />
+            </div>
+          )}
+        </div>
       </div>
 
-      <div className="card shrink-0 overflow-y-auto lg:w-44" style={{ maxHeight: chartHeight }}>
-        <ul className="divide-y divide-line/60">
-          {sortedSeries.map((s) => {
-            const idx = colorIndex.get(s.user.id) ?? 0
-            const color = hslColor(idx, totalUsers)
-            const isMe = s.user.id === me?.id
-            const isHighlighted = highlightedId === s.user.id
+      {/* ── Desktop layout ── */}
+      <div className="hidden lg:flex lg:items-start lg:gap-4">
+        <div className="min-w-0 flex-1">
+          <div className="flex items-stretch">
+            <div className="flex shrink-0 items-center justify-center" style={{ width: 20 }}>
+              <span
+                className="text-xs font-medium text-muted"
+                style={{ writingMode: 'vertical-rl', transform: 'rotate(180deg)', whiteSpace: 'nowrap' }}
+              >
+                Pozycja w rankingu
+              </span>
+            </div>
+            <div className="min-w-0 flex-1 overflow-x-auto">
+              <div style={{ minWidth: chartWidth }}>
+                <ResponsiveContainer width="100%" height={desktopChartHeight}>
+                  {chart(desktopChartHeight)}
+                </ResponsiveContainer>
+              </div>
+            </div>
+          </div>
+          <p className="mt-1 text-center text-xs font-medium text-muted">Numer meczu</p>
+        </div>
 
-            return (
-              <li key={s.user.id}>
-                <button
-                  type="button"
-                  onClick={() => setHighlightedId(isHighlighted ? null : s.user.id)}
-                  className={`flex w-full items-center gap-2 px-3 py-2 text-left text-xs transition-colors hover:bg-surface ${
-                    isHighlighted ? 'bg-surface font-semibold' : ''
-                  }`}
-                >
-                  <span className="inline-block h-2.5 w-4 shrink-0 rounded-sm" style={{ backgroundColor: color }} />
-                  <span className={`truncate ${isMe ? 'font-semibold text-brand' : 'text-ink'}`}>
-                    {s.user.username}
-                    {isMe && <span className="ml-1 text-[10px] font-normal">(Ty)</span>}
-                  </span>
-                </button>
-              </li>
-            )
-          })}
-        </ul>
+        <div className="card w-44 shrink-0 overflow-hidden">
+          <Legend
+            sortedSeries={sortedSeries}
+            colorIndex={colorIndex}
+            totalUsers={totalUsers}
+            highlightedId={highlightedId}
+            meId={me?.id}
+            onToggle={toggleHighlight}
+            maxHeight={desktopChartHeight}
+          />
+        </div>
       </div>
-    </div>
+    </>
   )
 }
