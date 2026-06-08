@@ -8,7 +8,14 @@ module Api
       end
 
       def history
-        render json: RankingHistorySerializer.call(Typerek::Ranking::History.new.call)
+        history = Typerek::Ranking::History
+        json = Rails.cache.fetch(
+          [history::CACHE_KEY, history.cache_version],
+          expires_in: 1.day
+        ) do
+          RankingHistorySerializer.call(history.new.call).to_json
+        end
+        render json: json
       end
     end
   end
