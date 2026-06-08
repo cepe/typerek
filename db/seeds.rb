@@ -8,6 +8,12 @@
 #   cities = City.create([{ :name => 'Chicago' }, { :name => 'Copenhagen' }])
 #   Mayor.create(:name => 'Emanuel', :city => cities.first)
 
+# Seeds populate development/production data (the admin account and the
+# tournament schedule). The test suite builds its own data with factories, so
+# skip seeding there — db:prepare would otherwise pollute the test database and
+# crash here on the missing TYPEREK_ADMIN_* env vars.
+return if Rails.env.test?
+
 User.create(
   username: ENV.fetch('TYPEREK_ADMIN_USERNAME'),
   password: ENV.fetch('TYPEREK_ADMIN_PASSWORD'),
