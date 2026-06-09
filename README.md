@@ -40,7 +40,19 @@ npm run dev        # http://localhost:5173, proxies /api → :8000
 ```
 
 Run the backend alongside it (`docker compose up -d web`). Other scripts: `npm run build`
-(typecheck + production build), `npm run typecheck`, `npm run preview`.
+(typecheck + production build), `npm run test` (Vitest), `npm run typecheck`,
+`npm run preview`.
+
+## WebMCP (AI agents)
+
+The SPA registers [WebMCP](https://github.com/webmachinelearning/webmcp) tools on
+`navigator.modelContext`, so in-browser AI agents can list matches, read rankings and
+profiles, and place bets as the signed-in user. Browsers without native WebMCP get the
+[`@mcp-b/global`](https://www.npmjs.com/package/@mcp-b/global) polyfill (lazy-loaded),
+which the [MCP-B extension](https://docs.mcp-b.ai) bridges to MCP clients such as
+Claude. Tools reuse the signed-in user's JWT and go through the same `/api/v1`
+validation as the UI — betting still locks at match start. See
+[`frontend/src/webmcp/`](frontend/src/webmcp/).
 
 ## Beta instance
 
