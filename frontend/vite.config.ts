@@ -1,3 +1,4 @@
+/// <reference types="vitest/config" />
 import { fileURLToPath, URL } from 'node:url'
 import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
@@ -16,6 +17,10 @@ export default defineConfig({
     // loads on first paint. Kept as separate files, each flag is fetched lazily only
     // when its `fi fi-<code>` element actually renders. Other assets keep the default.
     assetsInlineLimit: (filePath) => (filePath.includes('flag-icons') ? false : undefined),
+  },
+  test: {
+    environment: 'node',
+    include: ['src/**/*.test.ts'],
   },
   server: {
     port: 5173,
