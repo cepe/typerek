@@ -43,7 +43,6 @@ return `{ content: [{ type: 'text', text: JSON.stringify(data) }] }`; errors ret
 | `place_bet` | `match_id: number`, `result: enum` of `win_a, tie, win_b, win_tie_a, win_tie_b, not_tie` | `PUT /matches/:id/bet` |
 | `get_ranking` | — | `GET /ranking` |
 | `get_ranking_history` | — | `GET /ranking/history` |
-| `list_users` | — | `GET /users` |
 | `get_user_profile` | `user_id: number` | `GET /users/:id` |
 | `get_me` | — | `GET /me` |
 
@@ -69,14 +68,17 @@ reading the page.
 2. Reads: response JSON is returned to the agent as text content, unmodified — the
    `/api/v1` serializers are already the public contract.
 3. `place_bet`: on success, invalidate React Query keys `matches`, `match(id)`, `me`
-   (mirroring `usePlaceBet`) so an open page reflects the agent's bet immediately.
+   (mirroring `usePlaceBet`) so an open page reflects the agent's bet immediately. On a
+   422 (match started since the cache was filled), invalidate `matches` and `match(id)`
+   too, mirroring `usePlaceBet`'s `onError`.
 
 ## Error handling
 
 - Signed out (no token, or 401): tool returns `isError` with "Not signed in — sign in
   to Typerek in this tab first." The existing client's 401 handling (token clear +
   `auth:unauthorized` event) still applies.
-- API errors (e.g. 422 betting on a started match): surface `apiErrorMessage()` text.
+- API errors (422 betting on a started match, 404 unknown ids, and any other non-2xx):
+  surface `apiErrorMessage()` text via `isError`.
 - Invalid `result` values are rejected by the JSON Schema enum before reaching the API.
 - Server-side validation in `Typerek::MakeBet::Handler` (match not started) remains the
   authority; the agent can do nothing the UI cannot.
@@ -98,4 +100,5 @@ reading the page.
 
 - Backend/API changes of any kind.
 - Admin tools (match editing, invitations, user management) — betting + reading only.
+  This includes `GET /users` (admin-gated); `get_ranking` already lists all players.
 - A standalone (non-browser) MCP server.
