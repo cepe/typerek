@@ -10,8 +10,10 @@ import RankingPage from '@/pages/RankingPage'
 import SettingsPage from '@/pages/SettingsPage'
 import UsersPage from '@/pages/UsersPage'
 import UserProfilePage from '@/pages/UserProfilePage'
+import { useWebMcp } from '@/webmcp/useWebMcp'
 
 export default function App() {
+  useWebMcp()
   return (
     <Routes>
       {/* Public */}
