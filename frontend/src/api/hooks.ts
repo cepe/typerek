@@ -1,4 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import type { QueryClient } from '@tanstack/react-query'
 import api, { ApiClientError } from './client'
 import type {
   Answer,
@@ -6,6 +7,7 @@ import type {
   CurrentUser,
   InvitationCreated,
   InvitationInfo,
+  Match,
   MatchDetail,
   MatchList,
   RankingEntry,
@@ -23,6 +25,20 @@ export const queryKeys = {
   users: ['users'] as const,
   user: (id: number | string) => ['users', String(id)] as const,
   invitation: (token: string) => ['invitations', token] as const,
+}
+
+// Apply a per-viewer patch (my_answer / my_locked) to a single match across the
+// list and detail caches without refetching. Loading all matches is ~300ms on
+// prod, and a bet or a lock only ever touches the one match it targets — so we
+// edit that match in place instead of invalidating the whole list.
+function patchMatch(qc: QueryClient, matchId: number, fields: Partial<Match>) {
+  qc.setQueryData<MatchList>(queryKeys.matches, (list) =>
+    list && {
+      not_finished: list.not_finished.map((m) => (m.id === matchId ? { ...m, ...fields } : m)),
+      finished: list.finished.map((m) => (m.id === matchId ? { ...m, ...fields } : m)),
+    },
+  )
+  qc.setQueryData<MatchDetail>(queryKeys.match(matchId), (m) => m && { ...m, ...fields })
 }
 
 // ── Queries ───────────────────────────────────────────────────────────────────
@@ -80,16 +96,6 @@ export function useInvitation(token: string) {
 // ── Mutations ───────────────────────────────────────────────────────────────────
 export function usePlaceBet() {
   const qc = useQueryClient()
-  const setMyAnswer = (matchId: number, result: BetType | null) => {
-    qc.setQueryData<MatchList>(queryKeys.matches, (list) =>
-      list && {
-        not_finished: list.not_finished.map((m) => (m.id === matchId ? { ...m, my_answer: result } : m)),
-        finished: list.finished.map((m) => (m.id === matchId ? { ...m, my_answer: result } : m)),
-      },
-    )
-    qc.setQueryData<MatchDetail>(queryKeys.match(matchId), (m) => m && { ...m, my_answer: result })
-  }
-
   return useMutation({
     mutationFn: ({ matchId, result }: { matchId: number; result: BetType }) =>
       api.put<Answer>(`/matches/${matchId}/bet`, { result }),
@@ -106,7 +112,7 @@ export function usePlaceBet() {
         matches: qc.getQueryData<MatchList>(queryKeys.matches),
         match: qc.getQueryData<MatchDetail>(queryKeys.match(matchId)),
       }
-      setMyAnswer(matchId, result)
+      patchMatch(qc, matchId, { my_answer: result })
       return previous
     },
     // Roll back the optimistic pick on failure. A 422 means our cached view is
@@ -130,9 +136,29 @@ export function useToggleLock() {
   return useMutation({
     mutationFn: ({ matchId, locked }: { matchId: number; locked: boolean }) =>
       api.put<Answer>(`/matches/${matchId}/lock`, { locked }),
-    onSuccess: (_data, variables) => {
-      qc.invalidateQueries({ queryKey: queryKeys.matches })
-      qc.invalidateQueries({ queryKey: queryKeys.match(variables.matchId) })
+    // Toggling the lock only flips this match's my_locked, so patch it in place —
+    // the padlock reacts instantly and we skip the ~300ms full /matches refetch.
+    onMutate: async ({ matchId, locked }) => {
+      await Promise.all([
+        qc.cancelQueries({ queryKey: queryKeys.matches }),
+        qc.cancelQueries({ queryKey: queryKeys.match(matchId) }),
+      ])
+      const previous = {
+        matches: qc.getQueryData<MatchList>(queryKeys.matches),
+        match: qc.getQueryData<MatchDetail>(queryKeys.match(matchId)),
+      }
+      patchMatch(qc, matchId, { my_locked: locked })
+      return previous
+    },
+    // Roll back on failure. A 422 means the cached view is stale (e.g. the match
+    // has since started), so refetch to pick up the real state.
+    onError: (error, variables, previous) => {
+      qc.setQueryData(queryKeys.matches, previous?.matches)
+      qc.setQueryData(queryKeys.match(variables.matchId), previous?.match)
+      if (error instanceof ApiClientError && error.status === 422) {
+        qc.invalidateQueries({ queryKey: queryKeys.matches })
+        qc.invalidateQueries({ queryKey: queryKeys.match(variables.matchId) })
+      }
     },
   })
 }
