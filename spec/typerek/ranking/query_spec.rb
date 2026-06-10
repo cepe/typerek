@@ -62,4 +62,22 @@ RSpec.describe Typerek::Ranking::Query do
       expect(described_class.new.entry_for(pending)).to be_nil
     end
   end
+
+  describe '.standing_for' do
+    it 'returns the position and points for the given user' do
+      zoe = active_user('zoe')
+      amy = active_user('amy')
+      create(:answer, match: match, user: zoe, result: :win_a)
+
+      expect(described_class.standing_for(zoe)).to eq(position: 1, points: 5.0)
+      expect(described_class.standing_for(amy)).to eq(position: 2, points: 0.0)
+    end
+
+    it 'returns nil for a user outside the ranking' do
+      active_user('amy')
+      pending = create(:user, username: 'pending', invitation_accepted_at: nil)
+
+      expect(described_class.standing_for(pending)).to be_nil
+    end
+  end
 end

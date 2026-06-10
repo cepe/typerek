@@ -17,7 +17,11 @@ module Api
         # acceptance, never present here), which would otherwise reject this.
         current_user.settings = current_user.settings.merge(settings_params)
         current_user.save!(validate: false)
-        render json: CurrentUserSerializer.call(current_user)
+        # Return just the settings, not the full CurrentUser: flipping a switch
+        # never moves the ranking, so there is no reason to pay for the ranking
+        # query that CurrentUserSerializer runs. That query was making every save
+        # take as long as GET /me.
+        render json: { settings: current_user.settings_with_defaults }
       end
 
       private

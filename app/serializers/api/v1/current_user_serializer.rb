@@ -7,12 +7,12 @@ module Api
     # behind authentication so it is only ever exposed to signed-in members.
     class CurrentUserSerializer
       def self.call(user)
-        entry = Typerek::Ranking::Query.new.entry_for(user)
+        standing = Typerek::Ranking::Query.standing_for(user)
         {
           id: user.id,
           username: user.username,
           admin: user.admin?,
-          standing: entry && { rank: entry.position, points: entry.points },
+          standing: standing && { rank: standing[:position], points: standing[:points] },
           discord_url: ENV['TYPEREK_DISCORD_URL'].presence,
           settings: {
             drzewko_mode: user.drzewko_mode?,
