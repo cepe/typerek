@@ -109,7 +109,7 @@ export default function UserPositionChart({ userId }: Props) {
                   />
                   <YAxis
                     reversed
-                    domain={[1, totalUsers]}
+                    domain={[yTicks[0] ?? 1, yTicks[yTicks.length - 1] ?? totalUsers]}
                     ticks={yTicks}
                     allowDecimals={false}
                     width={24}
