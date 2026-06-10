@@ -80,18 +80,42 @@ export function useInvitation(token: string) {
 // ── Mutations ───────────────────────────────────────────────────────────────────
 export function usePlaceBet() {
   const qc = useQueryClient()
+  const setMyAnswer = (matchId: number, result: BetType | null) => {
+    qc.setQueryData<MatchList>(queryKeys.matches, (list) =>
+      list && {
+        not_finished: list.not_finished.map((m) => (m.id === matchId ? { ...m, my_answer: result } : m)),
+        finished: list.finished.map((m) => (m.id === matchId ? { ...m, my_answer: result } : m)),
+      },
+    )
+    qc.setQueryData<MatchDetail>(queryKeys.match(matchId), (m) => m && { ...m, my_answer: result })
+  }
+
   return useMutation({
     mutationFn: ({ matchId, result }: { matchId: number; result: BetType }) =>
       api.put<Answer>(`/matches/${matchId}/bet`, { result }),
-    onSuccess: (_data, variables) => {
-      qc.invalidateQueries({ queryKey: queryKeys.matches })
-      qc.invalidateQueries({ queryKey: queryKeys.match(variables.matchId) })
-      qc.invalidateQueries({ queryKey: queryKeys.me })
+    // A bet only ever changes the match's my_answer, so we patch it into the
+    // cache straight away. The picked pill highlights on click instead of after a
+    // full /matches refetch, and there is nothing else to reconcile — so unlike
+    // the other mutations this one deliberately never invalidates on success.
+    onMutate: async ({ matchId, result }) => {
+      await Promise.all([
+        qc.cancelQueries({ queryKey: queryKeys.matches }),
+        qc.cancelQueries({ queryKey: queryKeys.match(matchId) }),
+      ])
+      const previous = {
+        matches: qc.getQueryData<MatchList>(queryKeys.matches),
+        match: qc.getQueryData<MatchDetail>(queryKeys.match(matchId)),
+      }
+      setMyAnswer(matchId, result)
+      return previous
     },
-    // A 422 means our cached view is stale — typically the match has since
-    // started, so the server rejected the bet. Refetch to lock the now-started
-    // match instead of leaving the pills clickable.
-    onError: (error, variables) => {
+    // Roll back the optimistic pick on failure. A 422 means our cached view is
+    // stale — typically the match has since started, so the server rejected the
+    // bet; refetch to lock the now-started match instead of leaving the pills
+    // clickable.
+    onError: (error, variables, previous) => {
+      qc.setQueryData(queryKeys.matches, previous?.matches)
+      qc.setQueryData(queryKeys.match(variables.matchId), previous?.match)
       if (error instanceof ApiClientError && error.status === 422) {
         qc.invalidateQueries({ queryKey: queryKeys.matches })
         qc.invalidateQueries({ queryKey: queryKeys.match(variables.matchId) })
