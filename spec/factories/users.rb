@@ -12,5 +12,9 @@ FactoryBot.define do
     trait :active do
       invitation_accepted_at { Time.current }
     end
+
+    trait :bet_lock do
+      settings { { 'bet_lock' => true } }
+    end
   end
 end

@@ -5,8 +5,8 @@ module Api
     # The `MatchDetail` schema: Match + `participants` (their bets), visible only
     # once the match has started.
     class MatchDetailSerializer
-      def self.call(match, my_answer: nil)
-        data = MatchSerializer.call(match, my_answer: my_answer)
+      def self.call(match, my_answer: nil, my_locked: false)
+        data = MatchSerializer.call(match, my_answer: my_answer, my_locked: my_locked)
         data[:participants] = participants(match) if match.started?
         data
       end

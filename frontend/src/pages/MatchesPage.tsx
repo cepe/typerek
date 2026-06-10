@@ -4,12 +4,17 @@ import { formatDateLong, groupByDay } from '@/lib/format'
 import { BET_TYPES, BET_LEGEND } from '@/lib/bets'
 import MatchLine from '@/components/MatchLine'
 import BetGrid from '@/components/BetGrid'
+import LockToggle from '@/components/LockToggle'
 import { ErrorBox, Loading } from '@/components/Status'
 import type { BetType, Match } from '@/api/types'
+import { useSettings } from '@/lib/settings'
 import { useDocumentTitle } from '@/lib/useDocumentTitle'
 
 function MatchSection({ matches }: { matches: Match[] }) {
   const placeBet = usePlaceBet()
+  // The padlock column (and the matching legend spacer) only exist when the
+  // viewer enabled the feature; otherwise the layout is the plain pills row.
+  const { betLock } = useSettings()
 
   if (matches.length === 0) {
     return <div className="card card-body text-center text-muted">Brak meczów</div>
@@ -22,13 +27,17 @@ function MatchSection({ matches }: { matches: Match[] }) {
           <div className="card-header">
             <h3 className="text-sm font-bold text-muted">{formatDateLong(group.start)}</h3>
             {/* Legend explaining the 1 / X / 2 / 1X / X2 / 12 symbols, aligned over
-                the bet pills below (hidden on mobile, where the row stacks). */}
-            <div className="hidden w-[340px] grid-cols-6 gap-1.5 sm:grid sm:gap-2">
-              {BET_TYPES.map(([result]) => (
-                <div key={result} className="text-center text-[10px] leading-tight text-muted">
-                  {BET_LEGEND[result]}
-                </div>
-              ))}
+                the bet pills below (hidden on mobile, where the row stacks). The
+                trailing spacer mirrors each row's padlock slot so the columns line up. */}
+            <div className="hidden items-center gap-2 sm:flex">
+              <div className="grid w-[340px] grid-cols-6 gap-1.5 sm:gap-2">
+                {BET_TYPES.map(([result]) => (
+                  <div key={result} className="text-center text-[10px] leading-tight text-muted">
+                    {BET_LEGEND[result]}
+                  </div>
+                ))}
+              </div>
+              {betLock && <div className="w-7 shrink-0" aria-hidden="true" />}
             </div>
           </div>
           <div className="divide-y divide-line/60">
@@ -40,13 +49,23 @@ function MatchSection({ matches }: { matches: Match[] }) {
                 }`}
               >
                 <MatchLine match={match} />
-                <div className="sm:w-[340px]">
-                  <BetGrid
-                    match={match}
-                    myAnswer={match.my_answer}
-                    pending={placeBet.isPending}
-                    onBet={(result: BetType) => placeBet.mutate({ matchId: match.id, result })}
-                  />
+                {/* Pills, plus a fixed padlock slot on the right when the feature is
+                    on. The slot is reserved in every row (lock or empty) so the 6
+                    columns share one offset, matching the legend's trailing spacer. */}
+                <div className="flex items-center gap-2">
+                  <div className="flex-1 sm:w-[340px] sm:flex-none">
+                    <BetGrid
+                      match={match}
+                      myAnswer={match.my_answer}
+                      pending={placeBet.isPending}
+                      onBet={(result: BetType) => placeBet.mutate({ matchId: match.id, result })}
+                    />
+                  </div>
+                  {betLock && (
+                    <div className="w-7 shrink-0">
+                      <LockToggle match={match} />
+                    </div>
+                  )}
                 </div>
               </div>
             ))}

@@ -6,7 +6,7 @@ module Api
       def index
         not_finished = Match.not_finished.includes(:answers).accessible_by(current_ability)
         finished = Match.finished.includes(:answers).accessible_by(current_ability)
-        answers = current_user.answers.index_by(&:match_id).transform_values(&:result)
+        answers = current_user.answers.index_by(&:match_id)
 
         render json: {
           not_finished: MatchSerializer.many(not_finished, answers_by_match: answers),
@@ -17,7 +17,7 @@ module Api
       def show
         match = Match.includes(:answers).find(params[:id])
         authorize! :read, match
-        render json: MatchDetailSerializer.call(match, my_answer: my_answer(match))
+        render json: detail(match)
       end
 
       def update
@@ -25,7 +25,7 @@ module Api
         authorize! :update, match
 
         if match.update(match_params)
-          render json: MatchDetailSerializer.call(match, my_answer: my_answer(match))
+          render json: detail(match)
         else
           unprocessable!(match)
         end
@@ -44,10 +44,28 @@ module Api
         unprocessable!(e.message)
       end
 
+      def lock
+        answer = Typerek::SetLock::Handler.new(
+          user_id: current_user.id,
+          match_id: params[:id],
+          locked: params[:locked]
+        ).call
+        render json: AnswerSerializer.call(answer)
+      rescue Typerek::MatchNotFoundError
+        not_found!
+      rescue Typerek::Error => e
+        unprocessable!(e.message)
+      end
+
       private
 
+      def detail(match)
+        answer = my_answer(match)
+        MatchDetailSerializer.call(match, my_answer: answer&.result, my_locked: answer&.locked || false)
+      end
+
       def my_answer(match)
-        current_user.answers.find_by(match_id: match.id)&.result
+        current_user.answers.find_by(match_id: match.id)
       end
 
       def match_params

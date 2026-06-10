@@ -18,6 +18,12 @@ export interface Standing {
   points: number
 }
 
+// Per-user UI preferences, persisted server-side (see UserSettings on the backend).
+export interface UserSettings {
+  drzewko_mode: boolean
+  bet_lock: boolean
+}
+
 export interface CurrentUser {
   id: number
   username: string
@@ -25,6 +31,7 @@ export interface CurrentUser {
   standing: Standing | null
   // Community Discord invite, served only to signed-in users; null when unset.
   discord_url: string | null
+  settings: UserSettings
 }
 
 export interface User {
@@ -47,6 +54,8 @@ export interface Match {
   result_b: number | null
   odds: Odds
   my_answer: BetType | null
+  // Whether the viewer locked their bet against accidental changes.
+  my_locked: boolean
 }
 
 export interface Participant {
@@ -66,6 +75,7 @@ export interface MatchList {
 export interface Answer {
   match_id: number
   result: BetType
+  locked: boolean
 }
 
 export interface RankingEntry {

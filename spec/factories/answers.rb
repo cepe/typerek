@@ -5,5 +5,9 @@ FactoryBot.define do
     match
     user
     result { %i[win_a tie win_b win_tie_a win_tie_b not_tie].sample }
+
+    trait :locked do
+      locked { true }
+    end
   end
 end

@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.1].define(version: 2023_12_04_222527) do
+ActiveRecord::Schema[7.1].define(version: 2026_06_09_130000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
 
@@ -20,6 +20,7 @@ ActiveRecord::Schema[7.1].define(version: 2023_12_04_222527) do
     t.integer "result"
     t.datetime "created_at", precision: nil, null: false
     t.datetime "updated_at", precision: nil, null: false
+    t.boolean "locked", default: false, null: false
     t.index ["match_id", "user_id"], name: "index_answers_on_match_id_and_user_id", unique: true
     t.index ["match_id"], name: "index_answers_on_match_id"
     t.index ["user_id"], name: "index_answers_on_user_id"
@@ -68,6 +69,7 @@ ActiveRecord::Schema[7.1].define(version: 2023_12_04_222527) do
     t.string "invited_by_type", limit: 255
     t.boolean "fin", default: false
     t.string "password_digest"
+    t.jsonb "settings", default: {}, null: false
     t.index ["invited_by_id"], name: "index_users_on_invited_by_id"
     t.index ["username"], name: "index_users_on_username", unique: true
   end

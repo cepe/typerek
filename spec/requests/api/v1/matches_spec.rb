@@ -61,7 +61,7 @@ RSpec.describe 'API V1 Matches', type: :request do
         put "/api/v1/matches/#{match.id}/bet", params: { result: 'win_tie_a' }, headers: auth_headers(user), as: :json
 
         expect(response).to have_http_status(:ok)
-        expect(json).to eq('match_id' => match.id, 'result' => 'win_tie_a')
+        expect(json).to eq('match_id' => match.id, 'result' => 'win_tie_a', 'locked' => false)
       end
     end
 
@@ -73,6 +73,38 @@ RSpec.describe 'API V1 Matches', type: :request do
 
         expect(response).to have_http_status(:unprocessable_entity)
       end
+    end
+
+    context 'on a locked answer when the user enabled the bet lock' do
+      let(:user) { create(:user, :active, :bet_lock) }
+      let(:match) { create(:match, :start_in_future) }
+
+      it 'is rejected with 422' do
+        create(:answer, :locked, match: match, user: user, result: 'win_a')
+
+        put "/api/v1/matches/#{match.id}/bet", params: { result: 'win_b' }, headers: auth_headers(user), as: :json
+
+        expect(response).to have_http_status(:unprocessable_entity)
+      end
+    end
+  end
+
+  describe 'PUT /api/v1/matches/:id/lock' do
+    let(:match) { create(:match, :start_in_future) }
+
+    it 'locks the existing bet' do
+      create(:answer, match: match, user: user, result: 'win_a')
+
+      put "/api/v1/matches/#{match.id}/lock", params: { locked: true }, headers: auth_headers(user), as: :json
+
+      expect(response).to have_http_status(:ok)
+      expect(json).to eq('match_id' => match.id, 'result' => 'win_a', 'locked' => true)
+    end
+
+    it 'is rejected with 422 when there is no bet yet' do
+      put "/api/v1/matches/#{match.id}/lock", params: { locked: true }, headers: auth_headers(user), as: :json
+
+      expect(response).to have_http_status(:unprocessable_entity)
     end
   end
 

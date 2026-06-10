@@ -2,14 +2,18 @@
 
 module Api
   module V1
-    # A serialized match. `my_answer` is the given viewer's bet (or nil). Flags are
-    # resolved client-side from the team name (frontend/src/lib/flags.ts).
+    # A serialized match. `my_answer` is the given viewer's bet (or nil) and
+    # `my_locked` whether they locked it. Flags are resolved client-side from the
+    # team name (frontend/src/lib/flags.ts).
     class MatchSerializer
       def self.many(matches, answers_by_match: {})
-        matches.map { |match| call(match, my_answer: answers_by_match[match.id]) }
+        matches.map do |match|
+          answer = answers_by_match[match.id]
+          call(match, my_answer: answer&.result, my_locked: answer&.locked || false)
+        end
       end
 
-      def self.call(match, my_answer: nil)
+      def self.call(match, my_answer: nil, my_locked: false)
         {
           id: match.id,
           team_a: match.team_a,
@@ -27,7 +31,8 @@ module Api
             win_tie_b: match.win_tie_b,
             not_tie: match.not_tie
           },
-          my_answer: my_answer
+          my_answer: my_answer,
+          my_locked: my_locked
         }
       end
     end

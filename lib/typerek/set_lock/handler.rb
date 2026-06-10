@@ -1,12 +1,14 @@
 # frozen_string_literal: true
 
 module Typerek
-  module MakeBet
+  module SetLock
+    # Locks or unlocks the user's existing bet on a match so it can't be changed
+    # by accident. A locked bet is rejected by MakeBet::Handler.
     class Handler
-      def initialize(match_id:, user_id:, result:)
+      def initialize(match_id:, user_id:, locked:)
         @match_id = match_id
         @user_id = user_id
-        @result = result
+        @locked = ActiveModel::Type::Boolean.new.cast(locked)
       end
 
       def call
@@ -14,13 +16,11 @@ module Typerek
         raise UserNotFoundError, 'Użytkownik nie został znaleziony.' unless user
         raise MatchAlreadyStartedError, 'Mecz już się rozpoczął.' if match.started?
 
-        answer = match.answers.find_or_initialize_by(user_id: user.id)
-        raise AnswerLockedError, 'Typ jest zablokowany.' if answer.locked? && user.bet_lock?
+        answer = match.answers.find_by(user_id: user.id)
+        raise Error, 'Najpierw zatypuj mecz.' unless answer
 
-        answer.update!(result: @result)
+        answer.update!(locked: @locked)
         answer
-      rescue ArgumentError
-        raise Error, 'Nieprawidłowy typ.'
       end
 
       private

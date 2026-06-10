@@ -96,6 +96,9 @@
   .bet-hit { @apply border-brand bg-brand text-white shadow-sm; }
   /* Finished match: the viewer's pick that missed (light red). */
   .bet-miss { @apply border-danger/40 bg-danger-tint text-danger; }
+  /* Padlock toggle next to the pills (LockToggle); brand-colored when locked. */
+  .bet-lock { @apply inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-md text-muted transition-colors hover:bg-black/5 hover:text-ink disabled:pointer-events-none disabled:opacity-50; }
+  .bet-lock-on { @apply text-brand hover:text-brand; }
 }
 
 /* "Drzewko mode" (opt-in via Ustawienia → Dostępność): the current user's row in
