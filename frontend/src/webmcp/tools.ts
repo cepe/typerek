@@ -126,5 +126,12 @@ export function createTools(queryClient: QueryClient): ToolDescriptor[] {
       inputSchema: NO_INPUT,
       execute: () => authed(() => api.get('/me')),
     },
+    {
+      name: 'list_all_bets',
+      description:
+        'Full bets history of every player: all matches that have already started, oldest first, each with participants — every active player and their bet (null if they did not bet) — plus your own my_answer. Bets on matches that have not started yet are private and not included.',
+      inputSchema: NO_INPUT,
+      execute: () => authed(() => api.get('/bets')),
+    },
   ]
 }

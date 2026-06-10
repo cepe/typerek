@@ -32,7 +32,7 @@ beforeEach(() => {
 })
 
 describe('createTools', () => {
-  it('exposes exactly the 7 spec tools', () => {
+  it('exposes exactly the 8 spec tools', () => {
     const { tools } = setup()
     expect(tools.map((t) => t.name).sort()).toEqual([
       'get_match',
@@ -40,6 +40,7 @@ describe('createTools', () => {
       'get_ranking',
       'get_ranking_history',
       'get_user_profile',
+      'list_all_bets',
       'list_matches',
       'place_bet',
     ])
@@ -51,6 +52,7 @@ describe('createTools', () => {
     ['get_ranking', {}, '/ranking'],
     ['get_ranking_history', {}, '/ranking/history'],
     ['get_user_profile', { user_id: 3 }, '/users/3'],
+    ['list_all_bets', {}, '/bets'],
     ['get_me', {}, '/me'],
   ])('%s GETs %s and returns the JSON as text', async (name, args, path) => {
     const { tool } = setup()
