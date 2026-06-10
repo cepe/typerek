@@ -9,6 +9,7 @@ Rails.application.routes.draw do
       post 'auth/login', to: 'auth#login'
       post 'auth/logout', to: 'auth#logout'
       get 'me', to: 'profile#show'
+      get 'me/settings/stats', to: 'profile#settings_stats'
       patch 'me/settings', to: 'profile#update_settings'
 
       resources :matches, only: %i[index show update] do
