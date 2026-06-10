@@ -44,21 +44,32 @@ function CustomTooltip({ active, label, payload, matches, userMap, meId, hovered
       ? formattedScore(match.result_a, match.result_b)
       : '–:–'
 
-  const entry = hoveredUserId ? payload.find((p) => p.dataKey === hoveredUserId) : null
+  const hoveredEntry = hoveredUserId ? payload.find((p) => p.dataKey === hoveredUserId) : null
+  const focusPosition = hoveredEntry?.value
+  const tiedEntries = focusPosition != null
+    ? payload.filter((p) => p.value === focusPosition)
+    : hoveredEntry ? [hoveredEntry] : []
 
   return (
-    <div className="card card-body w-48 py-2 text-xs shadow-lg">
+    <div className="card card-body w-52 py-2 text-xs shadow-lg">
       <p className="mb-1 font-semibold text-ink">
         Mecz #{label}: {match.team_a} {score} {match.team_b}
       </p>
       <p className="text-muted">{formatDateLong(match.start)}</p>
-      {entry && (
-        <div className="mt-2 flex items-center gap-1.5 border-t border-line pt-2">
-          <span className="w-4 text-right font-bold tabular-nums text-ink">{entry.value}.</span>
-          <span className="inline-block h-2 w-2.5 shrink-0 rounded-sm" style={{ backgroundColor: entry.stroke }} />
-          <span className={`truncate ${entry.dataKey === String(meId) ? 'font-semibold text-brand' : 'text-ink'}`}>
-            {userMap.get(entry.dataKey) ?? '—'}
-          </span>
+      {tiedEntries.length > 0 && (
+        <div className="mt-2 space-y-1 border-t border-line pt-2">
+          {tiedEntries.map((entry, i) => (
+            <div key={entry.dataKey} className="flex items-center gap-1.5">
+              {i === 0 && (
+                <span className="w-4 text-right font-bold tabular-nums text-ink">{entry.value}.</span>
+              )}
+              {i > 0 && <span className="w-4" />}
+              <span className="inline-block h-2 w-2.5 shrink-0 rounded-sm" style={{ backgroundColor: entry.stroke }} />
+              <span className={`truncate ${entry.dataKey === String(meId) ? 'font-semibold text-brand' : 'text-ink'}`}>
+                {userMap.get(entry.dataKey) ?? '—'}
+              </span>
+            </div>
+          ))}
         </div>
       )}
     </div>
@@ -151,7 +162,7 @@ export default function RankingBumpChart({ enabled }: Props) {
   const totalUsers = series.length
   const chartWidth = Math.max(matches.length * COL_PX, 600)
   const desktopChartHeight = Math.max(DESKTOP_CHART_MIN_HEIGHT, totalUsers * DESKTOP_CHART_HEIGHT_PER_USER)
-  const yTicks = Array.from({ length: totalUsers }, (_, i) => i + 1)
+  const yTicks = Array.from(new Set(series.flatMap((s) => s.positions))).sort((a, b) => a - b)
 
   const toggleHighlight = (id: number) => setHighlightedId((prev) => (prev === id ? null : id))
 

@@ -66,7 +66,7 @@ export default function UserPositionChart({ userId }: Props) {
 
   const totalUsers = series.length
   const chartWidth = Math.max(matches.length * COL_PX, 300)
-  const yTicks = Array.from({ length: totalUsers }, (_, i) => i + 1)
+  const yTicks = Array.from(new Set(series.flatMap((s) => s.positions))).sort((a, b) => a - b)
 
   const rows = matches.map((_, i) => ({
     x: i + 1,

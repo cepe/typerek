@@ -46,19 +46,25 @@ RSpec.describe Typerek::Ranking::History do
       expect(bob_series.points[1]).to eq(2.0)
     end
 
-    it 'assigns unique sequential positions (no shared positions even on equal points)' do
-      amy = active_user('amy') # alphabetically first -> lower position number (higher rank)
+    it 'assigns shared positions for tied users, consistent with Ranking::Query' do
+      amy = active_user('amy')
+      bob = active_user('bob')
       zoe = active_user('zoe')
 
+      # amy and bob tie on match1 (both correct); zoe gets 0
       create(:answer, match: match1, user: amy, result: :win_a)
-      create(:answer, match: match1, user: zoe, result: :win_a)
+      create(:answer, match: match1, user: bob, result: :win_a)
+      create(:answer, match: match1, user: zoe, result: :tie)
 
       result = described_class.new.call
       amy_series = result.series.find { |s| s.user.username == 'amy' }
+      bob_series = result.series.find { |s| s.user.username == 'bob' }
       zoe_series = result.series.find { |s| s.user.username == 'zoe' }
 
+      # amy and bob are tied -> both get position 1; zoe is third -> position 3
       expect(amy_series.positions[0]).to eq(1)
-      expect(zoe_series.positions[0]).to eq(2)
+      expect(bob_series.positions[0]).to eq(1)
+      expect(zoe_series.positions[0]).to eq(3)
     end
 
     it 'excludes users who have not accepted their invitation' do
