@@ -25,5 +25,10 @@ module Typerek
     #
     config.time_zone = "Europe/Warsaw"
     config.i18n.default_locale = :pl
+
+    # Keep the PWA service worker (public/sw.js) out of the HTTP cache so clients pick
+    # up new deploys quickly. Sits above ActionDispatch::Static (string-referenced so
+    # Zeitwerk resolves it from app/middleware after autoloading is set up).
+    config.middleware.insert_before(0, 'ServiceWorkerCacheHeaders')
   end
 end
