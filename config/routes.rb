@@ -21,6 +21,8 @@ Rails.application.routes.draw do
       get 'ranking', to: 'rankings#show'
       get 'ranking/history', to: 'rankings#history'
 
+      get 'bets', to: 'bets#index'
+
       resources :users, only: %i[index create show destroy] do
         member do
           post :resend_invitation, path: 'resend-invitation'
