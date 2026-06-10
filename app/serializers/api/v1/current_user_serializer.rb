@@ -16,7 +16,10 @@ module Api
           discord_url: ENV['TYPEREK_DISCORD_URL'].presence,
           settings: {
             drzewko_mode: user.drzewko_mode?,
-            bet_lock: user.bet_lock?
+            bet_lock: user.bet_lock?,
+            push_enabled: user.push_enabled?,
+            push_results: user.push_results?,
+            push_reminders: user.push_reminders?
           }
         }
       end

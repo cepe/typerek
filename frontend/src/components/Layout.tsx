@@ -56,10 +56,21 @@ export default function Layout({ children }: { children: ReactNode }) {
                   <i className="fas fa-trophy" aria-hidden="true" /> Ranking
                 </NavLink>
               </li>
+              {/* Admin tools are icon-only on the desktop row (label + tooltip), so they
+                  don't overflow the menu; the mobile dropdown still shows their labels. */}
               {isAdmin && (
                 <li>
-                  <NavLink to="/users" className={linkClass}>
-                    <i className="far fa-envelope" aria-hidden="true" /> Zaproszenia
+                  <NavLink to="/users" className={linkClass} title="Zaproszenia">
+                    <i className="far fa-envelope" aria-hidden="true" />
+                    <span className="lg:hidden">Zaproszenia</span>
+                  </NavLink>
+                </li>
+              )}
+              {isAdmin && (
+                <li>
+                  <NavLink to="/admin/push" className={linkClass} title="Powiadomienia">
+                    <i className="fas fa-bullhorn" aria-hidden="true" />
+                    <span className="lg:hidden">Powiadomienia</span>
                   </NavLink>
                 </li>
               )}

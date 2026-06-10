@@ -6,6 +6,7 @@ services:
         - "UID=${UID:-1000}"
         - "GID=${GID:-1000}"
         - "RAILS_ENV=${RAILS_ENV:-production}"
+        - "VITE_VAPID_PUBLIC_KEY=${VAPID_PUBLIC_KEY:-}"
     env_file:
       - ".env.beta"
     restart: "unless-stopped"

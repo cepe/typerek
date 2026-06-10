@@ -31,7 +31,9 @@ module Api
       # Only known keys are accepted; values are coerced to booleans and merged
       # into the existing settings bag, so a partial update leaves the rest intact.
       def settings_params
-        params.require(:settings).permit(:drzewko_mode, :bet_lock).to_h.transform_values do |value|
+        params.require(:settings).permit(
+          :drzewko_mode, :bet_lock, :push_enabled, :push_results, :push_reminders
+        ).to_h.transform_values do |value|
           ActiveModel::Type::Boolean.new.cast(value)
         end
       end

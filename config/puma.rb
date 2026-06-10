@@ -43,3 +43,8 @@ pidfile ENV.fetch('PIDFILE', 'tmp/pids/server.pid')
 
 # Allow puma to be restarted by `rails restart` command.
 plugin :tmp_restart
+
+# Run the Solid Queue worker/dispatcher/scheduler inside this Puma process, so a
+# single container handles both web requests and background jobs (push delivery and
+# the hourly match-reminder recurring task). No separate worker process or Redis.
+plugin :solid_queue

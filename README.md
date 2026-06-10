@@ -54,6 +54,57 @@ Claude. Tools reuse the signed-in user's JWT and go through the same `/api/v1`
 validation as the UI — betting still locks at match start. See
 [`frontend/src/webmcp/`](frontend/src/webmcp/).
 
+## Push notifications
+
+The app sends [Web Push](https://developer.mozilla.org/en-US/docs/Web/API/Push_API)
+notifications to opted-in users (no Firebase — the PWA's service worker talks directly to
+the browser's push service). Two kinds:
+
+- **Match result entered** — when an admin saves a final score, everyone who opted in is
+  told the result and that the ranking updated. Fired straight from the result update.
+- **Unbet match reminders** — an hourly job nudges users who haven't bet a match yet at
+  24h, 6h and 1h before kickoff (one push per window, deduplicated). Admins can also send
+  an arbitrary broadcast from **Powiadomienia** in the nav (handy for testing).
+
+Notifications are **opt-in**: each user turns them on under **Ustawienia → Powiadomienia
+push**, which asks for browser permission and registers that device. Once on, they can
+pick which kinds they want — match results and/or unbet reminders — independently.
+
+Delivery runs on [Solid Queue](https://github.com/rails/solid_queue) (DB-backed, no
+Redis); its worker/scheduler runs *inside* Puma via a plugin, so the single `web`
+container handles it — nothing to add to nginx or systemd.
+
+> **iOS/iPadOS:** Web Push only works for a PWA **added to the home screen** (iOS 16.4+),
+> not a regular Safari tab. This is an Apple limitation and applies to Firebase too.
+
+### Setup
+
+1. **Generate a VAPID key pair** (no Ruby needed on the host — runs in the container):
+   ```bash
+   docker compose run --rm web bundle exec rake typerek:vapid_keys
+   ```
+
+2. **Set the keys** in `.env` (from the command's output):
+   ```bash
+   export VAPID_PUBLIC_KEY=...
+   export VAPID_PRIVATE_KEY=...
+   export VAPID_SUBJECT=mailto:you@example.com
+   ```
+   The public key is passed into the SPA build automatically (the
+   `VITE_VAPID_PUBLIC_KEY` build arg reads `VAPID_PUBLIC_KEY`), so you don't set it twice.
+
+3. **Rebuild, migrate, restart** so the SPA bakes in the key, the new tables are
+   created, and the in-Puma Solid Queue worker picks them up:
+   ```bash
+   docker compose up --build -d
+   docker compose exec web rails db:migrate   # push_subscriptions + Solid Queue tables
+   docker compose restart web
+   ```
+
+Leaving the VAPID vars unset disables push entirely — the app still boots and the toggle
+just stays unavailable. For local `npm run dev`, put `VITE_VAPID_PUBLIC_KEY=...` in
+`frontend/.env` instead (the Vite build arg only applies to the Docker image).
+
 ## Beta instance
 
 Run a second instance on port `8001` against the same database, to test changes before

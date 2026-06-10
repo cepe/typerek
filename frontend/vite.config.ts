@@ -35,6 +35,10 @@ export default defineConfig({
         ],
       },
       workbox: {
+        // Pull in the Web Push handlers (push + notificationclick). Kept as a plain
+        // unbundled file in public/ and imported at SW startup, so the generated
+        // Workbox service worker still owns all precaching/navigation below.
+        importScripts: ['push-sw.js'],
         // Precache only the app shell: hashed JS/CSS, the HTML, self-hosted fonts and
         // the PWA icons. Deliberately exclude the ~540 lazily-loaded flag SVGs under
         // assets/ (~6 MB) — they'd bloat the install. They're runtime-cached on demand.

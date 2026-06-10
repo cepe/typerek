@@ -16,5 +16,7 @@ class Ability
     can :manage, Match
     # Only the administrator can manage users
     can :manage, User
+    # Only the administrator can broadcast a push notification to everyone
+    can :broadcast, :push
   end
 end

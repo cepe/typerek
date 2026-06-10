@@ -24,6 +24,13 @@ Rails.application.routes.draw do
 
       get 'bets', to: 'bets#index'
 
+      # Web Push: a device registers/removes its subscription; admins broadcast.
+      namespace :push do
+        post 'subscriptions', to: 'subscriptions#create'
+        delete 'subscriptions', to: 'subscriptions#destroy'
+        post 'broadcast', to: 'broadcasts#create'
+      end
+
       resources :users, only: %i[index create show destroy] do
         member do
           post :resend_invitation, path: 'resend-invitation'
