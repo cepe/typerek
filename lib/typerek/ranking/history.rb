@@ -19,19 +19,11 @@ module Typerek
 
       CACHE_KEY = 'api/v1/ranking_history'
 
-      # Fingerprint of every input that can change the chart. Bets are locked
-      # once a match starts (see Typerek::MakeBet::Handler), so answers of
-      # finished matches are immutable — the chart only moves when a match is
-      # edited (results/date) or the set of users changes. Both bump the
-      # respective table's max(updated_at)/count, so this string changes exactly
-      # when a recompute is needed and the cache self-invalidates.
+      # The bump chart depends on exactly the same inputs as the live ranking
+      # (finished-match results and the set of users), so it reuses the ranking's
+      # fingerprint rather than duplicating it. See Query.cache_version.
       def self.cache_version
-        [
-          Match.maximum(:updated_at)&.to_f,
-          Match.count,
-          User.maximum(:updated_at)&.to_f,
-          User.count
-        ].join('-')
+        Query.cache_version
       end
 
       def call
