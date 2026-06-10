@@ -7,6 +7,10 @@ module Api
         render json: CurrentUserSerializer.call(current_user)
       end
 
+      def settings_stats
+        render json: User.settings_counts
+      end
+
       def update_settings
         # Persist only the settings bag, skipping validations: the User model
         # requires a password on every update (it is set during invitation

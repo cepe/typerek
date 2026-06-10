@@ -38,6 +38,15 @@ class User < ApplicationRecord
     update(params.merge(invitation_accepted_at: DateTime.now))
   end
 
+  # Number of users with each setting switched on, keyed by the setting name.
+  # Powers the "Włączone przez N osób" hint on the settings screen. Users who have
+  # never toggled anything store no key and so are naturally counted as "off".
+  def self.settings_counts
+    SETTINGS_DEFAULTS.keys.index_with do |key|
+      where("settings ->> ? = 'true'", key).count
+    end
+  end
+
   def settings_with_defaults
     SETTINGS_DEFAULTS.merge(settings || {})
   end

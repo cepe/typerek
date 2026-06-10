@@ -27,6 +27,26 @@ RSpec.describe 'API V1 Profile', type: :request do
     end
   end
 
+  describe 'GET /api/v1/me/settings/stats' do
+    let(:user) { create(:user, :active) }
+
+    it 'returns how many users have each setting enabled' do
+      create(:user, :active, settings: { 'drzewko_mode' => true, 'bet_lock' => true })
+      create(:user, :active, settings: { 'drzewko_mode' => true })
+
+      get '/api/v1/me/settings/stats', headers: auth_headers(user)
+
+      expect(response).to have_http_status(:ok)
+      expect(json).to eq('drzewko_mode' => 2, 'bet_lock' => 1)
+    end
+
+    it 'returns 401 without a token' do
+      get '/api/v1/me/settings/stats'
+
+      expect(response).to have_http_status(:unauthorized)
+    end
+  end
+
   describe 'PATCH /api/v1/me/settings' do
     let(:user) { create(:user, :active) }
 
