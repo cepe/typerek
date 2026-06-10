@@ -55,8 +55,10 @@ module Typerek
           end
 
           ordered = sort_users(users, cumulative)
-          ordered.each_with_index do |user, idx|
-            series_data[user.id][:positions] << idx + 1
+          ranked_points = ordered.map { |u| cumulative[u.id] }
+          ordered.each do |user|
+            position = ranked_points.index(cumulative[user.id]) + 1
+            series_data[user.id][:positions] << position
             series_data[user.id][:points]    << cumulative[user.id]
           end
         end
