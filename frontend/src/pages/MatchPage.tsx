@@ -4,6 +4,7 @@ import { useAuth } from '@/auth/AuthContext'
 import { ErrorBox, Loading } from '@/components/Status'
 import Flag from '@/components/Flag'
 import BetGrid from '@/components/BetGrid'
+import LockToggle from '@/components/LockToggle'
 import { BET_TYPES, betPillClass, winningBets } from '@/lib/bets'
 import { formatShort, formattedOdds, formattedScore } from '@/lib/format'
 import { useDocumentTitle } from '@/lib/useDocumentTitle'
@@ -68,6 +69,7 @@ export default function MatchPage() {
           <h3 className="flex items-center gap-2">
             <i className="fas fa-user text-brand" aria-hidden="true" /> Twój typ
           </h3>
+          <LockToggle match={match} />
         </div>
         <div className="card-body">
           {!match.started && <p className="mb-3 text-sm text-muted">Wybierz swój typ, klikając w kurs:</p>}

@@ -13,7 +13,11 @@ module Api
           username: user.username,
           admin: user.admin?,
           standing: entry && { rank: entry.position, points: entry.points },
-          discord_url: ENV['TYPEREK_DISCORD_URL'].presence
+          discord_url: ENV['TYPEREK_DISCORD_URL'].presence,
+          settings: {
+            drzewko_mode: user.drzewko_mode?,
+            bet_lock: user.bet_lock?
+          }
         }
       end
     end

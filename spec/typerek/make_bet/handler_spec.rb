@@ -30,6 +30,24 @@ RSpec.describe Typerek::MakeBet::Handler do
       end
     end
 
+    context 'when the existing answer is locked' do
+      it 'raises error when the user enabled the bet lock' do
+        user.update_column(:settings, { 'bet_lock' => true })
+        create(:answer, :locked, match: match, user: user, result: :tie)
+
+        expect do
+          described_class.new(match_id: match.id, user_id: user.id, result: :win_a).call
+        end.to raise_error(Typerek::AnswerLockedError)
+      end
+
+      it 'allows the change when the user disabled the bet lock' do
+        answer = create(:answer, :locked, match: match, user: user, result: :tie)
+        described_class.new(match_id: match.id, user_id: user.id, result: :win_a).call
+
+        expect(answer.reload.result).to eq('win_a')
+      end
+    end
+
     context 'when match is started' do
       it 'raises error' do
         match.update(start: Time.current)

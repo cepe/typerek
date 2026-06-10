@@ -7,7 +7,8 @@ module Api
       def self.call(answer)
         {
           match_id: answer.match_id,
-          result: answer.result
+          result: answer.result,
+          locked: answer.locked
         }
       end
     end

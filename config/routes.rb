@@ -9,9 +9,13 @@ Rails.application.routes.draw do
       post 'auth/login', to: 'auth#login'
       post 'auth/logout', to: 'auth#logout'
       get 'me', to: 'profile#show'
+      patch 'me/settings', to: 'profile#update_settings'
 
       resources :matches, only: %i[index show update] do
-        member { put :bet }
+        member do
+          put :bet
+          put :lock
+        end
       end
 
       get 'ranking', to: 'rankings#show'

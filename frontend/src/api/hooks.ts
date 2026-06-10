@@ -100,6 +100,19 @@ export function usePlaceBet() {
   })
 }
 
+// Locks or unlocks the viewer's bet on a match so it can't be changed by accident.
+export function useToggleLock() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: ({ matchId, locked }: { matchId: number; locked: boolean }) =>
+      api.put<Answer>(`/matches/${matchId}/lock`, { locked }),
+    onSuccess: (_data, variables) => {
+      qc.invalidateQueries({ queryKey: queryKeys.matches })
+      qc.invalidateQueries({ queryKey: queryKeys.match(variables.matchId) })
+    },
+  })
+}
+
 export function useUpdateMatch(id: number) {
   const qc = useQueryClient()
   return useMutation({

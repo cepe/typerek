@@ -1,6 +1,10 @@
 # frozen_string_literal: true
 
 class User < ApplicationRecord
+  # Per-user UI preferences, stored in the `settings` jsonb column. New keys can be
+  # added here without a migration; everything defaults to off.
+  SETTINGS_DEFAULTS = { 'drzewko_mode' => false, 'bet_lock' => false }.freeze
+
   has_secure_password validations: false
 
   generates_token_for :invitation, expires_in: 72.hours do
@@ -32,5 +36,17 @@ class User < ApplicationRecord
 
   def accept_invitation(params = {})
     update(params.merge(invitation_accepted_at: DateTime.now))
+  end
+
+  def settings_with_defaults
+    SETTINGS_DEFAULTS.merge(settings || {})
+  end
+
+  def drzewko_mode?
+    settings_with_defaults['drzewko_mode'] == true
+  end
+
+  def bet_lock?
+    settings_with_defaults['bet_lock'] == true
   end
 end

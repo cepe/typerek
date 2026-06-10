@@ -1,5 +1,6 @@
 import { BET_TYPES, betPillClass, winningBets } from '@/lib/bets'
 import { formattedOdds } from '@/lib/format'
+import { useSettings } from '@/lib/settings'
 import type { BetType, Match } from '@/api/types'
 
 interface Props {
@@ -12,9 +13,13 @@ interface Props {
 
 // The 1 / X / 2 / 1X / X2 / 12 row. Mirrors matches/_buttons.html.erb: a started
 // match locks the pills, the chosen pill is highlighted, and a finished match
-// marks the viewer's own pick as a hit or a miss.
+// marks the viewer's own pick as a hit or a miss. A bet the viewer locked
+// (my_locked) is read-only too, until they unlock it via LockToggle.
 export default function BetGrid({ match, myAnswer, onBet, pending }: Props) {
-  const interactive = Boolean(onBet) && !match.started
+  const { betLock } = useSettings()
+  // The lock only restricts editing when the viewer has the feature enabled.
+  const locked = betLock && match.my_locked
+  const interactive = Boolean(onBet) && !match.started && !locked
   const scored = match.finished ? new Set(winningBets(match.result_a, match.result_b)) : null
 
   return (

@@ -6,6 +6,25 @@ module Api
       def show
         render json: CurrentUserSerializer.call(current_user)
       end
+
+      def update_settings
+        # Persist only the settings bag, skipping validations: the User model
+        # requires a password on every update (it is set during invitation
+        # acceptance, never present here), which would otherwise reject this.
+        current_user.settings = current_user.settings.merge(settings_params)
+        current_user.save!(validate: false)
+        render json: CurrentUserSerializer.call(current_user)
+      end
+
+      private
+
+      # Only known keys are accepted; values are coerced to booleans and merged
+      # into the existing settings bag, so a partial update leaves the rest intact.
+      def settings_params
+        params.require(:settings).permit(:drzewko_mode, :bet_lock).to_h.transform_values do |value|
+          ActiveModel::Type::Boolean.new.cast(value)
+        end
+      end
     end
   end
 end
