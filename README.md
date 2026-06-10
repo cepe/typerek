@@ -59,6 +59,61 @@ deploying to production.
 > main app, so run migrations with care — a non-backwards-compatible migration on beta can
 > affect production.
 
+## Database backups
+
+The production database is the `typerek_production` database inside the `postgres`
+service. Its data lives on the named Docker volume `postgres`
+(`/var/lib/postgresql/data`), so it survives container restarts and rebuilds — but **not**
+`docker compose down -v` or a lost host. Take logical dumps regularly.
+
+`pg_dump` runs inside the container, so you never need to install Postgres on the host.
+Local socket connections are trusted, so no password is required. `POSTGRES_USER` is read
+from the container's environment.
+
+**Create a backup** (custom format, compressed — the most flexible to restore):
+
+```bash
+docker compose exec -T postgres \
+  sh -c 'pg_dump -U "$POSTGRES_USER" -Fc typerek_production' \
+  > typerek_$(date +%F).dump
+```
+
+Prefer a plain SQL dump you can read/grep? Pipe it through gzip:
+
+```bash
+docker compose exec -T postgres \
+  sh -c 'pg_dump -U "$POSTGRES_USER" typerek_production' \
+  | gzip > typerek_$(date +%F).sql.gz
+```
+
+**Restore** a custom-format dump (drops and recreates objects in place — stop the `web`
+service first so nothing writes mid-restore):
+
+```bash
+docker compose stop web
+docker compose exec -T postgres \
+  sh -c 'pg_restore -U "$POSTGRES_USER" --clean --if-exists -d typerek_production' \
+  < typerek_2026-06-10.dump
+docker compose start web
+```
+
+A gzipped SQL dump restores by piping into `psql`:
+
+```bash
+gunzip -c typerek_2026-06-10.sql.gz \
+  | docker compose exec -T postgres sh -c 'psql -U "$POSTGRES_USER" typerek_production'
+```
+
+**Schedule it** with a host cron entry (run from the project directory so Compose finds
+`.env` and `docker-compose.yaml`). Daily at 03:00, keeping the last 14 days:
+
+```cron
+0 3 * * * cd /path/to/typerek && docker compose exec -T postgres sh -c 'pg_dump -U "$POSTGRES_USER" -Fc typerek_production' > backups/typerek_$(date +\%F).dump && find backups -name 'typerek_*.dump' -mtime +14 -delete
+```
+
+> Dumps contain every user's data — store them off the production host (e.g. an
+> object-storage bucket) and treat them as secrets.
+
 ## Credits
 
 Team flags come from [flag-icons](https://github.com/lipis/flag-icons) (MIT). The package is
