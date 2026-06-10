@@ -7,6 +7,11 @@
 #
 # Inserted at the top of the stack (above ActionDispatch::Static), it can adjust the
 # response headers regardless of whether Rails or the static middleware served the file.
+#
+# Lives in lib/ (ignored by Zeitwerk, required explicitly from config/application.rb)
+# rather than app/: middleware must be a stable, non-reloadable constant, and the Rails
+# 7.1 stack calls `klass.new` without constantizing — so it needs the real class, not a
+# string, available before the stack is built.
 class ServiceWorkerCacheHeaders
   SW_PATH = '/sw.js'
 
