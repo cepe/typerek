@@ -11,6 +11,10 @@ interface AuthState {
   applyAuth: (result: AuthResult) => void
   signOut: () => void
   refresh: () => Promise<void>
+  // Merge fields into the cached user without a round trip — used after a write
+  // that already returns the updated slice (e.g. saving settings), so we avoid a
+  // full, slow GET /me just to learn what we just changed.
+  patchUser: (partial: Partial<CurrentUser>) => void
 }
 
 const AuthContext = createContext<AuthState | undefined>(undefined)
@@ -69,6 +73,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setUser(data)
   }, [])
 
+  const patchUser = useCallback((partial: Partial<CurrentUser>) => {
+    setUser((prev) => (prev ? { ...prev, ...partial } : prev))
+  }, [])
+
   const value: AuthState = {
     user,
     loading,
@@ -78,6 +86,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     applyAuth,
     signOut,
     refresh,
+    patchUser,
   }
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>

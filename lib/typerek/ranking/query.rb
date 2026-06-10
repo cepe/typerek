@@ -26,6 +26,25 @@ module Typerek
         ].join('-')
       end
 
+      # Position + points for every active user, keyed by user id, as plain data
+      # (an Entry wraps an AR record and does not cache cleanly). Shares the public
+      # ranking's fingerprint via cache_version, so it self-invalidates on exactly
+      # the same inputs — and spares GET /me from recomputing the whole ranking on
+      # every request.
+      def self.standings
+        Rails.cache.fetch([CACHE_KEY, 'standings', cache_version], expires_in: 1.day) do
+          new.call.each_with_object({}) do |entry, standings|
+            standings[entry.user.id] = { position: entry.position, points: entry.points }
+          end
+        end
+      end
+
+      # The given user's standing ({ position:, points: }) for the app header, or
+      # nil when they are not active and so not part of the ranking.
+      def self.standing_for(user)
+        standings[user.id]
+      end
+
       def call
         ordered = active_users.sort do |a, b|
           comparison = b.points <=> a.points

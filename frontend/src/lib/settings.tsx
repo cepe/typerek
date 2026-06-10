@@ -30,14 +30,16 @@ function fromServer(settings: UserSettings | undefined): Settings {
 }
 
 interface SettingsState extends Settings {
-  setDrzewkoMode: (value: boolean) => void
-  setBetLock: (value: boolean) => void
+  // Resolve once the save has settled (whether it persisted or was rolled back),
+  // so callers can reconcile any optimistic UI they showed in the meantime.
+  setDrzewkoMode: (value: boolean) => Promise<void>
+  setBetLock: (value: boolean) => Promise<void>
 }
 
 const SettingsContext = createContext<SettingsState | undefined>(undefined)
 
 export function SettingsProvider({ children }: { children: ReactNode }) {
-  const { user, refresh } = useAuth()
+  const { user, patchUser } = useAuth()
   const [settings, setSettings] = useState<Settings>(() => fromServer(user?.settings))
 
   // Re-sync whenever the signed-in user (and their persisted settings) changes.
@@ -45,13 +47,14 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
     setSettings(fromServer(user?.settings))
   }, [user])
 
-  // Update locally first (snappy toggle), then persist. On failure, fall back to
-  // whatever the server currently holds.
-  const persist = (optimistic: Partial<Settings>, patch: Partial<UserSettings>) => {
+  // Update locally first (snappy toggle), then persist. The PATCH returns just the
+  // updated settings, so we fold them into the cached user instead of paying for a
+  // full GET /me. On failure, fall back to whatever the server currently holds.
+  const persist = (optimistic: Partial<Settings>, patch: Partial<UserSettings>): Promise<void> => {
     setSettings((prev) => ({ ...prev, ...optimistic }))
-    api
-      .patch('/me/settings', { settings: patch })
-      .then(() => refresh())
+    return api
+      .patch<{ settings: UserSettings }>('/me/settings', { settings: patch })
+      .then((res) => patchUser({ settings: res.settings }))
       .catch(() => setSettings(fromServer(user?.settings)))
   }
 
