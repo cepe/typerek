@@ -26,13 +26,13 @@ beforeEach(() => {
 })
 
 describe('registerWebMcpTools', () => {
-  it('registers all 7 tools on an existing navigator.modelContext', async () => {
+  it('registers all 8 tools on an existing navigator.modelContext', async () => {
     vi.stubGlobal('navigator', { modelContext: { registerTool } })
     const { registerWebMcpTools } = await import('./register')
 
     await registerWebMcpTools(new QueryClient())
 
-    expect(registerTool).toHaveBeenCalledTimes(7)
+    expect(registerTool).toHaveBeenCalledTimes(8)
   })
 
   it('is idempotent (StrictMode double-effect safe)', async () => {
@@ -43,7 +43,7 @@ describe('registerWebMcpTools', () => {
     await registerWebMcpTools(queryClient)
     await registerWebMcpTools(queryClient)
 
-    expect(registerTool).toHaveBeenCalledTimes(7)
+    expect(registerTool).toHaveBeenCalledTimes(8)
   })
 
   it('loads the polyfill when navigator.modelContext is absent', async () => {
@@ -52,6 +52,6 @@ describe('registerWebMcpTools', () => {
 
     await registerWebMcpTools(new QueryClient())
 
-    expect(registerTool).toHaveBeenCalledTimes(7)
+    expect(registerTool).toHaveBeenCalledTimes(8)
   })
 })
