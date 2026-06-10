@@ -3,6 +3,7 @@
 class Match < ApplicationRecord
   has_many :answers, dependent: :destroy
   has_many :users, through: :answers
+  has_many :match_reminders, dependent: :destroy
 
   validates :team_a, :team_b, presence: true, length: { maximum: 255 }
   validates :win_a, :tie, :win_b, :win_tie_a, :win_tie_b, :not_tie,

@@ -66,7 +66,7 @@ const api = {
   post: <T>(path: string, body?: RequestBody) => request<T>('POST', path, body),
   put: <T>(path: string, body?: RequestBody) => request<T>('PUT', path, body),
   patch: <T>(path: string, body?: RequestBody) => request<T>('PATCH', path, body),
-  delete: <T = void>(path: string) => request<T>('DELETE', path),
+  delete: <T = void>(path: string, body?: RequestBody) => request<T>('DELETE', path, body),
 }
 
 // Pull a user-facing message out of an API error, with a fallback.

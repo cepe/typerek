@@ -1,10 +1,12 @@
 import { useCallback, useEffect, useState } from 'react'
 import api from '@/api/client'
 import { useSettings } from '@/lib/settings'
+import { usePushSubscription, pushSupported } from '@/lib/usePushSubscription'
 import { useDocumentTitle } from '@/lib/useDocumentTitle'
+import Alert from '@/components/Alert'
 
 // Number of users with each setting switched on, keyed by the server setting name.
-type SettingsStats = { drzewko_mode: number; bet_lock: number }
+type SettingsStats = { drzewko_mode: number; bet_lock: number; push_enabled: number }
 
 // Polish accusative of "osoba" for the "Włączone przez N osób" hint:
 // 1 → osobę, 2–4 (but not 12–14) → osoby, otherwise → osób.
@@ -27,8 +29,23 @@ function UsageHint({ count }: { count: number | undefined }) {
 }
 
 export default function SettingsPage() {
-  const { drzewkoMode, setDrzewkoMode, betLock, setBetLock } = useSettings()
+  const {
+    drzewkoMode,
+    setDrzewkoMode,
+    betLock,
+    setBetLock,
+    pushEnabled,
+    setPushEnabled,
+    pushResults,
+    setPushResults,
+    pushReminders,
+    setPushReminders,
+  } = useSettings()
+  const { subscribe, unsubscribe } = usePushSubscription()
   const [stats, setStats] = useState<SettingsStats | null>(null)
+  const [pushBusy, setPushBusy] = useState(false)
+  const [pushError, setPushError] = useState<string | null>(null)
+  const supported = pushSupported()
 
   useDocumentTitle('Ustawienia')
 
@@ -57,13 +74,106 @@ export default function SettingsPage() {
     void set(checked).finally(refreshStats)
   }
 
+  // Push needs the browser permission + a device subscription before we persist the
+  // opt-in, so it can't use the generic `toggle` above. Enabling only sticks if the
+  // user granted permission and the device subscribed; disabling also tears the
+  // device subscription down. The usage count is bumped optimistically, then
+  // reconciled with the server once the save settles.
+  const handlePushToggle = async (checked: boolean) => {
+    setPushError(null)
+    setPushBusy(true)
+    try {
+      if (checked) {
+        const ok = await subscribe()
+        if (!ok) {
+          setPushError('Nie udało się włączyć powiadomień. Sprawdź, czy zezwoliłeś na nie w przeglądarce.')
+          return
+        }
+        setStats((prev) => (prev ? { ...prev, push_enabled: prev.push_enabled + 1 } : prev))
+        await setPushEnabled(true).finally(refreshStats)
+      } else {
+        setStats((prev) => (prev ? { ...prev, push_enabled: Math.max(0, prev.push_enabled - 1) } : prev))
+        await setPushEnabled(false).finally(refreshStats)
+        await unsubscribe()
+      }
+    } finally {
+      setPushBusy(false)
+    }
+  }
+
   return (
     <>
       <h1 className="mb-4 flex items-center gap-2">
         <i className="fas fa-cog text-brand" aria-hidden="true" /> Ustawienia
       </h1>
 
+      {pushError && (
+        <Alert kind="alert" onClose={() => setPushError(null)}>
+          {pushError}
+        </Alert>
+      )}
+
       <section className="card divide-y divide-line/60">
+        <div>
+          <label className="flex cursor-pointer items-start gap-3 px-4 py-4 sm:px-5">
+            <input
+              type="checkbox"
+              className="mt-0.5 h-5 w-5 shrink-0 accent-brand"
+              checked={pushEnabled}
+              disabled={!supported || pushBusy}
+              onChange={(event) => handlePushToggle(event.target.checked)}
+            />
+            <span className="leading-snug">
+              <span className="block font-semibold text-ink">Powiadomienia push</span>
+              <span className="block text-muted">
+                Powiadomienia o meczach — działają też przy zamkniętej aplikacji. Po włączeniu wybierz
+                poniżej, co chcesz dostawać.
+              </span>
+              {!supported && (
+                <span className="mt-1.5 block text-xs font-medium text-muted">
+                  Ta przeglądarka nie obsługuje powiadomień. Na iPhone/iPad dodaj aplikację do ekranu
+                  głównego, aby je włączyć.
+                </span>
+              )}
+              <UsageHint count={stats?.push_enabled} />
+            </span>
+          </label>
+
+          {pushEnabled && supported && (
+            <div className="space-y-3 border-t border-line/40 bg-surface/40 px-4 py-3 pl-12 sm:px-5 sm:pl-14">
+              <label className="flex cursor-pointer items-start gap-3">
+                <input
+                  type="checkbox"
+                  className="mt-0.5 h-4 w-4 shrink-0 accent-brand"
+                  checked={pushResults}
+                  onChange={(event) => void setPushResults(event.target.checked)}
+                />
+                <span className="leading-snug">
+                  <span className="block text-sm font-medium text-ink">Wyniki meczów</span>
+                  <span className="block text-xs text-muted">
+                    Gdy ktoś wpisze wynik meczu i zaktualizuje się ranking.
+                  </span>
+                </span>
+              </label>
+
+              <label className="flex cursor-pointer items-start gap-3">
+                <input
+                  type="checkbox"
+                  className="mt-0.5 h-4 w-4 shrink-0 accent-brand"
+                  checked={pushReminders}
+                  onChange={(event) => void setPushReminders(event.target.checked)}
+                />
+                <span className="leading-snug">
+                  <span className="block text-sm font-medium text-ink">Przypomnienia o meczach</span>
+                  <span className="block text-xs text-muted">
+                    Gdy zbliża się mecz, którego jeszcze nie wytypowałeś (24h, 6h i 1h przed startem).
+                  </span>
+                </span>
+              </label>
+            </div>
+          )}
+        </div>
+
         <label className="flex cursor-pointer items-start gap-3 px-4 py-4 sm:px-5">
           <input
             type="checkbox"

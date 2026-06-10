@@ -22,6 +22,11 @@ export interface Standing {
 export interface UserSettings {
   drzewko_mode: boolean
   bet_lock: boolean
+  // Opt-in master switch for Web Push notifications.
+  push_enabled: boolean
+  // Which kinds of push the user wants (only relevant when push_enabled). Default on.
+  push_results: boolean
+  push_reminders: boolean
 }
 
 export interface CurrentUser {

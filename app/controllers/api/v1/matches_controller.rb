@@ -24,7 +24,11 @@ module Api
         match = Match.find(params[:id])
         authorize! :update, match
 
+        # Notify (#1) only on the transition into "finished" — i.e. the result was
+        # just entered — not on every later edit of an already-finished match.
+        was_finished = match.finished?
         if match.update(match_params)
+          NotifyMatchResultJob.perform_later(match.id) if !was_finished && match.finished?
           render json: detail(match)
         else
           unprocessable!(match)

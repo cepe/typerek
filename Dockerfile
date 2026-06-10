@@ -27,6 +27,12 @@ FROM node:20-slim AS frontend
 
 WORKDIR /frontend
 
+# Public VAPID key for Web Push, baked into the SPA at build time (Vite inlines
+# VITE_* vars). Passed as a build arg from docker-compose (sourced from the backend's
+# VAPID_PUBLIC_KEY); empty just leaves the push toggle unavailable.
+ARG VITE_VAPID_PUBLIC_KEY=""
+ENV VITE_VAPID_PUBLIC_KEY=${VITE_VAPID_PUBLIC_KEY}
+
 COPY frontend/package.json frontend/package-lock.json ./
 RUN npm ci
 

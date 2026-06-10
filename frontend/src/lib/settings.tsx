@@ -14,11 +14,20 @@ interface Settings {
   // Show the padlock that locks a bet against accidental changes. Opt-in: not
   // everyone wants the extra control, so it is off by default.
   betLock: boolean
+  // Opt-in master switch for Web Push notifications. The browser subscription side
+  // effects live in usePushSubscription; this only mirrors the persisted flag.
+  pushEnabled: boolean
+  // Which kinds of push the user wants (only meaningful when pushEnabled). Default on.
+  pushResults: boolean
+  pushReminders: boolean
 }
 
 const DEFAULTS: Settings = {
   drzewkoMode: false,
   betLock: false,
+  pushEnabled: false,
+  pushResults: true,
+  pushReminders: true,
 }
 
 // Map between the server shape (snake_case, the API contract) and ours (camelCase).
@@ -26,6 +35,9 @@ function fromServer(settings: UserSettings | undefined): Settings {
   return {
     drzewkoMode: settings?.drzewko_mode ?? DEFAULTS.drzewkoMode,
     betLock: settings?.bet_lock ?? DEFAULTS.betLock,
+    pushEnabled: settings?.push_enabled ?? DEFAULTS.pushEnabled,
+    pushResults: settings?.push_results ?? DEFAULTS.pushResults,
+    pushReminders: settings?.push_reminders ?? DEFAULTS.pushReminders,
   }
 }
 
@@ -34,6 +46,9 @@ interface SettingsState extends Settings {
   // so callers can reconcile any optimistic UI they showed in the meantime.
   setDrzewkoMode: (value: boolean) => Promise<void>
   setBetLock: (value: boolean) => Promise<void>
+  setPushEnabled: (value: boolean) => Promise<void>
+  setPushResults: (value: boolean) => Promise<void>
+  setPushReminders: (value: boolean) => Promise<void>
 }
 
 const SettingsContext = createContext<SettingsState | undefined>(undefined)
@@ -62,6 +77,9 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
     ...settings,
     setDrzewkoMode: (drzewkoMode) => persist({ drzewkoMode }, { drzewko_mode: drzewkoMode }),
     setBetLock: (betLock) => persist({ betLock }, { bet_lock: betLock }),
+    setPushEnabled: (pushEnabled) => persist({ pushEnabled }, { push_enabled: pushEnabled }),
+    setPushResults: (pushResults) => persist({ pushResults }, { push_results: pushResults }),
+    setPushReminders: (pushReminders) => persist({ pushReminders }, { push_reminders: pushReminders }),
   }
 
   return <SettingsContext.Provider value={value}>{children}</SettingsContext.Provider>

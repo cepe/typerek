@@ -30,6 +30,11 @@ module Typerek
     config.time_zone = "Europe/Warsaw"
     config.i18n.default_locale = :pl
 
+    # Run background jobs (push delivery, match reminders) on the DB-backed Solid
+    # Queue. The worker runs inside Puma via its plugin (see config/puma.rb), so no
+    # extra process or Redis is needed. Overridden to :test in the test environment.
+    config.active_job.queue_adapter = :solid_queue
+
     # Keep the PWA service worker (public/sw.js) out of the HTTP cache so clients pick
     # up new deploys quickly. Inserted at the top so it sits above ActionDispatch::Static.
     config.middleware.insert_before(0, ServiceWorkerCacheHeaders)

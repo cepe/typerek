@@ -5,6 +5,8 @@ x-app: &default-app
       - "UID=${UID:-1000}"
       - "GID=${GID:-1000}"
       - "RAILS_ENV=${RAILS_ENV:-production}"
+      # Bake the public VAPID key into the SPA build so the browser can subscribe.
+      - "VITE_VAPID_PUBLIC_KEY=${VAPID_PUBLIC_KEY:-}"
   depends_on:
     - "postgres"
   env_file:
