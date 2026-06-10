@@ -46,18 +46,25 @@ module Typerek
       end
 
       def call
-        ordered = active_users.sort do |a, b|
-          comparison = b.points <=> a.points
-          comparison.zero? ? a.username.downcase <=> b.username.downcase : comparison
+        # Score every user once up front. Computing points lazily inside the sort
+        # comparator instead means re-summing each user's answers on every
+        # comparison (O(n log n) times), which is what made the ranking slow.
+        scored = active_users.map do |user|
+          { user: user, points: user.points, accuracy: user.accuracy }
         end
 
-        points = ordered.map(&:points)
-        ordered.map do |user|
+        scored.sort! do |a, b|
+          by_points = b[:points] <=> a[:points]
+          by_points.zero? ? a[:user].username.downcase <=> b[:user].username.downcase : by_points
+        end
+
+        points = scored.map { |row| row[:points] }
+        scored.map do |row|
           Entry.new(
-            user: user,
-            points: user.points,
-            accuracy: user.accuracy,
-            position: points.index(user.points) + 1
+            user: row[:user],
+            points: row[:points],
+            accuracy: row[:accuracy],
+            position: points.index(row[:points]) + 1
           )
         end
       end
