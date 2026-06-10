@@ -4,7 +4,14 @@ module Api
   module V1
     class RankingsController < BaseController
       def show
-        render json: RankingEntrySerializer.many(Typerek::Ranking::Query.new.call)
+        query = Typerek::Ranking::Query
+        json = Rails.cache.fetch(
+          [query::CACHE_KEY, query.cache_version],
+          expires_in: 1.day
+        ) do
+          RankingEntrySerializer.many(query.new.call).to_json
+        end
+        render json: json
       end
 
       def history
