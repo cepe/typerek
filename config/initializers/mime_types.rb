@@ -3,3 +3,8 @@
 
 # Add new mime types for use in respond_to blocks:
 # Mime::Type.register "text/richtext", :rtf
+
+# The static middleware serves the PWA manifest (public/manifest.webmanifest) by
+# extension. Rack doesn't know `.webmanifest`, so register it or it goes out as
+# text/plain. (This is Rack::Mime, separate from Rails' Mime::Type above.)
+Rack::Mime::MIME_TYPES['.webmanifest'] = 'application/manifest+json'

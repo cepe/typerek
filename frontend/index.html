@@ -3,19 +3,21 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="description" content="Typuj wyniki meczów piłkarskich ze znajomymi." />
     <link rel="icon" type="image/svg+xml" href="/icon.svg" />
-    <link rel="preconnect" href="https://fonts.googleapis.com" />
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link
-      href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap"
-      rel="stylesheet"
-    />
-    <!-- Font Awesome 6 (free). Icons use the style prefixes: fas (solid),
-         far (regular), fab (brands, e.g. the Discord mark). -->
-    <link
-      rel="stylesheet"
-      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css"
-    />
+    <!-- Fonts (Roboto) and Font Awesome are self-hosted and imported from src/main.tsx
+         (see @fontsource/roboto and @fortawesome/fontawesome-free) — no CDN. -->
+
+    <!-- PWA / installability. The web app manifest link is injected at build time by
+         vite-plugin-pwa; these tags cover iOS Safari, which ignores most of it. -->
+    <meta name="theme-color" content="#12A751" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <!-- `default` (not black-translucent): iOS reserves the status-bar area so the
+         green top nav starts below it. black-translucent would let the clock/battery
+         overlay the header, since we don't set viewport-fit=cover + safe-area insets. -->
+    <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+    <meta name="apple-mobile-web-app-title" content="Typerek" />
+    <link rel="apple-touch-icon" href="/apple-touch-icon-180x180.png" />
     <title>Typerek</title>
   </head>
   <body>
