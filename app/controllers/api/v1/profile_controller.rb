@@ -12,15 +12,17 @@ module Api
       end
 
       def update_settings
-        # Persist only the settings bag, skipping validations: the User model
-        # requires a password on every update (it is set during invitation
-        # acceptance, never present here), which would otherwise reject this.
-        current_user.settings = current_user.settings.merge(settings_params)
-        current_user.save!(validate: false)
+        # Write the settings bag straight to its column with update_column. This
+        # skips validations (the User model demands a password on every save, never
+        # present here) and — crucially — does NOT bump updated_at. The ranking
+        # cache is fingerprinted on User.maximum(:updated_at), so a plain save here
+        # would invalidate it on every toggle and make the next GET /me recompute
+        # the whole ranking. A setting never affects the ranking, so it must not
+        # touch that fingerprint.
+        current_user.update_column(:settings, current_user.settings.merge(settings_params))
         # Return just the settings, not the full CurrentUser: flipping a switch
         # never moves the ranking, so there is no reason to pay for the ranking
-        # query that CurrentUserSerializer runs. That query was making every save
-        # take as long as GET /me.
+        # query that CurrentUserSerializer runs.
         render json: { settings: current_user.settings_with_defaults }
       end
 
