@@ -12,6 +12,7 @@ export default function AdminPushPage() {
   const [title, setTitle] = useState('')
   const [body, setBody] = useState('')
   const [sending, setSending] = useState(false)
+  const [triggering, setTriggering] = useState(false)
   const [notice, setNotice] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
 
@@ -37,6 +38,22 @@ export default function AdminPushPage() {
       setError(apiErrorMessage(err))
     } finally {
       setSending(false)
+    }
+  }
+
+  // Manually trigger the unbet-match reminder job (the one the scheduler runs every
+  // 15 min). Idempotent server-side, so re-clicking won't double-send.
+  const onTriggerReminders = async () => {
+    setNotice(null)
+    setError(null)
+    setTriggering(true)
+    try {
+      await api.post('/push/reminders')
+      setNotice('Zlecono wysłanie przypomnień o niezatypowanych meczach.')
+    } catch (err) {
+      setError(apiErrorMessage(err))
+    } finally {
+      setTriggering(false)
     }
   }
 
@@ -98,6 +115,28 @@ export default function AdminPushPage() {
           )}
         </button>
       </form>
+
+      <section className="card mt-4 space-y-3 p-4 sm:p-5">
+        <div>
+          <h2 className="font-semibold text-ink">Przypomnienia o niezatypowanych meczach</h2>
+          <p className="text-sm text-muted">
+            Ręcznie uruchom wysyłkę przypomnień — to samo zadanie, które planowo działa co 15 minut.
+            Trafią tylko do osób z niezatypowanym meczem w oknie 24h / 6h / 1h przed startem, z
+            pominięciem już wysłanych.
+          </p>
+        </div>
+        <button type="button" className="btn btn-outline" onClick={onTriggerReminders} disabled={triggering}>
+          {triggering ? (
+            <>
+              <i className="fas fa-spinner fa-spin" aria-hidden="true" /> Wysyłanie…
+            </>
+          ) : (
+            <>
+              <i className="fas fa-bell" aria-hidden="true" /> Wyślij przypomnienia teraz
+            </>
+          )}
+        </button>
+      </section>
     </>
   )
 }

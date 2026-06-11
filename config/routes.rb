@@ -24,12 +24,14 @@ Rails.application.routes.draw do
 
       get 'bets', to: 'bets#index'
 
-      # Web Push: a device lists/registers/removes its subscription; admins broadcast.
+      # Web Push: a device lists/registers/removes its subscription; admins broadcast
+      # and can manually trigger the unbet-match reminder job.
       namespace :push do
         get 'subscriptions', to: 'subscriptions#index'
         post 'subscriptions', to: 'subscriptions#create'
         delete 'subscriptions', to: 'subscriptions#destroy'
         post 'broadcast', to: 'broadcasts#create'
+        post 'reminders', to: 'reminders#create'
       end
 
       resources :users, only: %i[index create show destroy] do
