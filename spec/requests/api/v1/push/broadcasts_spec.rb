@@ -8,9 +8,9 @@ RSpec.describe 'Api::V1::Push::Broadcasts', type: :request do
 
   it 'enqueues a broadcast job for an admin' do
     expect do
-      post '/api/v1/push/broadcast', params: { title: 'Cześć', body: 'Test', url: '/matches' },
+      post '/api/v1/push/broadcast', params: { title: 'Cześć', body: 'Test' },
                                      headers: auth_headers(admin)
-    end.to have_enqueued_job(BroadcastPushJob).with(title: 'Cześć', body: 'Test', url: '/matches')
+    end.to have_enqueued_job(BroadcastPushJob).with(title: 'Cześć', body: 'Test')
 
     expect(response).to have_http_status(:accepted)
   end

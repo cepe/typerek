@@ -13,7 +13,7 @@ module Api
           body = params[:body].to_s.strip
           return unprocessable!('Tytuł i treść są wymagane.') if title.blank? || body.blank?
 
-          BroadcastPushJob.perform_later(title: title, body: body, url: params[:url].presence || '/')
+          BroadcastPushJob.perform_later(title: title, body: body)
           head :accepted
         end
       end

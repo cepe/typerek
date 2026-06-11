@@ -11,7 +11,6 @@ export default function AdminPushPage() {
   const { isAdmin } = useAuth()
   const [title, setTitle] = useState('')
   const [body, setBody] = useState('')
-  const [url, setUrl] = useState('')
   const [sending, setSending] = useState(false)
   const [notice, setNotice] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
@@ -30,15 +29,10 @@ export default function AdminPushPage() {
     setError(null)
     setSending(true)
     try {
-      await api.post('/push/broadcast', {
-        title: title.trim(),
-        body: body.trim(),
-        url: url.trim() || undefined,
-      })
+      await api.post('/push/broadcast', { title: title.trim(), body: body.trim() })
       setNotice('Powiadomienie wysłane do wszystkich z włączonymi powiadomieniami.')
       setTitle('')
       setBody('')
-      setUrl('')
     } catch (err) {
       setError(apiErrorMessage(err))
     } finally {
@@ -89,17 +83,6 @@ export default function AdminPushPage() {
             maxLength={200}
             onChange={(event) => setBody(event.target.value)}
             placeholder="Treść powiadomienia"
-          />
-        </label>
-
-        <label className="block">
-          <span className="label">Link (opcjonalnie)</span>
-          <input
-            type="text"
-            className="field"
-            value={url}
-            onChange={(event) => setUrl(event.target.value)}
-            placeholder="/matches"
           />
         </label>
 
