@@ -66,15 +66,15 @@ export function usePushSubscription() {
     await subscription.unsubscribe().catch(() => undefined)
   }, [])
 
-  // Whether *this* device currently holds a push subscription — the source of truth
-  // for the per-device toggle state.
-  const isSubscribed = useCallback(async (): Promise<boolean> => {
-    if (!pushSupported()) return false
+  // This device's push endpoint, or null if it isn't subscribed. Drives the per-device
+  // toggle state and lets the device list mark which row is the current browser.
+  const currentEndpoint = useCallback(async (): Promise<string | null> => {
+    if (!pushSupported()) return null
     const registration = await navigator.serviceWorker.ready
-    return (await registration.pushManager.getSubscription()) !== null
+    return (await registration.pushManager.getSubscription())?.endpoint ?? null
   }, [])
 
-  return { subscribe, unsubscribe, isSubscribed }
+  return { subscribe, unsubscribe, currentEndpoint }
 }
 
 // On app load, if this device already granted permission and holds a subscription,

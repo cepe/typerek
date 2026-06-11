@@ -8,6 +8,13 @@ module Api
       # that gates sending is derived here — on whenever the user has at least one
       # device subscribed, off once the last one leaves.
       class SubscriptionsController < BaseController
+        # The signed-in user's registered devices, newest first.
+        def index
+          render json: PushSubscriptionSerializer.many(
+            current_user.push_subscriptions.order(created_at: :desc)
+          )
+        end
+
         # Body is the browser's PushSubscription JSON:
         #   { subscription: { endpoint, keys: { p256dh, auth } }, user_agent }
         # Keyed on the (globally unique) endpoint and reassigned to the current user,
