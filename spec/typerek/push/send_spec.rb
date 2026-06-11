@@ -3,7 +3,8 @@
 require 'rails_helper'
 
 RSpec.describe Typerek::Push::Send do
-  let(:subscription) { create(:push_subscription) }
+  # let! (not let) so the row exists before the prune example's `change` block measures.
+  let!(:subscription) { create(:push_subscription) }
 
   describe '#call' do
     context 'when push is not configured' do
