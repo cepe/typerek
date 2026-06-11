@@ -29,8 +29,8 @@ function Countdown({ start }: { start: string }) {
 
   const urgent = remaining < 30 * 60 * 1000
   return (
-    <span className={`tabular-nums text-[10px] font-bold leading-none ${urgent ? 'text-amber-600' : 'text-muted'}`}>
-      {formatCountdown(remaining)}
+    <span className={`text-[10px] font-bold leading-none ${urgent ? 'text-amber-600' : 'text-muted'}`}>
+      za <span className="tabular-nums">{formatCountdown(remaining)}</span>
     </span>
   )
 }
@@ -41,7 +41,7 @@ export default function MatchLine({ match }: { match: Match }) {
   const live = match.started && !match.finished
   return (
     <Link to={`/matches/${match.id}`} className="group flex items-center gap-2 sm:flex-1 sm:gap-3">
-      <span className="flex w-11 shrink-0 flex-col gap-0.5">
+      <span className="flex w-14 shrink-0 flex-col gap-0.5">
         <span className="text-sm font-semibold tabular-nums text-muted">{formatTime(match.start)}</span>
         {live && (
           <span className="inline-flex items-center gap-1 text-[10px] font-bold leading-none text-amber-600">
