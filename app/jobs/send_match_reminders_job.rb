@@ -1,9 +1,9 @@
 # frozen_string_literal: true
 
 # Notification #2: remind opted-in users about matches they haven't bet on yet, as
-# kickoff approaches. Runs hourly (config/recurring.yml). For each upcoming match it
-# announces the closest window that has just been crossed — 24h, then 6h, then 1h
-# before kickoff — sending at most one push per user per window. The match_reminders
+# kickoff approaches. Runs every 15 minutes (config/recurring.yml). For each upcoming
+# match it announces the closest window that has just been crossed — 24h, then 6h, then
+# 1h before kickoff — sending at most one push per user per window. The match_reminders
 # table makes that idempotent, so overlapping runs never double-send.
 class SendMatchRemindersJob < ApplicationJob
   queue_as :default

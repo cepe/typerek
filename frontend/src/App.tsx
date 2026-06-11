@@ -13,9 +13,11 @@ import UsersPage from '@/pages/UsersPage'
 import UserProfilePage from '@/pages/UserProfilePage'
 import PwaReloadPrompt from '@/components/PwaReloadPrompt'
 import { useWebMcp } from '@/webmcp/useWebMcp'
+import { usePushSync } from '@/lib/usePushSubscription'
 
 export default function App() {
   useWebMcp()
+  usePushSync()
   return (
     <>
       <PwaReloadPrompt />

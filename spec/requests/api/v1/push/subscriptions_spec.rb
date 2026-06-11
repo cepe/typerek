@@ -33,6 +33,13 @@ RSpec.describe 'Api::V1::Push::Subscriptions', type: :request do
       post '/api/v1/push/subscriptions', params: subscription_params('https://push.example.com/abc')
       expect(response).to have_http_status(:unauthorized)
     end
+
+    it 'turns the account push_enabled flag on when the first device subscribes' do
+      expect do
+        post '/api/v1/push/subscriptions', params: subscription_params('https://push.example.com/abc'),
+                                           headers: auth_headers(user)
+      end.to change { user.reload.push_enabled? }.from(false).to(true)
+    end
   end
 
   describe 'DELETE /api/v1/push/subscriptions' do
@@ -45,6 +52,27 @@ RSpec.describe 'Api::V1::Push::Subscriptions', type: :request do
       end.to change(user.push_subscriptions, :count).by(-1)
 
       expect(response).to have_http_status(:no_content)
+    end
+
+    it 'turns push_enabled off when the last device unsubscribes' do
+      create(:push_subscription, user: user, endpoint: 'https://push.example.com/abc')
+      user.update_column(:settings, { 'push_enabled' => true })
+
+      delete '/api/v1/push/subscriptions', params: { endpoint: 'https://push.example.com/abc' },
+                                           headers: auth_headers(user)
+
+      expect(user.reload.push_enabled?).to be(false)
+    end
+
+    it 'keeps push_enabled on while another device remains subscribed' do
+      create(:push_subscription, user: user, endpoint: 'https://push.example.com/abc')
+      create(:push_subscription, user: user, endpoint: 'https://push.example.com/def')
+      user.update_column(:settings, { 'push_enabled' => true })
+
+      delete '/api/v1/push/subscriptions', params: { endpoint: 'https://push.example.com/abc' },
+                                           headers: auth_headers(user)
+
+      expect(user.reload.push_enabled?).to be(true)
     end
   end
 end
