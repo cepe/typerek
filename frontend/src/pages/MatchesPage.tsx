@@ -1,6 +1,6 @@
 import { useSearchParams } from 'react-router-dom'
 import { useMatches, usePlaceBet } from '@/api/hooks'
-import { formatDateLong, groupByDay } from '@/lib/format'
+import { formatDateLong, groupByDay, relativeDay } from '@/lib/format'
 import { BET_TYPES, BET_LEGEND } from '@/lib/bets'
 import MatchLine from '@/components/MatchLine'
 import BetGrid from '@/components/BetGrid'
@@ -9,6 +9,13 @@ import { ErrorBox, Loading } from '@/components/Status'
 import type { BetType, Match } from '@/api/types'
 import { useSettings } from '@/lib/settings'
 import { useDocumentTitle } from '@/lib/useDocumentTitle'
+
+function DayBadge({ iso }: { iso: string }) {
+  const label = relativeDay(iso)
+  if (!label) return null
+  const cls = label === 'dziś' ? 'bg-brand/15 text-brand' : 'bg-sky-100 text-sky-600'
+  return <span className={`rounded-full px-2 py-0.5 text-[11px] font-semibold tracking-wide ${cls}`}>{label}</span>
+}
 
 function MatchSection({ matches }: { matches: Match[] }) {
   const placeBet = usePlaceBet()
@@ -25,7 +32,10 @@ function MatchSection({ matches }: { matches: Match[] }) {
       {groupByDay(matches).map((group) => (
         <section key={group.start} className="card overflow-hidden">
           <div className="card-header">
-            <h3 className="text-sm font-bold text-muted">{formatDateLong(group.start)}</h3>
+            <h3 className="flex items-center gap-2 text-sm font-bold text-muted">
+              {formatDateLong(group.start)}
+              <DayBadge iso={group.start} />
+            </h3>
             {/* Legend explaining the 1 / X / 2 / 1X / X2 / 12 symbols, aligned over
                 the bet pills below (hidden on mobile, where the row stacks). The
                 trailing spacer mirrors each row's padlock slot so the columns line up. */}
