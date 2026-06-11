@@ -62,13 +62,17 @@ the browser's push service). Two kinds:
 
 - **Match result entered** — when an admin saves a final score, everyone who opted in is
   told the result and that the ranking updated. Fired straight from the result update.
-- **Unbet match reminders** — an hourly job nudges users who haven't bet a match yet at
-  24h, 6h and 1h before kickoff (one push per window, deduplicated). Admins can also send
-  an arbitrary broadcast from **Powiadomienia** in the nav (handy for testing).
+- **Unbet match reminders** — a job runs every 15 minutes and nudges users who haven't
+  bet a match yet at 24h, 6h and 1h before kickoff (one push per window, deduplicated).
+  Admins can also send an arbitrary broadcast from **Powiadomienia** in the nav (handy
+  for testing).
 
-Notifications are **opt-in**: each user turns them on under **Ustawienia → Powiadomienia
-push**, which asks for browser permission and registers that device. Once on, they can
-pick which kinds they want — match results and/or unbet reminders — independently.
+Notifications are **opt-in and per-device**: each user enables them under **Ustawienia →
+Powiadomienia push** on every device they want (it asks for browser permission and
+registers that device); a notification then fans out to all of a user's devices. The
+account-wide send flag is derived automatically — on while any device is subscribed.
+Once on, they can pick which kinds they want — match results and/or unbet reminders —
+independently.
 
 Delivery runs on [Solid Queue](https://github.com/rails/solid_queue) (DB-backed, no
 Redis); its worker/scheduler runs *inside* Puma via a plugin, so the single `web`

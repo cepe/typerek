@@ -34,20 +34,26 @@ export default function SettingsPage() {
     setDrzewkoMode,
     betLock,
     setBetLock,
-    pushEnabled,
-    setPushEnabled,
     pushResults,
     setPushResults,
     pushReminders,
     setPushReminders,
   } = useSettings()
-  const { subscribe, unsubscribe } = usePushSubscription()
+  const { subscribe, unsubscribe, isSubscribed } = usePushSubscription()
   const [stats, setStats] = useState<SettingsStats | null>(null)
   const [pushBusy, setPushBusy] = useState(false)
   const [pushError, setPushError] = useState<string | null>(null)
+  // Whether *this device* is subscribed — the per-device toggle reflects this, not the
+  // account-wide push_enabled flag (which the backend derives from any subscription).
+  const [deviceSubscribed, setDeviceSubscribed] = useState(false)
   const supported = pushSupported()
 
   useDocumentTitle('Ustawienia')
+
+  // Reflect this device's actual subscription state on mount.
+  useEffect(() => {
+    void isSubscribed().then(setDeviceSubscribed)
+  }, [isSubscribed])
 
   // Pull the authoritative usage counts (cheap endpoint, ~30ms). Called on mount
   // and again once a toggle settles, to reconcile the optimistic bump below.
@@ -74,11 +80,10 @@ export default function SettingsPage() {
     void set(checked).finally(refreshStats)
   }
 
-  // Push needs the browser permission + a device subscription before we persist the
-  // opt-in, so it can't use the generic `toggle` above. Enabling only sticks if the
-  // user granted permission and the device subscribed; disabling also tears the
-  // device subscription down. The usage count is bumped optimistically, then
-  // reconciled with the server once the save settles.
+  // Per-device opt-in: enabling asks for browser permission and subscribes *this*
+  // device; disabling tears that subscription down. The backend derives the account's
+  // push_enabled flag from whether any device remains, so we just refresh the usage
+  // count afterwards rather than guessing it optimistically.
   const handlePushToggle = async (checked: boolean) => {
     setPushError(null)
     setPushBusy(true)
@@ -89,13 +94,12 @@ export default function SettingsPage() {
           setPushError('Nie udało się włączyć powiadomień. Sprawdź, czy zezwoliłeś na nie w przeglądarce.')
           return
         }
-        setStats((prev) => (prev ? { ...prev, push_enabled: prev.push_enabled + 1 } : prev))
-        await setPushEnabled(true).finally(refreshStats)
+        setDeviceSubscribed(true)
       } else {
-        setStats((prev) => (prev ? { ...prev, push_enabled: Math.max(0, prev.push_enabled - 1) } : prev))
-        await setPushEnabled(false).finally(refreshStats)
         await unsubscribe()
+        setDeviceSubscribed(false)
       }
+      refreshStats()
     } finally {
       setPushBusy(false)
     }
@@ -119,15 +123,15 @@ export default function SettingsPage() {
             <input
               type="checkbox"
               className="mt-0.5 h-5 w-5 shrink-0 accent-brand"
-              checked={pushEnabled}
+              checked={deviceSubscribed}
               disabled={!supported || pushBusy}
               onChange={(event) => handlePushToggle(event.target.checked)}
             />
             <span className="leading-snug">
-              <span className="block font-semibold text-ink">Powiadomienia push</span>
+              <span className="block font-semibold text-ink">Powiadomienia push na tym urządzeniu</span>
               <span className="block text-muted">
-                Powiadomienia o meczach — działają też przy zamkniętej aplikacji. Po włączeniu wybierz
-                poniżej, co chcesz dostawać.
+                Powiadomienia o meczach — działają też przy zamkniętej aplikacji. Każde urządzenie
+                włączasz osobno; po włączeniu wybierz poniżej, co chcesz dostawać.
               </span>
               {!supported && (
                 <span className="mt-1.5 block text-xs font-medium text-muted">
@@ -139,7 +143,7 @@ export default function SettingsPage() {
             </span>
           </label>
 
-          {pushEnabled && supported && (
+          {deviceSubscribed && (
             <div className="space-y-3 border-t border-line/40 bg-surface/40 px-4 py-3 pl-12 sm:px-5 sm:pl-14">
               <label className="flex cursor-pointer items-start gap-3">
                 <input

@@ -2,9 +2,9 @@ default: &default
   match_reminders:
     class: SendMatchRemindersJob
     queue: default
-    # Top of every hour. Each run sends, at most, one reminder per user per match for
+    # Every 15 minutes. Each run sends, at most, one reminder per user per match for
     # the closest crossed window (24h / 6h / 1h before kickoff); see the job.
-    schedule: "0 * * * *"
+    schedule: "*/15 * * * *"
     description: "Remind opted-in users about unbet matches starting within 24h/6h/1h"
 
 development:

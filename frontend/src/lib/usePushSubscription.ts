@@ -1,5 +1,6 @@
-import { useCallback } from 'react'
+import { useCallback, useEffect } from 'react'
 import api from '@/api/client'
+import { useAuth } from '@/auth/AuthContext'
 
 // Public VAPID key (URL-safe base64), injected at build time. Without it the browser
 // can't subscribe, so push simply stays unavailable.
@@ -65,5 +66,39 @@ export function usePushSubscription() {
     await subscription.unsubscribe().catch(() => undefined)
   }, [])
 
-  return { subscribe, unsubscribe }
+  // Whether *this* device currently holds a push subscription — the source of truth
+  // for the per-device toggle state.
+  const isSubscribed = useCallback(async (): Promise<boolean> => {
+    if (!pushSupported()) return false
+    const registration = await navigator.serviceWorker.ready
+    return (await registration.pushManager.getSubscription()) !== null
+  }, [])
+
+  return { subscribe, unsubscribe, isSubscribed }
+}
+
+// On app load, if this device already granted permission and holds a subscription,
+// re-register it with the backend. This handles push endpoint rotation and makes sure
+// the device stays known to the server (and the account's push_enabled flag stays on).
+// It never prompts — silent permission requests aren't allowed, so a brand-new device
+// still opts in explicitly via the settings toggle.
+export function usePushSync(): void {
+  const { isAuthenticated } = useAuth()
+
+  useEffect(() => {
+    if (!isAuthenticated || !pushSupported() || Notification.permission !== 'granted') return
+
+    void (async () => {
+      const registration = await navigator.serviceWorker.ready
+      const subscription = await registration.pushManager.getSubscription()
+      if (!subscription) return
+
+      await api
+        .post('/push/subscriptions', {
+          subscription: subscription.toJSON(),
+          user_agent: navigator.userAgent,
+        })
+        .catch(() => undefined)
+    })()
+  }, [isAuthenticated])
 }
