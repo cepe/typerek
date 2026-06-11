@@ -1,7 +1,39 @@
 import { Link } from 'react-router-dom'
+import { useEffect, useState } from 'react'
 import Flag from './Flag'
 import { formatTime, formattedScore } from '@/lib/format'
 import type { Match } from '@/api/types'
+
+const SIX_HOURS = 6 * 60 * 60 * 1000
+
+function formatCountdown(ms: number): string {
+  const totalSeconds = Math.floor(ms / 1000)
+  const h = Math.floor(totalSeconds / 3600)
+  const m = Math.floor((totalSeconds % 3600) / 60)
+  const s = totalSeconds % 60
+  const pad = (n: number) => String(n).padStart(2, '0')
+  if (h > 0) return `${h}h ${pad(m)}m`
+  return `${pad(m)}:${pad(s)}`
+}
+
+function Countdown({ start }: { start: string }) {
+  const [remaining, setRemaining] = useState(() => new Date(start).getTime() - Date.now())
+
+  useEffect(() => {
+    const tick = () => setRemaining(new Date(start).getTime() - Date.now())
+    const id = setInterval(tick, 1000)
+    return () => clearInterval(id)
+  }, [start])
+
+  if (remaining <= 0 || remaining > SIX_HOURS) return null
+
+  const urgent = remaining < 30 * 60 * 1000
+  return (
+    <span className={`tabular-nums text-[10px] font-bold leading-none ${urgent ? 'text-amber-600' : 'text-muted'}`}>
+      {formatCountdown(remaining)}
+    </span>
+  )
+}
 
 // Clickable match line: time on the left, then "TeamA <flag>  score  <flag> TeamB"
 // with the score centered. Mirrors matches/_match_line.html.erb.
@@ -17,6 +49,7 @@ export default function MatchLine({ match }: { match: Match }) {
             Trwa
           </span>
         )}
+        {!match.started && <Countdown start={match.start} />}
       </span>
       <span className="flex flex-1 items-center justify-center gap-2 sm:gap-3">
         <span className="flex-1 text-right font-semibold text-ink group-hover:text-brand">
