@@ -6,7 +6,8 @@
 class BroadcastPushJob < ApplicationJob
   queue_as :default
 
-  def perform(title:, body:, url: '/')
-    deliver_push(User.push_enabled, title: title, body: body, url: url)
+  def perform(title:, body:)
+    # Broadcasts always link to the home screen — there's no per-message link.
+    deliver_push(User.push_enabled, title: title, body: body, url: '/')
   end
 end

@@ -12,7 +12,7 @@ RSpec.describe BroadcastPushJob do
     create(:push_subscription, user: create(:user, settings: { 'push_enabled' => true }))
     create(:push_subscription, user: create(:user)) # opted out — skipped
 
-    described_class.new.perform(title: 'Cześć', body: 'Test', url: '/')
+    described_class.new.perform(title: 'Cześć', body: 'Test')
 
     expect(Typerek::Push::Send).to have_received(:new).twice.with(
       an_instance_of(PushSubscription),
