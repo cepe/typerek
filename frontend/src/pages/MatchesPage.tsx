@@ -37,6 +37,7 @@ function MatchRow({ match }: { match: Match }) {
             match={match}
             myAnswer={match.my_answer}
             pending={placeBet.isPending}
+            started={localStarted}
             onBet={(result: BetType) => placeBet.mutate({ matchId: match.id, result })}
           />
         </div>
