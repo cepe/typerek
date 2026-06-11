@@ -29,7 +29,7 @@ function Countdown({ start }: { start: string }) {
 
   const urgent = remaining < 30 * 60 * 1000
   return (
-    <span className={`text-[10px] font-bold leading-none ${urgent ? 'text-amber-600' : 'text-muted'}`}>
+    <span className={`inline-block rounded-full px-1.5 py-0.5 text-[10px] font-semibold leading-none tracking-wide ${urgent ? 'bg-amber-100 text-amber-600' : 'bg-sky-100 text-sky-600'}`}>
       za <span className="tabular-nums">{formatCountdown(remaining)}</span>
     </span>
   )
