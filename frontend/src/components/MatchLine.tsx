@@ -1,26 +1,13 @@
 import { Link } from 'react-router-dom'
-import { useEffect, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import Flag from './Flag'
 import { formatTime, formattedScore } from '@/lib/format'
+import { useLocalStarted } from '@/lib/useLocalStarted'
 import type { Match } from '@/api/types'
 
-const SIX_HOURS = 6 * 60 * 60 * 1000
+export { useLocalStarted } from '@/lib/useLocalStarted'
 
-// Tracks whether a match has started, flipping to true at kickoff time without
-// needing a page refresh. Safe to call from multiple components for the same match.
-export function useLocalStarted(match: Match): boolean {
-  const [started, setStarted] = useState(
-    () => match.started || Date.now() >= new Date(match.start).getTime(),
-  )
-  useEffect(() => {
-    if (started) return
-    const ms = new Date(match.start).getTime() - Date.now()
-    if (ms <= 0) { setStarted(true); return }
-    const id = setTimeout(() => setStarted(true), ms)
-    return () => clearTimeout(id)
-  }, [match.start, started])
-  return started
-}
+const SIX_HOURS = 6 * 60 * 60 * 1000
 
 function formatCountdown(ms: number): string {
   const totalSeconds = Math.floor(ms / 1000)
@@ -33,13 +20,14 @@ function formatCountdown(ms: number): string {
 }
 
 function Countdown({ start }: { start: string }) {
-  const [remaining, setRemaining] = useState(() => new Date(start).getTime() - Date.now())
+  const startMs = useMemo(() => new Date(start).getTime(), [start])
+  const [remaining, setRemaining] = useState(() => startMs - Date.now())
 
   useEffect(() => {
-    const tick = () => setRemaining(new Date(start).getTime() - Date.now())
+    const tick = () => setRemaining(startMs - Date.now())
     const id = setInterval(tick, 1000)
     return () => clearInterval(id)
-  }, [start])
+  }, [startMs])
 
   if (remaining <= 0 || remaining > SIX_HOURS) return null
 
@@ -53,8 +41,11 @@ function Countdown({ start }: { start: string }) {
 
 // Clickable match line: time on the left, then "TeamA <flag>  score  <flag> TeamB"
 // with the score centered. Mirrors matches/_match_line.html.erb.
-export default function MatchLine({ match }: { match: Match }) {
-  const localStarted = useLocalStarted(match)
+// `started` can be passed from a parent that already holds the value to avoid a
+// duplicate hook call; when omitted, the component computes it internally.
+export default function MatchLine({ match, started }: { match: Match; started?: boolean }) {
+  const internal = useLocalStarted(match)
+  const localStarted = started ?? internal
   const live = localStarted && !match.finished
   return (
     <Link to={`/matches/${match.id}`} className="group flex items-center gap-2 sm:flex-1 sm:gap-3">

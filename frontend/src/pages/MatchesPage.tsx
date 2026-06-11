@@ -2,7 +2,8 @@ import { useSearchParams } from 'react-router-dom'
 import { useMatches, usePlaceBet } from '@/api/hooks'
 import { formatDateLong, groupByDay, relativeDay } from '@/lib/format'
 import { BET_TYPES, BET_LEGEND } from '@/lib/bets'
-import MatchLine, { useLocalStarted } from '@/components/MatchLine'
+import MatchLine from '@/components/MatchLine'
+import { useLocalStarted } from '@/lib/useLocalStarted'
 import BetGrid from '@/components/BetGrid'
 import LockToggle from '@/components/LockToggle'
 import { ErrorBox, Loading } from '@/components/Status'
@@ -26,7 +27,7 @@ function MatchRow({ match }: { match: Match }) {
     <div
       className={`flex flex-col gap-3 px-4 py-3 sm:flex-row sm:items-center sm:gap-4 sm:px-5${live ? ' bg-amber-50/70' : ''}`}
     >
-      <MatchLine match={match} />
+      <MatchLine match={match} started={localStarted} />
       {/* Pills, plus a fixed padlock slot on the right when the feature is
           on. The slot is reserved in every row (lock or empty) so the 6
           columns share one offset, matching the legend's trailing spacer. */}
