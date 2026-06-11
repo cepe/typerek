@@ -2,7 +2,7 @@ import { useSearchParams } from 'react-router-dom'
 import { useMatches, usePlaceBet } from '@/api/hooks'
 import { formatDateLong, groupByDay, relativeDay } from '@/lib/format'
 import { BET_TYPES, BET_LEGEND } from '@/lib/bets'
-import MatchLine from '@/components/MatchLine'
+import MatchLine, { useLocalStarted } from '@/components/MatchLine'
 import BetGrid from '@/components/BetGrid'
 import LockToggle from '@/components/LockToggle'
 import { ErrorBox, Loading } from '@/components/Status'
@@ -17,10 +17,39 @@ function DayBadge({ iso }: { iso: string }) {
   return <span className={`rounded-full px-2 py-0.5 text-[11px] font-semibold tracking-wide ${cls}`}>{label}</span>
 }
 
-function MatchSection({ matches }: { matches: Match[] }) {
+function MatchRow({ match }: { match: Match }) {
   const placeBet = usePlaceBet()
-  // The padlock column (and the matching legend spacer) only exist when the
-  // viewer enabled the feature; otherwise the layout is the plain pills row.
+  const { betLock } = useSettings()
+  const localStarted = useLocalStarted(match)
+  const live = localStarted && !match.finished
+  return (
+    <div
+      className={`flex flex-col gap-3 px-4 py-3 sm:flex-row sm:items-center sm:gap-4 sm:px-5${live ? ' bg-amber-50/70' : ''}`}
+    >
+      <MatchLine match={match} />
+      {/* Pills, plus a fixed padlock slot on the right when the feature is
+          on. The slot is reserved in every row (lock or empty) so the 6
+          columns share one offset, matching the legend's trailing spacer. */}
+      <div className="flex items-center gap-2">
+        <div className="flex-1 sm:w-[340px] sm:flex-none">
+          <BetGrid
+            match={match}
+            myAnswer={match.my_answer}
+            pending={placeBet.isPending}
+            onBet={(result: BetType) => placeBet.mutate({ matchId: match.id, result })}
+          />
+        </div>
+        {betLock && (
+          <div className="w-7 shrink-0">
+            <LockToggle match={match} />
+          </div>
+        )}
+      </div>
+    </div>
+  )
+}
+
+function MatchSection({ matches }: { matches: Match[] }) {
   const { betLock } = useSettings()
 
   if (matches.length === 0) {
@@ -52,32 +81,7 @@ function MatchSection({ matches }: { matches: Match[] }) {
           </div>
           <div className="divide-y divide-line/60">
             {group.items.map((match) => (
-              <div
-                key={match.id}
-                className={`flex flex-col gap-3 px-4 py-3 sm:flex-row sm:items-center sm:gap-4 sm:px-5${
-                  match.started && !match.finished ? ' bg-amber-50/70' : ''
-                }`}
-              >
-                <MatchLine match={match} />
-                {/* Pills, plus a fixed padlock slot on the right when the feature is
-                    on. The slot is reserved in every row (lock or empty) so the 6
-                    columns share one offset, matching the legend's trailing spacer. */}
-                <div className="flex items-center gap-2">
-                  <div className="flex-1 sm:w-[340px] sm:flex-none">
-                    <BetGrid
-                      match={match}
-                      myAnswer={match.my_answer}
-                      pending={placeBet.isPending}
-                      onBet={(result: BetType) => placeBet.mutate({ matchId: match.id, result })}
-                    />
-                  </div>
-                  {betLock && (
-                    <div className="w-7 shrink-0">
-                      <LockToggle match={match} />
-                    </div>
-                  )}
-                </div>
-              </div>
+              <MatchRow key={match.id} match={match} />
             ))}
           </div>
         </section>

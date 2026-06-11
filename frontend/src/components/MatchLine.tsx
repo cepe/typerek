@@ -6,6 +6,22 @@ import type { Match } from '@/api/types'
 
 const SIX_HOURS = 6 * 60 * 60 * 1000
 
+// Tracks whether a match has started, flipping to true at kickoff time without
+// needing a page refresh. Safe to call from multiple components for the same match.
+export function useLocalStarted(match: Match): boolean {
+  const [started, setStarted] = useState(
+    () => match.started || Date.now() >= new Date(match.start).getTime(),
+  )
+  useEffect(() => {
+    if (started) return
+    const ms = new Date(match.start).getTime() - Date.now()
+    if (ms <= 0) { setStarted(true); return }
+    const id = setTimeout(() => setStarted(true), ms)
+    return () => clearTimeout(id)
+  }, [match.start, started])
+  return started
+}
+
 function formatCountdown(ms: number): string {
   const totalSeconds = Math.floor(ms / 1000)
   const h = Math.floor(totalSeconds / 3600)
@@ -38,7 +54,8 @@ function Countdown({ start }: { start: string }) {
 // Clickable match line: time on the left, then "TeamA <flag>  score  <flag> TeamB"
 // with the score centered. Mirrors matches/_match_line.html.erb.
 export default function MatchLine({ match }: { match: Match }) {
-  const live = match.started && !match.finished
+  const localStarted = useLocalStarted(match)
+  const live = localStarted && !match.finished
   return (
     <Link to={`/matches/${match.id}`} className="group flex items-center gap-2 sm:flex-1 sm:gap-3">
       <span className="flex w-14 shrink-0 flex-col gap-0.5">
@@ -49,7 +66,7 @@ export default function MatchLine({ match }: { match: Match }) {
             Trwa
           </span>
         )}
-        {!match.started && <Countdown start={match.start} />}
+        {!localStarted && <Countdown start={match.start} />}
       </span>
       <span className="flex flex-1 items-center justify-center gap-2 sm:gap-3">
         <span className="flex-1 text-right font-semibold text-ink group-hover:text-brand">
