@@ -4,6 +4,7 @@ import { useSettings } from '@/lib/settings'
 import { usePushSubscription, pushSupported } from '@/lib/usePushSubscription'
 import { useDocumentTitle } from '@/lib/useDocumentTitle'
 import Alert from '@/components/Alert'
+import type { PushDevice } from '@/api/types'
 
 // Number of users with each setting switched on, keyed by the server setting name.
 type SettingsStats = { drzewko_mode: number; bet_lock: number; push_enabled: number }
@@ -28,6 +29,31 @@ function UsageHint({ count }: { count: number | undefined }) {
   )
 }
 
+// Best-effort friendly name from a User-Agent string, e.g. "Chrome · macOS".
+function deviceLabel(userAgent: string | null): string {
+  if (!userAgent) return 'Nieznane urządzenie'
+  const ua = userAgent
+  const browser =
+    /Edg\//.test(ua) ? 'Edge'
+    : /OPR\/|Opera/.test(ua) ? 'Opera'
+    : /Firefox\//.test(ua) ? 'Firefox'
+    : /Chrome\//.test(ua) ? 'Chrome'
+    : /Safari\//.test(ua) ? 'Safari'
+    : 'Przeglądarka'
+  const os =
+    /Windows/.test(ua) ? 'Windows'
+    : /Android/.test(ua) ? 'Android'
+    : /iPhone|iPad|iPod/.test(ua) ? 'iOS'
+    : /Mac OS X|Macintosh/.test(ua) ? 'macOS'
+    : /Linux/.test(ua) ? 'Linux'
+    : 'nieznany system'
+  return `${browser} · ${os}`
+}
+
+function formatDeviceDate(iso: string): string {
+  return new Date(iso).toLocaleDateString('pl-PL', { day: 'numeric', month: 'short', year: 'numeric' })
+}
+
 export default function SettingsPage() {
   const {
     drzewkoMode,
@@ -39,21 +65,32 @@ export default function SettingsPage() {
     pushReminders,
     setPushReminders,
   } = useSettings()
-  const { subscribe, unsubscribe, isSubscribed } = usePushSubscription()
+  const { subscribe, unsubscribe, currentEndpoint } = usePushSubscription()
   const [stats, setStats] = useState<SettingsStats | null>(null)
   const [pushBusy, setPushBusy] = useState(false)
   const [pushError, setPushError] = useState<string | null>(null)
-  // Whether *this device* is subscribed — the per-device toggle reflects this, not the
-  // account-wide push_enabled flag (which the backend derives from any subscription).
-  const [deviceSubscribed, setDeviceSubscribed] = useState(false)
+  // This device's push endpoint (null when not subscribed) drives the per-device
+  // toggle and marks which row in the device list is the current browser.
+  const [currentEp, setCurrentEp] = useState<string | null>(null)
+  const [devices, setDevices] = useState<PushDevice[]>([])
+  const deviceSubscribed = currentEp !== null
   const supported = pushSupported()
 
   useDocumentTitle('Ustawienia')
 
-  // Reflect this device's actual subscription state on mount.
+  // The signed-in user's registered devices (shown so you can see what's configured).
+  const refreshDevices = useCallback(() => {
+    api
+      .get<PushDevice[]>('/push/subscriptions')
+      .then(setDevices)
+      .catch(() => setDevices([]))
+  }, [])
+
+  // Reflect this device's actual subscription state and load the device list on mount.
   useEffect(() => {
-    void isSubscribed().then(setDeviceSubscribed)
-  }, [isSubscribed])
+    void currentEndpoint().then(setCurrentEp)
+    refreshDevices()
+  }, [currentEndpoint, refreshDevices])
 
   // Pull the authoritative usage counts (cheap endpoint, ~30ms). Called on mount
   // and again once a toggle settles, to reconcile the optimistic bump below.
@@ -94,11 +131,12 @@ export default function SettingsPage() {
           setPushError('Nie udało się włączyć powiadomień. Sprawdź, czy zezwoliłeś na nie w przeglądarce.')
           return
         }
-        setDeviceSubscribed(true)
       } else {
         await unsubscribe()
-        setDeviceSubscribed(false)
       }
+      // Re-read this device's state and refresh the device list after the change.
+      setCurrentEp(await currentEndpoint())
+      refreshDevices()
       refreshStats()
     } finally {
       setPushBusy(false)
@@ -174,6 +212,42 @@ export default function SettingsPage() {
                   </span>
                 </span>
               </label>
+            </div>
+          )}
+
+          {devices.length > 0 && (
+            <div className="border-t border-line/40 bg-surface/40 px-4 py-3 pl-12 sm:px-5 sm:pl-14">
+              <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-muted">
+                Twoje urządzenia
+              </p>
+              <ul className="space-y-2">
+                {devices.map((device) => {
+                  const isCurrent = device.endpoint === currentEp
+                  return (
+                    <li key={device.id} className="flex items-center justify-between gap-3">
+                      <span className="leading-tight">
+                        <span className="block text-sm font-medium text-ink">
+                          {deviceLabel(device.user_agent)}
+                          {isCurrent && <span className="badge badge-success ml-2">to urządzenie</span>}
+                        </span>
+                        <span className="block text-xs text-muted">
+                          dodano {formatDeviceDate(device.created_at)}
+                        </span>
+                      </span>
+                      {isCurrent && (
+                        <button
+                          type="button"
+                          className="btn-action btn-action-danger shrink-0"
+                          onClick={() => handlePushToggle(false)}
+                          disabled={pushBusy}
+                        >
+                          <i className="fas fa-xmark" aria-hidden="true" /> Wyłącz
+                        </button>
+                      )}
+                    </li>
+                  )
+                })}
+              </ul>
             </div>
           )}
         </div>

@@ -29,6 +29,14 @@ export interface UserSettings {
   push_reminders: boolean
 }
 
+// A registered Web Push device for the signed-in user (GET /push/subscriptions).
+export interface PushDevice {
+  id: number
+  endpoint: string
+  user_agent: string | null
+  created_at: string
+}
+
 export interface CurrentUser {
   id: number
   username: string

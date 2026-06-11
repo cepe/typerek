@@ -9,6 +9,21 @@ RSpec.describe 'Api::V1::Push::Subscriptions', type: :request do
     { subscription: { endpoint: endpoint, keys: { p256dh: 'k', auth: 'a' } }, user_agent: 'rspec' }
   end
 
+  describe 'GET /api/v1/push/subscriptions' do
+    it "lists the current user's devices, newest first" do
+      create(:push_subscription, user: user, endpoint: 'https://push.example.com/old', created_at: 2.days.ago)
+      create(:push_subscription, user: user, endpoint: 'https://push.example.com/new', created_at: 1.hour.ago)
+      create(:push_subscription, user: create(:user)) # another user's device — excluded
+
+      get '/api/v1/push/subscriptions', headers: auth_headers(user)
+
+      expect(response).to have_http_status(:ok)
+      expect(json.map { |d| d['endpoint'] })
+        .to eq(['https://push.example.com/new', 'https://push.example.com/old'])
+      expect(json.first.keys).to contain_exactly('id', 'endpoint', 'user_agent', 'created_at')
+    end
+  end
+
   describe 'POST /api/v1/push/subscriptions' do
     it 'registers a new subscription for the current user' do
       expect do

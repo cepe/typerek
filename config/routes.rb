@@ -24,8 +24,9 @@ Rails.application.routes.draw do
 
       get 'bets', to: 'bets#index'
 
-      # Web Push: a device registers/removes its subscription; admins broadcast.
+      # Web Push: a device lists/registers/removes its subscription; admins broadcast.
       namespace :push do
+        get 'subscriptions', to: 'subscriptions#index'
         post 'subscriptions', to: 'subscriptions#create'
         delete 'subscriptions', to: 'subscriptions#destroy'
         post 'broadcast', to: 'broadcasts#create'
