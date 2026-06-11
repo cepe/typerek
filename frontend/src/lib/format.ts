@@ -27,6 +27,20 @@ export function formatDateLong(iso: string): string {
   return text.charAt(0).toUpperCase() + text.slice(1)
 }
 
+// Returns "dziś" or "jutro" when the ISO date falls on today/tomorrow (local
+// time), otherwise null — lets callers render a visual badge.
+export function relativeDay(iso: string): 'dziś' | 'jutro' | null {
+  const sameDay = (a: Date, b: Date) =>
+    a.getFullYear() === b.getFullYear() && a.getMonth() === b.getMonth() && a.getDate() === b.getDate()
+  const date = new Date(iso)
+  const today = new Date()
+  const tomorrow = new Date()
+  tomorrow.setDate(today.getDate() + 1)
+  if (sameDay(date, today)) return 'dziś'
+  if (sameDay(date, tomorrow)) return 'jutro'
+  return null
+}
+
 // ISO timestamp -> value for an <input type="datetime-local"> (local wall time).
 export function toDateTimeLocalValue(iso: string): string {
   const date = new Date(iso)
