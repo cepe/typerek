@@ -11,6 +11,9 @@ export function useLocalStarted(match: Match): boolean {
     if (started) return
     const ms = new Date(match.start).getTime() - Date.now()
     if (ms <= 0) { setStarted(true); return }
+    // setTimeout silently overflows for delays > 2^31-1 ms (~24.8 days) and fires
+    // immediately — skip the timer for far-future matches.
+    if (ms > 2_147_483_647) return
     const id = setTimeout(() => setStarted(true), ms)
     return () => clearTimeout(id)
   }, [match.start, started])
