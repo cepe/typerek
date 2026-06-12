@@ -39,7 +39,7 @@ export default function BetDistributionChart({ participants }: Props) {
   const total = data.reduce((sum, d) => sum + d.count, 0)
 
   return (
-    <div className="flex items-center gap-6 px-4 py-4 sm:px-5">
+    <div className="flex items-center justify-center gap-6 px-4 py-4 sm:px-5">
       <div className="relative shrink-0">
         <PieChart width={120} height={120}>
           <Pie
