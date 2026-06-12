@@ -5,6 +5,7 @@ import { ErrorBox, Loading } from '@/components/Status'
 import Flag from '@/components/Flag'
 import BetGrid from '@/components/BetGrid'
 import LockToggle from '@/components/LockToggle'
+import BetDistributionChart from '@/components/BetDistributionChart'
 import { BET_TYPES, betPillClass, winningBets } from '@/lib/bets'
 import { formatShort, formattedOdds, formattedScore } from '@/lib/format'
 import { useDocumentTitle } from '@/lib/useDocumentTitle'
@@ -89,6 +90,11 @@ export default function MatchPage() {
               <i className="fas fa-users text-brand" aria-hidden="true" /> Typy uczestników
             </h3>
           </div>
+          {match.participants.some((p) => p.result != null) && (
+            <div className="border-b border-line/60">
+              <BetDistributionChart participants={match.participants} />
+            </div>
+          )}
           <div className="divide-y divide-line/60">
             {match.participants.map((participant) => (
               <div
