@@ -8,22 +8,21 @@ interface Props {
   participants: Participant[]
 }
 
-interface TooltipPayload {
-  name: string
-  value: number
+function pluralGraczy(n: number): string {
+  return n === 1 ? 'gracz' : 'graczy'
 }
 
 interface CustomTooltipProps {
   active?: boolean
-  payload?: { payload: TooltipPayload }[]
+  payload?: Array<{ value: number }>
 }
 
 function CustomTooltip({ active, payload }: CustomTooltipProps) {
   if (!active || !payload?.length) return null
-  const { value } = payload[0].payload
+  const count = payload[0].value ?? 0
   return (
     <div className="card card-body py-1.5 text-xs shadow-lg">
-      {value} {value === 1 ? 'gracz' : 'graczy'}
+      {count} {pluralGraczy(count)}
     </div>
   )
 }
@@ -62,7 +61,7 @@ export default function BetDistributionChart({ participants }: Props) {
         </PieChart>
         <div className="pointer-events-none absolute inset-0 flex flex-col items-center justify-center">
           <span className="text-lg font-bold text-ink">{total}</span>
-          <span className="text-[10px] text-muted">graczy</span>
+          <span className="text-[10px] text-muted">{pluralGraczy(total)}</span>
         </div>
       </div>
 
@@ -74,7 +73,7 @@ export default function BetDistributionChart({ participants }: Props) {
               style={{ backgroundColor: entry.color }}
             />
             <span className="font-semibold text-ink">{entry.label}</span>
-            <span className="text-muted">— {entry.count} {entry.count === 1 ? 'gracz' : 'graczy'}</span>
+            <span className="text-muted">— {entry.count} {pluralGraczy(entry.count)}</span>
           </li>
         ))}
       </ul>
