@@ -1,11 +1,28 @@
-import { LineChart, Line, XAxis, YAxis, Tooltip, ReferenceLine, ResponsiveContainer } from 'recharts'
+import { LineChart, Line, XAxis, YAxis, Tooltip, ReferenceLine, CartesianGrid, ResponsiveContainer } from 'recharts'
 import { useRankingHistory } from '@/api/hooks'
 import { formatDateLong, formattedScore } from '@/lib/format'
 import type { RankingHistoryMatch } from '@/api/types'
 
-const COL_PX = 16
 const CHART_HEIGHT = 180
 const MAX_X_TICKS = 10
+
+interface DotWithLabelProps {
+  cx?: number
+  cy?: number
+  value?: number
+}
+
+function DotWithLabel({ cx, cy, value }: DotWithLabelProps) {
+  if (cx == null || cy == null || value == null) return null
+  return (
+    <g>
+      <circle cx={cx} cy={cy} r={3} fill="var(--color-brand, #12A751)" stroke="none" />
+      <text x={cx} y={cy - 7} textAnchor="middle" fontSize={9} fontWeight={600} fill="var(--color-brand, #12A751)">
+        {value}
+      </text>
+    </g>
+  )
+}
 
 function xTicks(count: number): number[] {
   if (count <= MAX_X_TICKS) return Array.from({ length: count }, (_, i) => i + 1)
@@ -56,26 +73,31 @@ interface Props {
 
 export default function UserPositionChart({ userId }: Props) {
   const { data, isLoading } = useRankingHistory(true)
-
   if (isLoading || !data) return null
 
   const { matches, series } = data
   const userSeries = series.find((s) => s.user.id === userId)
 
-  if (!userSeries || matches.length === 0) return null
+  if (!userSeries || matches.length === 0) {
+    return (
+      <div className="card card-body text-center text-sm text-muted">
+        Historia pozycji pojawi się po zakończeniu pierwszego meczu
+      </div>
+    )
+  }
 
   const totalUsers = series.length
-  const chartWidth = Math.max(matches.length * COL_PX, 300)
-  const yTicks = Array.from(new Set(series.flatMap((s) => s.positions))).sort((a, b) => a - b)
 
   const rows = matches.map((_, i) => ({
     x: i + 1,
     position: userSeries.positions[i],
   }))
 
-  // Best and worst positions for reference lines
   const best = Math.min(...userSeries.positions)
+  const worst = Math.max(...userSeries.positions)
   const last = userSeries.positions[userSeries.positions.length - 1]
+
+  const yTicks = best === worst ? [best] : [best, worst]
 
   return (
     <div className="card overflow-hidden">
@@ -87,7 +109,6 @@ export default function UserPositionChart({ userId }: Props) {
       </div>
       <div className="px-2 pb-2 pt-1">
         <div className="flex items-stretch gap-1">
-          {/* Fixed Y-axis label */}
           <div className="flex shrink-0 items-center justify-center" style={{ width: 14 }}>
             <span
               className="text-[9px] font-medium text-muted"
@@ -96,47 +117,45 @@ export default function UserPositionChart({ userId }: Props) {
               Pozycja
             </span>
           </div>
-          <div className="min-w-0 flex-1 overflow-x-auto">
-            <div style={{ minWidth: chartWidth }}>
-              <ResponsiveContainer width="100%" height={CHART_HEIGHT}>
-                <LineChart data={rows} margin={{ top: 8, right: 12, bottom: 8, left: 4 }}>
-                  <XAxis
-                    dataKey="x"
-                    type="number"
-                    domain={[1, matches.length]}
-                    ticks={xTicks(matches.length)}
-                    tick={{ fontSize: 10 }}
-                  />
-                  <YAxis
-                    reversed
-                    domain={[yTicks[0] ?? 1, yTicks[yTicks.length - 1] ?? totalUsers]}
-                    ticks={yTicks}
-                    allowDecimals={false}
-                    width={24}
-                    tick={{ fontSize: 10 }}
-                  />
-                  <Tooltip content={<ChartTooltip matches={matches} totalUsers={totalUsers} />} />
-                  {/* Reference line for best position */}
-                  {best < last && (
-                    <ReferenceLine
-                      y={best}
-                      stroke="var(--color-brand, #12A751)"
-                      strokeDasharray="3 3"
-                      strokeOpacity={0.4}
-                    />
-                  )}
-                  <Line
-                    dataKey="position"
+          <div className="min-w-0 flex-1">
+            <ResponsiveContainer width="100%" height={CHART_HEIGHT}>
+              <LineChart data={rows} margin={{ top: 24, right: 12, bottom: 8, left: 4 }}>
+                  <CartesianGrid horizontal vertical={false} strokeDasharray="4 4" stroke="#E4E4E4" />
+                <XAxis
+                  dataKey="x"
+                  type="number"
+                  domain={[1, matches.length]}
+                  ticks={xTicks(matches.length)}
+                  tick={{ fontSize: 10 }}
+                />
+                <YAxis
+                  reversed
+                  domain={[best, worst]}
+                  ticks={yTicks}
+                  allowDecimals={false}
+                  width={24}
+                  tick={{ fontSize: 10 }}
+                />
+                <Tooltip content={<ChartTooltip matches={matches} totalUsers={totalUsers} />} />
+                {best < last && (
+                  <ReferenceLine
+                    y={best}
                     stroke="var(--color-brand, #12A751)"
-                    strokeWidth={2}
-                    dot={false}
-                    activeDot={{ r: 4 }}
-                    isAnimationActive={false}
-                    connectNulls
+                    strokeDasharray="3 3"
+                    strokeOpacity={0.4}
                   />
-                </LineChart>
-              </ResponsiveContainer>
-            </div>
+                )}
+                <Line
+                  dataKey="position"
+                  stroke="var(--color-brand, #12A751)"
+                  strokeWidth={2}
+                  dot={matches.length <= 5 ? (props: DotWithLabelProps) => <DotWithLabel {...props} /> : false}
+                  activeDot={{ r: 4 }}
+                  isAnimationActive={false}
+                  connectNulls
+                />
+              </LineChart>
+            </ResponsiveContainer>
           </div>
         </div>
         <p className="mt-0.5 text-center text-[10px] font-medium text-muted">Numer meczu</p>
