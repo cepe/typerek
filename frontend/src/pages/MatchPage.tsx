@@ -92,7 +92,7 @@ export default function MatchPage() {
           </div>
           {match.participants.some((p) => p.result != null) && (
             <div className="border-b border-line/60">
-              <BetDistributionChart participants={match.participants} />
+              <BetDistributionChart participants={match.participants} finished={match.finished} scoredBets={scored} />
             </div>
           )}
           <div className="divide-y divide-line/60">

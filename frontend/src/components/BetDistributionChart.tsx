@@ -1,11 +1,17 @@
 import { PieChart, Pie, Cell, Tooltip } from 'recharts'
 import { BET_TYPES } from '@/lib/bets'
-import type { Participant } from '@/api/types'
+import type { BetType, Participant } from '@/api/types'
 
-const COLORS = ['#0E8C43', '#12A751', '#1dbf5f', '#4fd48a', '#86e0b0', '#bcefd4']
+// No result yet — grey scale matching the neutral bet-locked pill style
+const GREY_COLORS = ['#5F6A6D', '#7A8587', '#95A0A1', '#B0BBBB', '#C8D0D0', '#DCDFE0']
+// Finished match — green for winning bets, red for losing bets
+const GREEN_COLORS = ['#0E8C43', '#12A751', '#1dbf5f']
+const RED_COLORS = ['#c53030', '#FA6A6A', '#fb9b9b']
 
 interface Props {
   participants: Participant[]
+  finished: boolean
+  scoredBets: Set<BetType> | null
 }
 
 function pluralGraczy(n: number): string {
@@ -27,12 +33,23 @@ function CustomTooltip({ active, payload }: CustomTooltipProps) {
   )
 }
 
-export default function BetDistributionChart({ participants }: Props) {
-  const data = BET_TYPES.map(([result, label], i) => ({
+export default function BetDistributionChart({ participants, finished, scoredBets }: Props) {
+  let greenIdx = 0, redIdx = 0, greyIdx = 0
+  const data = BET_TYPES.map(([result, label]) => ({
     label,
+    result,
     count: participants.filter((p) => p.result === result).length,
-    color: COLORS[i],
-  })).filter((d) => d.count > 0)
+  })).filter((d) => d.count > 0).map((d) => {
+    let color: string
+    if (!finished || scoredBets === null) {
+      color = GREY_COLORS[greyIdx++ % GREY_COLORS.length]
+    } else if (scoredBets.has(d.result)) {
+      color = GREEN_COLORS[greenIdx++ % GREEN_COLORS.length]
+    } else {
+      color = RED_COLORS[redIdx++ % RED_COLORS.length]
+    }
+    return { ...d, color }
+  })
 
   if (data.length === 0) return null
 
