@@ -2,7 +2,7 @@ import { PieChart, Pie, Cell, Tooltip } from 'recharts'
 import { BET_TYPES } from '@/lib/bets'
 import type { Participant } from '@/api/types'
 
-const COLORS = ['#6366f1', '#8b5cf6', '#a78bfa', '#c4b5fd', '#ddd6fe', '#e0e7ff']
+const COLORS = ['#0E8C43', '#12A751', '#1dbf5f', '#4fd48a', '#86e0b0', '#bcefd4']
 
 interface Props {
   participants: Participant[]
