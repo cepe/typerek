@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer } from 'recharts'
+import { LineChart, Line, XAxis, YAxis, Tooltip, CartesianGrid, ResponsiveContainer } from 'recharts'
 import { useRankingHistory } from '@/api/hooks'
 import { useAuth } from '@/auth/AuthContext'
 import { ErrorBox, Loading } from '@/components/Status'
@@ -8,7 +8,6 @@ import type { RankingHistoryMatch } from '@/api/types'
 
 const COL_PX = 20
 const MAX_X_TICKS = 12
-// Shorter chart on mobile, taller on desktop where the legend sits beside it
 const MOBILE_CHART_HEIGHT = 320
 const DESKTOP_CHART_HEIGHT_PER_USER = 14
 const DESKTOP_CHART_MIN_HEIGHT = 500
@@ -162,17 +161,25 @@ export default function RankingBumpChart({ enabled }: Props) {
   const totalUsers = series.length
   const chartWidth = Math.max(matches.length * COL_PX, 600)
   const desktopChartHeight = Math.max(DESKTOP_CHART_MIN_HEIGHT, totalUsers * DESKTOP_CHART_HEIGHT_PER_USER)
-  const yTicks = Array.from(new Set(series.flatMap((s) => s.positions))).sort((a, b) => a - b)
+
+  // Pick the smallest "nice" interval that yields ≤12 grid lines
+  const niceIntervals = [1, 2, 5, 10, 20, 25, 50]
+  const gridInterval = niceIntervals.find((i) => Math.ceil(totalUsers / i) <= 12) ?? 50
+  const yTicks = Array.from({ length: Math.floor(totalUsers / gridInterval) }, (_, i) => (i + 1) * gridInterval)
 
   const toggleHighlight = (id: number) => setHighlightedId((prev) => (prev === id ? null : id))
 
-  const chart = (height: number) => (
+  const xDomain: [number, number] = matches.length === 1 ? [0.5, 1.5] : [1, matches.length]
+  const showDots = matches.length <= 5
+
+  const chart = (
     <LineChart
       data={rows}
-      margin={{ top: 16, right: 24, bottom: 16, left: 8 }}
+      margin={{ top: 20, right: 24, bottom: 16, left: 8 }}
       onMouseLeave={() => setHoveredUserId(null)}
     >
-      <XAxis dataKey="x" type="number" domain={[1, matches.length]} ticks={xTicks(matches.length)} />
+      <CartesianGrid horizontal vertical={false} strokeDasharray="4 4" stroke="#E4E4E4" />
+      <XAxis dataKey="x" type="number" domain={xDomain} ticks={xTicks(matches.length)} />
       <YAxis reversed domain={[1, totalUsers]} ticks={yTicks} allowDecimals={false} width={32} />
       <Tooltip
         content={
@@ -193,7 +200,7 @@ export default function RankingBumpChart({ enabled }: Props) {
             dataKey={uid}
             stroke={color}
             strokeWidth={isMe || isHighlighted ? 2.5 : 1.5}
-            dot={false}
+            dot={showDots ? { r: 3, fill: color, strokeWidth: 0 } : false}
             activeDot={{ r: 4, onMouseEnter: () => setHoveredUserId(uid), onMouseLeave: () => setHoveredUserId(null) }}
             strokeOpacity={isDimmed ? 0.1 : 1}
             isAnimationActive={false}
@@ -208,24 +215,26 @@ export default function RankingBumpChart({ enabled }: Props) {
     <>
       {/* ── Mobile layout ── */}
       <div className="lg:hidden">
-        <div className="flex items-stretch">
-          <div className="flex shrink-0 items-center justify-center" style={{ width: 16 }}>
-            <span
-              className="text-[10px] font-medium text-muted"
-              style={{ writingMode: 'vertical-rl', transform: 'rotate(180deg)', whiteSpace: 'nowrap' }}
-            >
-              Pozycja
-            </span>
-          </div>
-          <div className="min-w-0 flex-1 overflow-x-auto">
-            <div style={{ minWidth: chartWidth }}>
-              <ResponsiveContainer width="100%" height={MOBILE_CHART_HEIGHT}>
-                {chart(MOBILE_CHART_HEIGHT)}
-              </ResponsiveContainer>
+        <div className="card overflow-hidden px-2 pb-2 pt-3">
+          <div className="flex items-stretch">
+            <div className="flex shrink-0 items-center justify-center" style={{ width: 16 }}>
+              <span
+                className="text-[10px] font-medium text-muted"
+                style={{ writingMode: 'vertical-rl', transform: 'rotate(180deg)', whiteSpace: 'nowrap' }}
+              >
+                Pozycja
+              </span>
+            </div>
+            <div className="min-w-0 flex-1 overflow-x-auto">
+              <div style={{ minWidth: chartWidth }}>
+                <ResponsiveContainer width="100%" height={MOBILE_CHART_HEIGHT}>
+                  {chart}
+                </ResponsiveContainer>
+              </div>
             </div>
           </div>
+          <p className="mt-1 text-center text-[10px] font-medium text-muted">Numer meczu</p>
         </div>
-        <p className="mt-1 text-center text-[10px] font-medium text-muted">Numer meczu</p>
 
         {/* Collapsible legend */}
         <div className="card mt-3 overflow-hidden">
@@ -262,7 +271,7 @@ export default function RankingBumpChart({ enabled }: Props) {
 
       {/* ── Desktop layout ── */}
       <div className="hidden lg:flex lg:items-start lg:gap-4">
-        <div className="min-w-0 flex-1">
+        <div className="card min-w-0 flex-1 overflow-hidden px-2 pb-2 pt-3">
           <div className="flex items-stretch">
             <div className="flex shrink-0 items-center justify-center" style={{ width: 20 }}>
               <span
@@ -275,7 +284,7 @@ export default function RankingBumpChart({ enabled }: Props) {
             <div className="min-w-0 flex-1 overflow-x-auto">
               <div style={{ minWidth: chartWidth }}>
                 <ResponsiveContainer width="100%" height={desktopChartHeight}>
-                  {chart(desktopChartHeight)}
+                  {chart}
                 </ResponsiveContainer>
               </div>
             </div>
