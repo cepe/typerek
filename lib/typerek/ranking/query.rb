@@ -59,12 +59,14 @@ module Typerek
         end
 
         points = scored.map { |row| row[:points] }
+        previous = previous_positions_by_user_id
         scored.map do |row|
           Entry.new(
             user: row[:user],
             points: row[:points],
             accuracy: row[:accuracy],
-            position: points.index(row[:points]) + 1
+            position: points.index(row[:points]) + 1,
+            previous_position: previous[row[:user].id]
           )
         end
       end
@@ -76,6 +78,31 @@ module Typerek
       end
 
       private
+
+      # Each active user's position as it stood *before* the most recent finished
+      # match, keyed by user id — the baseline for the table's movement arrow.
+      # Points only come from finished matches, so subtracting a user's payout from
+      # that one match reconstructs the prior standing without replaying history.
+      # Returns {} (i.e. no arrows) until at least two matches have finished, since
+      # before the second there is no real prior ranking to compare against —
+      # everyone starts level.
+      def previous_positions_by_user_id
+        last_match = Match.finished.order(start: :desc).first
+        return {} if last_match.nil? || Match.finished.count < 2
+
+        previous = active_users.map do |user|
+          delta = user.answers.find { |answer| answer.match_id == last_match.id }&.point || 0
+          { user: user, points: (user.points - delta).round(2) }
+        end
+        previous.sort! do |a, b|
+          by_points = b[:points] <=> a[:points]
+          by_points.zero? ? a[:user].username.downcase <=> b[:user].username.downcase : by_points
+        end
+        previous_points = previous.map { |row| row[:points] }
+        previous.each_with_object({}) do |row, positions|
+          positions[row[:user].id] = previous_points.index(row[:points]) + 1
+        end
+      end
 
       def active_users
         @active_users ||= User.includes(answers: :match).active.to_a
