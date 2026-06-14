@@ -13,8 +13,15 @@ class User < ApplicationRecord
     'hide_double_chance' => false,
     'push_enabled' => false,
     'push_results' => true,
-    'push_reminders' => true
+    'push_reminders' => true,
+    # UI colour theme. 'light' is the default (dark mode off); 'dark' forces dark
+    # mode on; 'auto' lets the SPA switch by the clock (dark at night). Unlike the
+    # other settings this is a string, not a boolean — see THEMES and #theme.
+    'theme' => 'light'
   }.freeze
+
+  # Allowed values for the `theme` setting. Anything else falls back to 'light'.
+  THEMES = %w[light dark auto].freeze
 
   # Settings we surface a "Włączone przez N osób" count for on the settings screen.
   # The push sub-toggles are excluded: they default on, so a raw `= 'true'` count
@@ -68,7 +75,11 @@ class User < ApplicationRecord
   def self.settings_counts
     COUNTED_SETTINGS.index_with do |key|
       where("settings ->> ? = 'true'", key).count
-    end
+    end.merge(
+      # `theme` isn't a boolean: it counts users who turned dark mode on at all,
+      # i.e. either 'dark' (always) or 'auto' (by the clock).
+      'theme' => where("settings ->> 'theme' IN (?, ?)", 'dark', 'auto').count
+    )
   end
 
   def settings_with_defaults
@@ -106,5 +117,12 @@ class User < ApplicationRecord
 
   def push_reminders?
     settings_with_defaults['push_reminders'] != false
+  end
+
+  # Colour theme preference ('light' | 'dark' | 'auto'). Guards against a stale or
+  # malformed value in the jsonb bag by falling back to the default.
+  def theme
+    value = settings_with_defaults['theme']
+    THEMES.include?(value) ? value : 'light'
   end
 end

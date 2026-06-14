@@ -19,6 +19,27 @@
     <meta name="apple-mobile-web-app-title" content="Typerek" />
     <link rel="apple-touch-icon" href="/apple-touch-icon-180x180.png" />
     <title>Typerek</title>
+
+    <!-- Anti-FOUC: apply the cached colour theme before the app loads so dark mode
+         doesn't flash light on every navigation. Mirrors src/lib/theme.ts (kept tiny
+         and dependency-free); the React app re-applies and keeps it in sync after. -->
+    <script>
+      (function () {
+        try {
+          var pref = localStorage.getItem('typerek.theme') || 'light'
+          var dark = pref === 'dark'
+          if (pref === 'auto') {
+            var h = new Date().getHours()
+            dark = h >= 20 || h < 7
+          }
+          if (dark) {
+            document.documentElement.classList.add('dark')
+            var meta = document.querySelector('meta[name="theme-color"]')
+            if (meta) meta.setAttribute('content', '#0F3D27')
+          }
+        } catch (e) {}
+      })()
+    </script>
   </head>
   <body>
     <div id="root"></div>

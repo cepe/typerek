@@ -55,7 +55,7 @@ export default function HomePage() {
         Możemy zmieniać typy do momentu rozpoczęcia spotkania. Gdy mecz się rozpocznie, widzimy typy
         wszystkich uczestników dla danego meczu. Nie możemy wtedy modyfikować swojego wyboru.
       </p>
-      <div className="rounded-lg bg-amber-50 p-3 text-sm text-amber-800">
+      <div className="rounded-lg bg-highlight p-3 text-sm text-highlight-fg">
         <strong>Uwaga!</strong> W meczach fazy pucharowej typujemy wyniki tylko do 90. minuty spotkania. Typ
         „remis” jest jak najbardziej poprawny. Oznacza to, że drużyny po rozegraniu regulaminowych 90 minut
         będą miały dogrywkę.

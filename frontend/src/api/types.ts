@@ -2,6 +2,8 @@
 // be generated automatically with openapi-typescript; for now they are kept in
 // sync by hand.
 
+import type { ThemePreference } from '@/lib/theme'
+
 export type BetType = 'win_a' | 'tie' | 'win_b' | 'win_tie_a' | 'win_tie_b' | 'not_tie'
 
 export interface Odds {
@@ -31,6 +33,8 @@ export interface UserSettings {
   // Which kinds of push the user wants (only relevant when push_enabled). Default on.
   push_results: boolean
   push_reminders: boolean
+  // Colour theme: 'light' (off), 'dark' (always), or 'auto' (dark at night).
+  theme: ThemePreference
 }
 
 // A registered Web Push device for the signed-in user (GET /push/subscriptions).

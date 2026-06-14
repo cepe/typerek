@@ -12,10 +12,15 @@ import type { RankingEntry } from '@/api/types'
 // Colour of the round position badge. Gold / silver / bronze for the podium, a
 // softer amber for the rest of the prize zone (positions 4..N), plain otherwise.
 function positionBadgeClass(position: number, rewarded: number): string {
-  if (position === 1) return 'bg-yellow-400 text-white'
-  if (position === 2) return 'bg-gray-300 text-ink'
-  if (position === 3) return 'bg-amber-600 text-white'
-  if (position <= rewarded) return 'bg-amber-100 text-amber-700 ring-1 ring-amber-300'
+  // Medals use slightly deeper, less saturated shades in dark mode so they don't
+  // glare on the dark page. Silver keeps fixed-dark text (text-ink would flip to
+  // near-white in dark mode and vanish on the light-grey chip).
+  if (position === 1) return 'bg-yellow-400 text-white dark:bg-yellow-500 dark:text-yellow-950'
+  if (position === 2) return 'bg-gray-300 text-gray-900 dark:bg-slate-400 dark:text-slate-950'
+  if (position === 3) return 'bg-amber-600 text-white dark:bg-amber-700'
+  if (position <= rewarded) {
+    return 'bg-highlight text-highlight-fg ring-1 ring-highlight-fg/30'
+  }
   return 'bg-surface text-muted'
 }
 
@@ -96,12 +101,12 @@ export default function RankingPage() {
     if (rewarded === 0 || cutoffPoints == null) return null
     if (entry.position <= rewarded) {
       if (firstOutPoints != null && entry.points === cutoffPoints) {
-        return { text: `bufor ${pointsDisplay(entry.points - firstOutPoints)} pkt`, tone: 'text-emerald-600' }
+        return { text: `bufor ${pointsDisplay(entry.points - firstOutPoints)} pkt`, tone: 'text-emerald-600 dark:text-emerald-400' }
       }
       return null
     }
     if (idx > prizeCount + 4) return null
-    return { text: `+${pointsDisplay(cutoffPoints - entry.points)} do strefy`, tone: 'text-amber-600' }
+    return { text: `+${pointsDisplay(cutoffPoints - entry.points)} do strefy`, tone: 'text-amber-600 dark:text-amber-400' }
   }
 
   return (
@@ -141,11 +146,11 @@ export default function RankingPage() {
                 {rewarded > 0 && (meInPrize || meGap != null) && (
                   <span className="mt-0.5 block text-xs font-medium">
                     {meInPrize ? (
-                      <span className="text-emerald-600">
+                      <span className="text-emerald-600 dark:text-emerald-400">
                         <i className="fas fa-trophy" aria-hidden="true" /> W strefie nagród
                       </span>
                     ) : (
-                      <span className="text-amber-600">+{meGap} pkt do strefy nagród</span>
+                      <span className="text-amber-600 dark:text-amber-400">+{meGap} pkt do strefy nagród</span>
                     )}
                   </span>
                 )}
@@ -161,7 +166,7 @@ export default function RankingPage() {
               const inPrize = rewarded > 0 && entry.position <= rewarded
               const hint = zoneHint(entry, idx)
               const accent = inPrize ? 'border-l-[3px] border-amber-400' : 'border-l-[3px] border-transparent'
-              const bg = me ? (drzewkoMode ? 'drzewko-flash' : 'bg-brand-tint') : inPrize ? 'bg-amber-50/50' : ''
+              const bg = me ? (drzewkoMode ? 'drzewko-flash' : 'bg-brand-tint') : inPrize ? 'bg-highlight/60' : ''
               return (
                 <Fragment key={entry.user.id}>
                   <li
@@ -192,7 +197,7 @@ export default function RankingPage() {
                     </span>
                   </li>
                   {prizeCount > 0 && idx === prizeCount - 1 && idx < data.length - 1 && (
-                    <li className="flex items-center gap-2 bg-amber-50 px-4 py-1.5 text-xs font-semibold uppercase tracking-wide text-amber-700">
+                    <li className="flex items-center gap-2 bg-highlight px-4 py-1.5 text-xs font-semibold uppercase tracking-wide text-highlight-fg">
                       <i className="fas fa-trophy" aria-hidden="true" />
                       Strefa nagród · {rewarded} {placesLabel(rewarded)}
                     </li>

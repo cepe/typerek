@@ -56,7 +56,7 @@ export default function MatchPage() {
         </div>
         {live && (
           <p className="mt-3 text-center">
-            <span className="inline-flex items-center gap-1.5 rounded-full bg-amber-100 px-2.5 py-0.5 text-xs font-bold text-amber-700">
+            <span className="inline-flex items-center gap-1.5 rounded-full bg-highlight px-2.5 py-0.5 text-xs font-bold text-highlight-fg">
               <span className="h-2 w-2 rounded-full bg-amber-500 motion-safe:animate-pulse" aria-hidden="true" />
               Trwa
             </span>

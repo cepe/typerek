@@ -20,7 +20,7 @@ export default function Layout({ children }: { children: ReactNode }) {
 
   return (
     <div className="flex min-h-screen flex-col">
-      <header className="bg-brand text-white shadow-sm">
+      <header className="bg-header text-white shadow-sm">
         <nav className="container-app flex flex-wrap items-center justify-between gap-x-8 gap-y-2 py-3">
           <div className="flex w-full items-center justify-between lg:w-auto">
             <Link to="/" className="flex items-center gap-2 text-lg font-bold text-white hover:text-white">

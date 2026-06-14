@@ -46,7 +46,7 @@ export default function UserProfilePage() {
                   <div
                     key={match.id}
                     className={`flex flex-col gap-3 px-4 py-3 sm:flex-row sm:items-center sm:gap-4 sm:px-5${
-                      match.started && !match.finished ? ' bg-amber-50/70' : ''
+                      match.started && !match.finished ? ' bg-highlight/70' : ''
                     }`}
                   >
                     <MatchLine match={match} />

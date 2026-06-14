@@ -5,6 +5,18 @@ import { usePushSubscription, pushSupported } from '@/lib/usePushSubscription'
 import { useDocumentTitle } from '@/lib/useDocumentTitle'
 import Alert from '@/components/Alert'
 import type { PushDevice } from '@/api/types'
+import { DARK_END_HOUR, DARK_START_HOUR, type ThemePreference } from '@/lib/theme'
+
+// The three dark-mode choices, in display order. 'light' is the default (off).
+const THEME_OPTIONS: { value: ThemePreference; title: string; hint: string }[] = [
+  { value: 'light', title: 'Wyłączony', hint: 'Zawsze jasny motyw.' },
+  { value: 'dark', title: 'Zawsze włączony', hint: 'Ciemny motyw przez cały czas.' },
+  {
+    value: 'auto',
+    title: 'Zależnie od godziny',
+    hint: `Ciemny wieczorem i w nocy (${DARK_START_HOUR}:00–${DARK_END_HOUR}:00), jasny w dzień.`,
+  },
+]
 
 // Number of users with each setting switched on, keyed by the server setting name.
 type SettingsStats = {
@@ -13,6 +25,8 @@ type SettingsStats = {
   hide_odds: number
   hide_double_chance: number
   push_enabled: number
+  // How many users have dark mode on (theme 'dark' or 'auto').
+  theme: number
 }
 
 // Polish accusative of "osoba" for the "Włączone przez N osób" hint:
@@ -62,6 +76,8 @@ function formatDeviceDate(iso: string): string {
 
 export default function SettingsPage() {
   const {
+    theme,
+    setTheme,
     drzewkoMode,
     setDrzewkoMode,
     betLock,
@@ -127,6 +143,20 @@ export default function SettingsPage() {
     void set(checked).finally(refreshStats)
   }
 
+  // Theme is the only non-boolean setting: the usage count tracks "dark mode on"
+  // (dark or auto), so only crossing the light <-> (dark|auto) line changes it.
+  // Bump optimistically on that crossing, then reconcile with the server.
+  const handleThemeChange = (next: ThemePreference) => {
+    const wasOn = theme !== 'light'
+    const nowOn = next !== 'light'
+    if (wasOn !== nowOn) {
+      setStats((prev) =>
+        prev ? { ...prev, theme: Math.max(0, prev.theme + (nowOn ? 1 : -1)) } : prev,
+      )
+    }
+    void setTheme(next).finally(refreshStats)
+  }
+
   // Per-device opt-in: enabling asks for browser permission and subscribes *this*
   // device; disabling tears that subscription down. The backend derives the account's
   // push_enabled flag from whether any device remains, so we just refresh the usage
@@ -164,6 +194,33 @@ export default function SettingsPage() {
           {pushError}
         </Alert>
       )}
+
+      <section className="card mb-4 px-4 py-4 sm:px-5">
+        <fieldset>
+          <legend className="font-semibold text-ink">Ciemny motyw</legend>
+          <p className="mt-0.5 text-muted">
+            Ciemniejsze kolory aplikacji. „Zależnie od godziny” włącza je wieczorem i w nocy.
+          </p>
+          <div className="mt-3 space-y-2">
+            {THEME_OPTIONS.map((option) => (
+              <label key={option.value} className="flex cursor-pointer items-start gap-3">
+                <input
+                  type="radio"
+                  name="theme"
+                  className="mt-0.5 h-5 w-5 shrink-0 accent-brand"
+                  checked={theme === option.value}
+                  onChange={() => handleThemeChange(option.value)}
+                />
+                <span className="leading-snug">
+                  <span className="block font-medium text-ink">{option.title}</span>
+                  <span className="block text-muted">{option.hint}</span>
+                </span>
+              </label>
+            ))}
+          </div>
+          <UsageHint count={stats?.theme} />
+        </fieldset>
+      </section>
 
       <section className="card divide-y divide-line/60">
         <div>
