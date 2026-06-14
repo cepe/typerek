@@ -7,7 +7,13 @@ import Alert from '@/components/Alert'
 import type { PushDevice } from '@/api/types'
 
 // Number of users with each setting switched on, keyed by the server setting name.
-type SettingsStats = { drzewko_mode: number; bet_lock: number; push_enabled: number }
+type SettingsStats = {
+  drzewko_mode: number
+  bet_lock: number
+  hide_odds: number
+  hide_double_chance: number
+  push_enabled: number
+}
 
 // Polish accusative of "osoba" for the "Włączone przez N osób" hint:
 // 1 → osobę, 2–4 (but not 12–14) → osoby, otherwise → osób.
@@ -60,6 +66,10 @@ export default function SettingsPage() {
     setDrzewkoMode,
     betLock,
     setBetLock,
+    hideOdds,
+    setHideOdds,
+    hideDoubleChance,
+    setHideDoubleChance,
     pushResults,
     setPushResults,
     pushReminders,
@@ -282,6 +292,40 @@ export default function SettingsPage() {
               przypadkiem go nie zmienić.
             </span>
             <UsageHint count={stats?.bet_lock} />
+          </span>
+        </label>
+
+        <label className="flex cursor-pointer items-start gap-3 px-4 py-4 sm:px-5">
+          <input
+            type="checkbox"
+            className="mt-0.5 h-5 w-5 shrink-0 accent-brand"
+            checked={hideOdds}
+            onChange={(event) => toggle('hide_odds', setHideOdds, event.target.checked)}
+          />
+          <span className="leading-snug">
+            <span className="block font-semibold text-ink">Ukryj kursy</span>
+            <span className="block text-muted">
+              Chowa kursy przy typach (1, X, 2, …) na liście meczów i na stronie meczu, żeby się
+              nimi nie sugerować przy obstawianiu. Po zakończeniu meczu kursy znów są widoczne.
+            </span>
+            <UsageHint count={stats?.hide_odds} />
+          </span>
+        </label>
+
+        <label className="flex cursor-pointer items-start gap-3 px-4 py-4 sm:px-5">
+          <input
+            type="checkbox"
+            className="mt-0.5 h-5 w-5 shrink-0 accent-brand"
+            checked={hideDoubleChance}
+            onChange={(event) => toggle('hide_double_chance', setHideDoubleChance, event.target.checked)}
+          />
+          <span className="leading-snug">
+            <span className="block font-semibold text-ink">Ukryj typy podwójne</span>
+            <span className="block text-muted">
+              Chowa typy podwójne (1X, X2, 12) na liście meczów i na stronie meczu — zostają tylko
+              1, X i 2. Po zakończeniu meczu znów są widoczne.
+            </span>
+            <UsageHint count={stats?.hide_double_chance} />
           </span>
         </label>
       </section>

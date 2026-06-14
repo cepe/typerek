@@ -32,7 +32,8 @@ module Api
       # into the existing settings bag, so a partial update leaves the rest intact.
       def settings_params
         params.require(:settings).permit(
-          :drzewko_mode, :bet_lock, :push_enabled, :push_results, :push_reminders
+          :drzewko_mode, :bet_lock, :hide_odds, :hide_double_chance,
+          :push_enabled, :push_results, :push_reminders
         ).to_h.transform_values do |value|
           ActiveModel::Type::Boolean.new.cast(value)
         end
