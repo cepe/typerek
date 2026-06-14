@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { LineChart, Line, XAxis, YAxis, Tooltip, CartesianGrid, ResponsiveContainer } from 'recharts'
+import { LineChart, Line, XAxis, YAxis, Tooltip, CartesianGrid, ReferenceLine, ResponsiveContainer } from 'recharts'
 import { useRankingHistory } from '@/api/hooks'
 import { useAuth } from '@/auth/AuthContext'
 import { ErrorBox, Loading } from '@/components/Status'
@@ -159,6 +159,7 @@ export default function RankingBumpChart({ enabled }: Props) {
   })
 
   const totalUsers = series.length
+  const rewarded = me?.rewarded_positions ?? 0
   const chartWidth = Math.max(matches.length * COL_PX, 600)
   const desktopChartHeight = Math.max(DESKTOP_CHART_MIN_HEIGHT, totalUsers * DESKTOP_CHART_HEIGHT_PER_USER)
 
@@ -181,6 +182,18 @@ export default function RankingBumpChart({ enabled }: Props) {
       <CartesianGrid horizontal vertical={false} strokeDasharray="4 4" stroke="#E4E4E4" />
       <XAxis dataKey="x" type="number" domain={xDomain} ticks={xTicks(matches.length)} />
       <YAxis reversed domain={[1, totalUsers]} ticks={yTicks} allowDecimals={false} width={32} />
+      {/* Cutoff between the prize zone (positions 1..N) and the rest. Drawn at the
+          half-step so it sits in the gap between the Nth and (N+1)th place lines. */}
+      {rewarded > 0 && rewarded < totalUsers && (
+        <ReferenceLine
+          y={rewarded + 0.5}
+          stroke="#f59e0b"
+          strokeDasharray="5 4"
+          strokeWidth={1.5}
+          ifOverflow="extendDomain"
+          label={{ value: 'strefa nagród', position: 'insideTopLeft', fill: '#b45309', fontSize: 10 }}
+        />
+      )}
       <Tooltip
         content={
           <CustomTooltip matches={matches} userMap={userMap} meId={me?.id} hoveredUserId={hoveredUserId} />

@@ -46,6 +46,9 @@ export interface CurrentUser {
   username: string
   admin: boolean
   standing: Standing | null
+  // How many top places are rewarded this season — the "prize zone" the ranking
+  // and the bump chart highlight. An app-level constant, same for everyone.
+  rewarded_positions: number
   // Community Discord invite, served only to signed-in users; null when unset.
   discord_url: string | null
   settings: UserSettings
@@ -97,6 +100,9 @@ export interface Answer {
 
 export interface RankingEntry {
   position: number
+  // Position before the most recent finished match, for the movement arrow; null
+  // until there is a prior ranking to compare against.
+  previous_position: number | null
   user: { id: number; username: string }
   points: number
   accuracy: number

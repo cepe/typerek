@@ -11,6 +11,7 @@ module Api
       def self.call(entry)
         {
           position: entry.position,
+          previous_position: entry.previous_position,
           user: { id: entry.user.id, username: entry.user.username },
           points: entry.points,
           accuracy: entry.accuracy

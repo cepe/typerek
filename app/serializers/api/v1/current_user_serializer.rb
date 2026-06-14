@@ -13,6 +13,10 @@ module Api
           username: user.username,
           admin: user.admin?,
           standing: standing && { rank: standing[:position], points: standing[:points] },
+          # How many top places are rewarded this season (the "prize zone"). A pure
+          # app-level constant, surfaced here — like discord_url — so the SPA can read
+          # it once at sign-in and highlight the zone in the ranking and the chart.
+          rewarded_positions: Typerek::Ranking::REWARDED_POSITIONS,
           discord_url: ENV['TYPEREK_DISCORD_URL'].presence,
           settings: {
             drzewko_mode: user.drzewko_mode?,
