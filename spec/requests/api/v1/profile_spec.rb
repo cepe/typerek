@@ -18,8 +18,9 @@ RSpec.describe 'API V1 Profile', type: :request do
       get '/api/v1/me', headers: auth_headers(user)
 
       expect(json['settings']).to eq(
-        'drzewko_mode' => false, 'bet_lock' => false,
-        'push_enabled' => false, 'push_results' => true, 'push_reminders' => true
+        'drzewko_mode' => false, 'bet_lock' => false, 'hide_odds' => false,
+        'hide_double_chance' => false, 'push_enabled' => false,
+        'push_results' => true, 'push_reminders' => true
       )
     end
 
@@ -40,7 +41,10 @@ RSpec.describe 'API V1 Profile', type: :request do
       get '/api/v1/me/settings/stats', headers: auth_headers(user)
 
       expect(response).to have_http_status(:ok)
-      expect(json).to eq('drzewko_mode' => 2, 'bet_lock' => 1, 'push_enabled' => 0)
+      expect(json).to eq(
+        'drzewko_mode' => 2, 'bet_lock' => 1, 'hide_odds' => 0,
+        'hide_double_chance' => 0, 'push_enabled' => 0
+      )
     end
 
     it 'returns 401 without a token' do
@@ -58,8 +62,9 @@ RSpec.describe 'API V1 Profile', type: :request do
 
       expect(response).to have_http_status(:ok)
       expect(json['settings']).to eq(
-        'drzewko_mode' => false, 'bet_lock' => true,
-        'push_enabled' => false, 'push_results' => true, 'push_reminders' => true
+        'drzewko_mode' => false, 'bet_lock' => true, 'hide_odds' => false,
+        'hide_double_chance' => false, 'push_enabled' => false,
+        'push_results' => true, 'push_reminders' => true
       )
       expect(user.reload.bet_lock?).to be(true)
     end

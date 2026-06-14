@@ -1,7 +1,7 @@
 import { useSearchParams } from 'react-router-dom'
 import { useMatches, usePlaceBet } from '@/api/hooks'
 import { formatDateLong, groupByDay, relativeDay } from '@/lib/format'
-import { BET_TYPES, BET_LEGEND } from '@/lib/bets'
+import { BET_LEGEND, visibleBetTypes } from '@/lib/bets'
 import MatchLine from '@/components/MatchLine'
 import { useLocalStarted } from '@/lib/useLocalStarted'
 import BetGrid from '@/components/BetGrid'
@@ -52,11 +52,17 @@ function MatchRow({ match }: { match: Match }) {
 }
 
 function MatchSection({ matches }: { matches: Match[] }) {
-  const { betLock } = useSettings()
+  const { betLock, hideDoubleChance } = useSettings()
 
   if (matches.length === 0) {
     return <div className="card card-body text-center text-muted">Brak meczów</div>
   }
+
+  // A tab holds only future or only finished matches, so the whole section is
+  // homogeneous: hide the double-chance columns only when these rows are still
+  // open, keeping the legend aligned with the pills below it.
+  const hideDc = hideDoubleChance && matches.some((match) => !match.finished)
+  const legendTypes = visibleBetTypes(hideDc)
 
   return (
     <div className="space-y-4">
@@ -71,8 +77,8 @@ function MatchSection({ matches }: { matches: Match[] }) {
                 the bet pills below (hidden on mobile, where the row stacks). The
                 trailing spacer mirrors each row's padlock slot so the columns line up. */}
             <div className="hidden items-center gap-2 sm:flex">
-              <div className="grid w-[340px] grid-cols-6 gap-1.5 sm:gap-2">
-                {BET_TYPES.map(([result]) => (
+              <div className={`grid w-[340px] gap-1.5 sm:gap-2 ${hideDc ? 'grid-cols-3' : 'grid-cols-6'}`}>
+                {legendTypes.map(([result]) => (
                   <div key={result} className="text-center text-[10px] leading-tight text-muted">
                     {BET_LEGEND[result]}
                   </div>

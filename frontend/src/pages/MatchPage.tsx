@@ -9,11 +9,13 @@ import BetDistributionChart from '@/components/BetDistributionChart'
 import { BET_TYPES, betPillClass, winningBets } from '@/lib/bets'
 import { formatShort, formattedOdds, formattedScore } from '@/lib/format'
 import { useDocumentTitle } from '@/lib/useDocumentTitle'
+import { useSettings } from '@/lib/settings'
 
 // Mirrors matches/show.html.erb.
 export default function MatchPage() {
   const { id = '' } = useParams()
   const { isAdmin } = useAuth()
+  const { hideOdds } = useSettings()
   const { data: match, isLoading, isError } = useMatch(id)
   const placeBet = usePlaceBet()
 
@@ -40,15 +42,15 @@ export default function MatchPage() {
           </div>
         )}
         <div className="flex items-center justify-center gap-2 sm:gap-3">
-          <div className="flex-1 text-right text-lg font-bold text-ink">
+          <div className="flex flex-1 items-center justify-end gap-4 text-right text-lg font-bold text-ink">
             {match.team_a}
-            <Flag team={match.team_a} className="ml-4 inline-block h-5 w-7 rounded-sm align-[-0.2em]" />
+            <Flag team={match.team_a} className="h-5 w-7 shrink-0 rounded-sm" />
           </div>
           <div className="shrink-0 rounded-lg bg-surface px-4 py-2 text-2xl font-bold tabular-nums text-ink">
             {formattedScore(match.result_a, match.result_b)}
           </div>
-          <div className="flex-1 text-left text-lg font-bold text-ink">
-            <Flag team={match.team_b} className="mr-4 inline-block h-5 w-7 rounded-sm align-[-0.2em]" />
+          <div className="flex flex-1 items-center gap-4 text-left text-lg font-bold text-ink">
+            <Flag team={match.team_b} className="h-5 w-7 shrink-0 rounded-sm" />
             {match.team_b}
           </div>
         </div>
@@ -124,7 +126,9 @@ export default function MatchPage() {
                           })}
                         >
                           <span className="bet-key">{label}</span>
-                          <span className="bet-odds">{formattedOdds(match.odds[result])}</span>
+                          {(!hideOdds || match.finished) && (
+                            <span className="bet-odds">{formattedOdds(match.odds[result])}</span>
+                          )}
                         </div>
                       )
                     })}
