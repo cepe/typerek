@@ -33,7 +33,7 @@ function Countdown({ start }: { start: string }) {
 
   const urgent = remaining < 30 * 60 * 1000
   return (
-    <span className={`text-[10px] font-bold leading-none ${urgent ? 'text-amber-600' : 'text-muted'}`}>
+    <span className={`text-[10px] font-bold leading-none ${urgent ? 'text-highlight-fg' : 'text-muted'}`}>
       za <span className="tabular-nums">{formatCountdown(remaining)}</span>
     </span>
   )
@@ -52,7 +52,7 @@ export default function MatchLine({ match, started }: { match: Match; started?: 
       <span className="flex w-14 shrink-0 flex-col gap-0.5">
         <span className="text-sm font-semibold tabular-nums text-muted">{formatTime(match.start)}</span>
         {live && (
-          <span className="inline-flex items-center gap-1 text-[10px] font-bold leading-none text-amber-600">
+          <span className="inline-flex items-center gap-1 text-[10px] font-bold leading-none text-highlight-fg">
             <span className="h-1.5 w-1.5 rounded-full bg-amber-500 motion-safe:animate-pulse" aria-hidden="true" />
             Trwa
           </span>

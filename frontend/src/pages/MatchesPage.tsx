@@ -25,7 +25,7 @@ function MatchRow({ match }: { match: Match }) {
   const live = localStarted && !match.finished
   return (
     <div
-      className={`flex flex-col gap-3 px-4 py-3 sm:flex-row sm:items-center sm:gap-4 sm:px-5${live ? ' bg-amber-50/70' : ''}`}
+      className={`flex flex-col gap-3 px-4 py-3 sm:flex-row sm:items-center sm:gap-4 sm:px-5${live ? ' bg-highlight/70' : ''}`}
     >
       <MatchLine match={match} started={localStarted} />
       {/* Pills, plus a fixed padlock slot on the right when the feature is

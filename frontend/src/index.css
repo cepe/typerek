@@ -8,6 +8,45 @@
  */
 
 @layer base {
+  /* Semantic design tokens as space-separated RGB channels (consumed via
+     rgb(var(--x) / <alpha-value>) in tailwind.config.cjs). Light values mirror the
+     original hex palette 1:1. */
+  :root {
+    --ink: 29 36 32;          /* #1D2420 */
+    --muted: 95 106 109;      /* #5F6A6D */
+    --line: 228 228 228;      /* #E4E4E4 */
+    --surface: 236 237 238;   /* #ECEDEE */
+    --raised: 255 255 255;    /* #FFFFFF */
+    --header: 18 167 81;      /* #12A751 (brand green) */
+    --brand: 18 167 81;       /* #12A751 */
+    --brand-dark: 14 140 67;  /* #0E8C43 */
+    --brand-tint: 234 250 241; /* #EAFAF1 */
+    --danger: 250 106 106;    /* #FA6A6A */
+    --danger-tint: 253 239 239; /* #FDEFEF */
+    --highlight: 255 251 235; /* #FFFBEB amber-50 */
+    --highlight-fg: 180 83 9; /* #B45309 amber-700 */
+  }
+
+  /* Dark mode (toggled by the `dark` class on <html>; see src/lib/theme.ts). A warm
+     slate palette — deliberately not pure black — so text stays comfortable and
+     readable. Brand green is nudged brighter for contrast on the dark surfaces, and
+     the tints become dark, low-chroma chip backgrounds instead of light pastels. */
+  .dark {
+    --ink: 230 233 236;       /* #E6E9EC */
+    --muted: 151 161 170;     /* #97A1AA */
+    --line: 58 67 77;         /* #3A434D */
+    --surface: 24 29 35;      /* #181D23 page background */
+    --raised: 35 42 50;       /* #232A32 cards / inputs */
+    --header: 15 61 39;       /* #0F3D27 deep calm green */
+    --brand: 31 182 98;       /* #1FB662 */
+    --brand-dark: 24 154 81;  /* #189A51 */
+    --brand-tint: 28 58 41;   /* #1C3A29 */
+    --danger: 248 113 113;    /* #F87171 */
+    --danger-tint: 58 37 38;  /* #3A2526 */
+    --highlight: 58 46 22;    /* #3A2E16 muted warm-dark */
+    --highlight-fg: 252 211 77; /* #FCD34D amber-300 */
+  }
+
   html {
     -webkit-text-size-adjust: 100%;
     /* Always reserve the scrollbar gutter so switching between short pages (e.g.
@@ -32,15 +71,15 @@
   .container-narrow { @apply mx-auto w-full max-w-md px-4; }
 
   /* Cards */
-  .card { @apply rounded-xl bg-white shadow-card; }
+  .card { @apply rounded-xl bg-raised shadow-card; }
   .card-header { @apply flex items-center justify-between gap-3 border-b border-line/70 px-4 py-3 sm:px-5; }
   .card-body { @apply px-4 py-4 sm:px-5; }
 
   /* Buttons */
   .btn { @apply inline-flex cursor-pointer items-center justify-center gap-2 rounded-lg px-4 py-2 text-sm font-semibold leading-none transition-colors disabled:pointer-events-none disabled:opacity-50; }
   .btn-brand { @apply bg-brand text-white hover:bg-brand-dark; }
-  .btn-outline { @apply border border-brand bg-white text-brand hover:bg-brand-tint; }
-  .btn-ghost { @apply text-ink/70 hover:bg-black/5 hover:text-ink; }
+  .btn-outline { @apply border border-brand bg-raised text-brand hover:bg-brand-tint; }
+  .btn-ghost { @apply text-ink/70 hover:bg-black/5 hover:text-ink dark:hover:bg-white/10; }
   .btn-danger { @apply bg-danger text-white hover:opacity-90; }
   .btn-block { @apply w-full; }
   .btn-sm { @apply px-3 py-1.5 text-xs; }
@@ -50,11 +89,11 @@
   .badge-success { @apply bg-brand-tint text-brand; }
   .badge-warning { @apply bg-amber-100 text-amber-700; }
   .badge-danger { @apply bg-danger-tint text-danger; }
-  .badge-count { @apply inline-flex h-5 min-w-[1.25rem] items-center justify-center rounded-full bg-black/10 px-1.5 text-xs font-bold text-ink/70; }
+  .badge-count { @apply inline-flex h-5 min-w-[1.25rem] items-center justify-center rounded-full bg-black/10 px-1.5 text-xs font-bold text-ink/70 dark:bg-white/10; }
 
   /* Forms */
   .label { @apply mb-1 block text-sm font-semibold text-ink; }
-  .field { @apply w-full rounded-lg border border-line bg-white px-3 py-2 text-sm text-ink placeholder:text-muted focus:border-brand focus:outline-none focus:ring-2 focus:ring-brand/20 disabled:bg-surface disabled:text-muted; }
+  .field { @apply w-full rounded-lg border border-line bg-raised px-3 py-2 text-sm text-ink placeholder:text-muted focus:border-brand focus:outline-none focus:ring-2 focus:ring-brand/20 disabled:bg-surface disabled:text-muted; }
 
   /* Admin user list: a compact 2x2 card on mobile (user + status on top,
      payment + actions below) that flows into aligned columns with a header on >=sm. */
@@ -72,7 +111,7 @@
   .ur-status { grid-area: status; }
   .ur-pay { grid-area: pay; }
   .ur-actions { grid-area: actions; @apply flex items-center gap-1 justify-self-end; }
-  .btn-action { @apply inline-flex items-center gap-1.5 rounded-md px-2 py-1 text-xs font-medium text-muted transition-colors hover:bg-black/5 hover:text-ink; }
+  .btn-action { @apply inline-flex items-center gap-1.5 rounded-md px-2 py-1 text-xs font-medium text-muted transition-colors hover:bg-black/5 hover:text-ink dark:hover:bg-white/10; }
   .btn-action-danger { @apply hover:bg-danger-tint hover:text-danger; }
 
   /* Tabs */
@@ -88,7 +127,7 @@
   .bet { @apply flex flex-col items-center justify-center gap-0.5 rounded-lg border px-1 py-1.5 text-center leading-none transition-colors; }
   .bet-key { @apply text-[11px] font-bold uppercase tracking-wide; }
   .bet-odds { @apply text-xs font-semibold tabular-nums; }
-  .bet-idle { @apply border-brand/30 bg-white text-ink hover:border-brand hover:bg-brand-tint hover:text-ink; }
+  .bet-idle { @apply border-brand/30 bg-raised text-ink hover:border-brand hover:bg-brand-tint hover:text-ink; }
   .bet-locked { @apply pointer-events-none border-line bg-surface text-muted; }
   /* The viewer's pick before the result is known — neutral gray ("picked, undecided"). */
   .bet-pick { @apply border-[#969b9d] bg-[#969b9d] text-white shadow-sm; }
@@ -97,7 +136,7 @@
   /* Finished match: the viewer's pick that missed (light red). */
   .bet-miss { @apply border-danger/40 bg-danger-tint text-danger; }
   /* Padlock toggle next to the pills (LockToggle); brand-colored when locked. */
-  .bet-lock { @apply inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-md text-muted transition-colors hover:bg-black/5 hover:text-ink disabled:pointer-events-none disabled:opacity-50; }
+  .bet-lock { @apply inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-md text-muted transition-colors hover:bg-black/5 hover:text-ink disabled:pointer-events-none disabled:opacity-50 dark:hover:bg-white/10; }
   .bet-lock-on { @apply text-brand hover:text-brand; }
 }
 

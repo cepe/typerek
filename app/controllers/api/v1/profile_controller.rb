@@ -28,15 +28,19 @@ module Api
 
       private
 
-      # Only known keys are accepted; values are coerced to booleans and merged
-      # into the existing settings bag, so a partial update leaves the rest intact.
+      # Only known keys are accepted and merged into the existing settings bag, so a
+      # partial update leaves the rest intact. The boolean flags are coerced to true/
+      # false; `theme` is a string and is only kept when it is one of the allowed
+      # values (an invalid value is dropped so it can't poison the stored bag).
       def settings_params
-        params.require(:settings).permit(
+        permitted = params.require(:settings).permit(
           :drzewko_mode, :bet_lock, :hide_odds, :hide_double_chance,
-          :push_enabled, :push_results, :push_reminders
-        ).to_h.transform_values do |value|
-          ActiveModel::Type::Boolean.new.cast(value)
-        end
+          :push_enabled, :push_results, :push_reminders, :theme
+        ).to_h
+
+        theme = permitted.delete('theme')
+        booleans = permitted.transform_values { |value| ActiveModel::Type::Boolean.new.cast(value) }
+        User::THEMES.include?(theme) ? booleans.merge('theme' => theme) : booleans
       end
     end
   end

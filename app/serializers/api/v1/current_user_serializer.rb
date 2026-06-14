@@ -25,7 +25,8 @@ module Api
             hide_double_chance: user.hide_double_chance?,
             push_enabled: user.push_enabled?,
             push_results: user.push_results?,
-            push_reminders: user.push_reminders?
+            push_reminders: user.push_reminders?,
+            theme: user.theme
           }
         }
       end

@@ -20,7 +20,7 @@ RSpec.describe 'API V1 Profile', type: :request do
       expect(json['settings']).to eq(
         'drzewko_mode' => false, 'bet_lock' => false, 'hide_odds' => false,
         'hide_double_chance' => false, 'push_enabled' => false,
-        'push_results' => true, 'push_reminders' => true
+        'push_results' => true, 'push_reminders' => true, 'theme' => 'light'
       )
     end
 
@@ -36,14 +36,16 @@ RSpec.describe 'API V1 Profile', type: :request do
 
     it 'returns how many users have each setting enabled' do
       create(:user, :active, settings: { 'drzewko_mode' => true, 'bet_lock' => true })
-      create(:user, :active, settings: { 'drzewko_mode' => true })
+      create(:user, :active, settings: { 'drzewko_mode' => true, 'theme' => 'dark' })
+      create(:user, :active, settings: { 'theme' => 'auto' })
+      create(:user, :active, settings: { 'theme' => 'light' })
 
       get '/api/v1/me/settings/stats', headers: auth_headers(user)
 
       expect(response).to have_http_status(:ok)
       expect(json).to eq(
         'drzewko_mode' => 2, 'bet_lock' => 1, 'hide_odds' => 0,
-        'hide_double_chance' => 0, 'push_enabled' => 0
+        'hide_double_chance' => 0, 'push_enabled' => 0, 'theme' => 2
       )
     end
 
@@ -64,9 +66,27 @@ RSpec.describe 'API V1 Profile', type: :request do
       expect(json['settings']).to eq(
         'drzewko_mode' => false, 'bet_lock' => true, 'hide_odds' => false,
         'hide_double_chance' => false, 'push_enabled' => false,
-        'push_results' => true, 'push_reminders' => true
+        'push_results' => true, 'push_reminders' => true, 'theme' => 'light'
       )
       expect(user.reload.bet_lock?).to be(true)
+    end
+
+    it 'accepts a valid theme preference' do
+      patch '/api/v1/me/settings', params: { settings: { theme: 'auto' } }, headers: auth_headers(user), as: :json
+
+      expect(response).to have_http_status(:ok)
+      expect(json['settings']).to include('theme' => 'auto')
+      expect(user.reload.theme).to eq('auto')
+    end
+
+    it 'ignores an invalid theme and keeps the current one' do
+      user.update_column(:settings, { 'theme' => 'dark' })
+
+      patch '/api/v1/me/settings', params: { settings: { theme: 'neon' } }, headers: auth_headers(user), as: :json
+
+      expect(response).to have_http_status(:ok)
+      expect(json['settings']).to include('theme' => 'dark')
+      expect(user.reload.theme).to eq('dark')
     end
 
     it 'returns 401 without a token' do
