@@ -75,17 +75,17 @@ export default function BetDistributionChart({ participants, finished, scoredBet
             outerRadius={56}
             strokeWidth={0}
             isAnimationActive={false}
-            style={{ cursor: onSelect ? 'pointer' : 'default' }}
           >
             {data.map((entry) => (
               <Cell
                 key={entry.label}
                 fill={entry.color}
                 style={{
+                  cursor: onSelect ? 'pointer' : 'default',
                   opacity: selectedResult === null || selectedResult === entry.result ? 1 : 0.3,
                   transition: 'opacity 0.15s',
                 }}
-                onClick={() => handleToggle(entry.result)}
+                onClick={onSelect ? () => handleToggle(entry.result) : undefined}
               />
             ))}
           </Pie>
@@ -104,8 +104,8 @@ export default function BetDistributionChart({ participants, finished, scoredBet
           return (
             <li
               key={entry.label}
-              className={`flex items-center gap-2 transition-opacity ${onSelect ? 'cursor-pointer' : ''} ${isDimmed ? 'opacity-30' : ''}`}
-              onClick={() => handleToggle(entry.result)}
+              className={`flex items-center gap-2 transition-opacity duration-150 ${onSelect ? 'cursor-pointer' : ''} ${isDimmed ? 'opacity-30' : ''}`}
+              onClick={onSelect ? () => handleToggle(entry.result) : undefined}
             >
               <span
                 className="inline-block h-2.5 w-3 shrink-0 rounded-sm"
