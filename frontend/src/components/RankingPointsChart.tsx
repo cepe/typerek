@@ -48,8 +48,16 @@ function getLineProps(
   const finalRank = finalRankMap.get(uid) ?? totalUsers
   const anyHighlighted = highlightedIds.size > 0
 
-  if (uid === meId)             return { stroke: '#12A751', strokeWidth: 2.5, strokeOpacity: 1 }
-  if (favorites.has(uid))       return { stroke: '#f59e0b', strokeWidth: 1.8, strokeOpacity: 1 }
+  if (uid === meId) {
+    if (!anyHighlighted || highlightedIds.has(uid))
+      return { stroke: '#12A751', strokeWidth: 2.5, strokeOpacity: 1 }
+    return { stroke: '#12A751', strokeWidth: 1, strokeOpacity: 0.05 }
+  }
+  if (favorites.has(uid)) {
+    if (!anyHighlighted || highlightedIds.has(uid))
+      return { stroke: '#f59e0b', strokeWidth: 1.8, strokeOpacity: 1 }
+    return { stroke: '#f59e0b', strokeWidth: 1, strokeOpacity: 0.05 }
+  }
   if (highlightedIds.has(uid))  return { stroke: tierColor(finalRank, totalUsers), strokeWidth: 2,   strokeOpacity: 1 }
   if (anyHighlighted)           return { stroke: tierColor(finalRank, totalUsers), strokeWidth: 1,   strokeOpacity: 0.05 }
   return                               { stroke: tierColor(finalRank, totalUsers), strokeWidth: 1,   strokeOpacity: tierOpacity(finalRank, totalUsers) }
