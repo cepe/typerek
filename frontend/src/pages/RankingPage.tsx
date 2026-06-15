@@ -60,6 +60,14 @@ function Movement({ entry }: { entry: RankingEntry }) {
   )
 }
 
+type View = 'table' | 'chart' | 'points'
+
+function parseView(param: string | null): View {
+  if (param === 'chart') return 'chart'
+  if (param === 'points') return 'points'
+  return 'table'
+}
+
 // Mirrors rankings/show.html.erb.
 export default function RankingPage() {
   const { data, isLoading, isError } = useRanking()
@@ -70,12 +78,6 @@ export default function RankingPage() {
   // The active subpage lives in the URL (?view=chart) so a refresh or shared link
   // keeps you on the same tab — same pattern as MatchesPage (?status=finished).
   const [searchParams, setSearchParams] = useSearchParams()
-  type View = 'table' | 'chart' | 'points'
-  function parseView(param: string | null): View {
-    if (param === 'chart') return 'chart'
-    if (param === 'points') return 'points'
-    return 'table'
-  }
   const view = parseView(searchParams.get('view'))
   const selectView = (next: View) =>
     setSearchParams(next === 'table' ? {} : { view: next }, { replace: true })
@@ -257,9 +259,9 @@ export default function RankingPage() {
         </div>
       ) : view === 'chart' ? (
         <RankingBumpChart enabled={view === 'chart'} />
-      ) : (
-        <RankingPointsChart enabled={view === 'points'} />
-      )}
+      ) : view === 'points' ? (
+        <RankingPointsChart enabled />
+      ) : null}
     </>
   )
 }
