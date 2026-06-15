@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import React, { useState, useMemo } from 'react'
 import {
   LineChart, Line, XAxis, YAxis, Tooltip, CartesianGrid,
   ReferenceLine, ResponsiveContainer,
@@ -55,10 +55,10 @@ function getLineProps(
   return                               { stroke: tierColor(finalRank, totalUsers), strokeWidth: 1,   strokeOpacity: tierOpacity(finalRank, totalUsers) }
 }
 
-interface DotProps { cx?: number; cy?: number; index?: number }
+interface EndDotProps { cx?: number; cy?: number; index?: number }
 
 function makeEndDot(rank: number, color: string, lastMatchIdx: number) {
-  return function EndDot({ cx, cy, index }: DotProps) {
+  return function EndDot({ cx, cy, index }: EndDotProps) {
     if (cx == null || cy == null || index !== lastMatchIdx) return null
     return (
       <g>
@@ -155,6 +155,20 @@ export default function RankingPointsChart({ enabled }: Props) {
   const desktopChartHeight = Math.max(DESKTOP_CHART_MIN_HEIGHT, totalUsers * DESKTOP_CHART_HEIGHT_PER_USER)
   const xDomain: [number, number] = matches.length === 1 ? [0.5, 1.5] : [1, matches.length]
 
+  const sortedForRender = useMemo(
+    () =>
+      [...series].sort((a, b) => {
+        const rank = (s: RankingHistorySeries) => {
+          if (s.user.id === me?.id)          return 3
+          if (favorites.has(s.user.id))      return 2
+          if (highlightedIds.has(s.user.id)) return 1
+          return 0
+        }
+        return rank(a) - rank(b)
+      }),
+    [series, me?.id, favorites, highlightedIds],
+  )
+
   const chart = (
     <LineChart
       data={rows}
@@ -185,23 +199,14 @@ export default function RankingPointsChart({ enabled }: Props) {
           />
         }
       />
-      {[...series]
-        .sort((a, b) => {
-          const rank = (s: RankingHistorySeries) => {
-            if (s.user.id === me?.id)          return 3
-            if (favorites.has(s.user.id))      return 2
-            if (highlightedIds.has(s.user.id)) return 1
-            return 0
-          }
-          return rank(a) - rank(b)
-        })
-        .map(s => {
+      {sortedForRender.map(s => {
           const uid = String(s.user.id)
           const props = getLineProps(s, me?.id, favorites, highlightedIds, finalRankMap, totalUsers)
           const finalRank = finalRankMap.get(s.user.id) ?? totalUsers
           const showEndLabel = finalRank <= 3 && s.user.id !== me?.id && !favorites.has(s.user.id)
 
           return (
+            // recharts dot type expects ReactElement; function components returning null need this cast
             <Line
               key={uid}
               dataKey={uid}
