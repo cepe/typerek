@@ -91,7 +91,61 @@ interface LegendProps {
   onClear: () => void
   maxHeight?: number
 }
-function Legend(_props: LegendProps) { return null }
+function Legend({ sortedSeries, finalRankMap, totalUsers, highlightedIds, favorites, meId, onToggle, onClear, maxHeight }: LegendProps) {
+  return (
+    <div>
+      {highlightedIds.size > 0 && (
+        <div className="border-b border-line px-3 py-2">
+          <button
+            type="button"
+            onClick={onClear}
+            className="text-xs text-brand hover:underline"
+          >
+            Wyczyść ({highlightedIds.size})
+          </button>
+        </div>
+      )}
+      <ul
+        className="divide-y divide-line/60"
+        style={maxHeight ? { maxHeight, overflowY: 'auto' } : undefined}
+      >
+        {sortedSeries.map(s => {
+          const uid = s.user.id
+          const finalRank = finalRankMap.get(uid) ?? totalUsers
+          const isMe = uid === meId
+          const isFav = favorites.has(uid)
+          const isSelected = highlightedIds.has(uid)
+          const lineColor = isMe ? '#12A751' : isFav ? '#f59e0b' : tierColor(finalRank, totalUsers)
+
+          return (
+            <li key={uid}>
+              <button
+                type="button"
+                onClick={() => onToggle(uid)}
+                className={`flex w-full items-center gap-2 px-3 py-2 text-left text-xs transition-colors hover:bg-surface ${
+                  isSelected ? 'bg-surface font-semibold' : ''
+                }`}
+              >
+                <span
+                  className="inline-block h-2.5 w-4 shrink-0 rounded-sm"
+                  style={{ backgroundColor: lineColor, opacity: isSelected || isMe || isFav ? 1 : 0.5 }}
+                />
+                <span className={`flex-1 truncate ${isMe ? 'font-semibold text-brand' : 'text-ink'}`}>
+                  {s.user.username}
+                  {isMe && <span className="ml-1 text-[10px] font-normal">(Ty)</span>}
+                  {isFav && !isMe && <span className="ml-1 text-yellow-500">★</span>}
+                </span>
+                {isSelected && (
+                  <i className="fas fa-check text-brand" aria-hidden="true" />
+                )}
+              </button>
+            </li>
+          )
+        })}
+      </ul>
+    </div>
+  )
+}
 
 interface Props {
   enabled: boolean
