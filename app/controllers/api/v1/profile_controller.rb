@@ -31,16 +31,30 @@ module Api
       # Only known keys are accepted and merged into the existing settings bag, so a
       # partial update leaves the rest intact. The boolean flags are coerced to true/
       # false; `theme` is a string and is only kept when it is one of the allowed
-      # values (an invalid value is dropped so it can't poison the stored bag).
+      # values (an invalid value is dropped so it can't poison the stored bag);
+      # `favorite_user_ids` is an array of user ids, normalised to unique positive
+      # integers with the user's own id stripped (you can't favourite yourself).
       def settings_params
         permitted = params.require(:settings).permit(
           :drzewko_mode, :bet_lock, :hide_odds, :hide_double_chance,
-          :push_enabled, :push_results, :push_reminders, :theme
+          :push_enabled, :push_results, :push_reminders, :theme,
+          favorite_user_ids: []
         ).to_h
 
+        result = {}
+
         theme = permitted.delete('theme')
-        booleans = permitted.transform_values { |value| ActiveModel::Type::Boolean.new.cast(value) }
-        User::THEMES.include?(theme) ? booleans.merge('theme' => theme) : booleans
+        result['theme'] = theme if User::THEMES.include?(theme)
+
+        if permitted.key?('favorite_user_ids')
+          result['favorite_user_ids'] = Array(permitted.delete('favorite_user_ids'))
+                                        .map(&:to_i)
+                                        .reject { |id| id <= 0 || id == current_user.id }
+                                        .uniq
+        end
+
+        permitted.each { |key, value| result[key] = ActiveModel::Type::Boolean.new.cast(value) }
+        result
       end
     end
   end

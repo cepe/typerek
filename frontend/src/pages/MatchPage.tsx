@@ -15,9 +15,10 @@ import { useSettings } from '@/lib/settings'
 export default function MatchPage() {
   const { id = '' } = useParams()
   const { isAdmin } = useAuth()
-  const { hideOdds } = useSettings()
+  const { hideOdds, favoriteUserIds } = useSettings()
   const { data: match, isLoading, isError } = useMatch(id)
   const placeBet = usePlaceBet()
+  const favorites = new Set(favoriteUserIds)
 
   useDocumentTitle(match ? `${match.team_a} – ${match.team_b}` : undefined)
 
@@ -98,12 +99,23 @@ export default function MatchPage() {
             </div>
           )}
           <div className="divide-y divide-line/60">
-            {match.participants.map((participant) => (
+            {match.participants.map((participant) => {
+              const fav = favorites.has(participant.user.id)
+              return (
               <div
                 key={participant.user.id}
-                className="flex flex-col gap-2 px-4 py-3 sm:flex-row sm:items-center sm:gap-4 sm:px-5"
+                className={`flex flex-col gap-2 px-4 py-3 sm:flex-row sm:items-center sm:gap-4 sm:px-5 ${
+                  fav ? 'bg-amber-100/80 dark:bg-amber-500/10' : ''
+                }`}
               >
-                <div className="font-medium">
+                <div className={`flex items-center gap-1.5 ${fav ? 'font-semibold' : 'font-medium'}`}>
+                  {fav && (
+                    <i
+                      className="fas fa-star text-xs text-yellow-400"
+                      aria-label="Ulubiony"
+                      title="Ulubiony"
+                    />
+                  )}
                   <Link to={`/users/${participant.user.id}`} className="text-ink hover:text-brand">
                     {participant.user.username}
                   </Link>
@@ -135,7 +147,8 @@ export default function MatchPage() {
                   </div>
                 )}
               </div>
-            ))}
+              )
+            })}
           </div>
         </section>
       )}

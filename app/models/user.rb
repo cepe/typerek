@@ -17,7 +17,11 @@ class User < ApplicationRecord
     # UI colour theme. 'light' is the default (dark mode off); 'dark' forces dark
     # mode on; 'auto' lets the SPA switch by the clock (dark at night). Unlike the
     # other settings this is a string, not a boolean — see THEMES and #theme.
-    'theme' => 'light'
+    'theme' => 'light',
+    # IDs of users this user starred as favourites in the ranking. Highlighted in
+    # the ranking and in a match's participant ("typy") list. Unlike the others
+    # this is an array, not a scalar — see #favorite_user_ids.
+    'favorite_user_ids' => []
   }.freeze
 
   # Allowed values for the `theme` setting. Anything else falls back to 'light'.
@@ -124,5 +128,12 @@ class User < ApplicationRecord
   def theme
     value = settings_with_defaults['theme']
     THEMES.include?(value) ? value : 'light'
+  end
+
+  # IDs of the users this user starred as favourites. Coerces the stored jsonb to a
+  # plain array of integers so a malformed value (e.g. nil or strings) can't break
+  # the ranking/match views that highlight these users.
+  def favorite_user_ids
+    Array(settings_with_defaults['favorite_user_ids']).map(&:to_i)
   end
 end
