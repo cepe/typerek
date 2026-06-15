@@ -20,7 +20,8 @@ RSpec.describe 'API V1 Profile', type: :request do
       expect(json['settings']).to eq(
         'drzewko_mode' => false, 'bet_lock' => false, 'hide_odds' => false,
         'hide_double_chance' => false, 'push_enabled' => false,
-        'push_results' => true, 'push_reminders' => true, 'theme' => 'light'
+        'push_results' => true, 'push_reminders' => true, 'theme' => 'light',
+        'favorite_user_ids' => []
       )
     end
 
@@ -66,7 +67,8 @@ RSpec.describe 'API V1 Profile', type: :request do
       expect(json['settings']).to eq(
         'drzewko_mode' => false, 'bet_lock' => true, 'hide_odds' => false,
         'hide_double_chance' => false, 'push_enabled' => false,
-        'push_results' => true, 'push_reminders' => true, 'theme' => 'light'
+        'push_results' => true, 'push_reminders' => true, 'theme' => 'light',
+        'favorite_user_ids' => []
       )
       expect(user.reload.bet_lock?).to be(true)
     end
@@ -87,6 +89,31 @@ RSpec.describe 'API V1 Profile', type: :request do
       expect(response).to have_http_status(:ok)
       expect(json['settings']).to include('theme' => 'dark')
       expect(user.reload.theme).to eq('dark')
+    end
+
+    it 'stores favourite user ids, deduped and without the user itself' do
+      a = create(:user, :active)
+      b = create(:user, :active)
+
+      patch '/api/v1/me/settings',
+            params: { settings: { favorite_user_ids: [a.id, b.id, a.id, user.id] } },
+            headers: auth_headers(user), as: :json
+
+      expect(response).to have_http_status(:ok)
+      expect(json['settings']['favorite_user_ids']).to contain_exactly(a.id, b.id)
+      expect(user.reload.favorite_user_ids).to contain_exactly(a.id, b.id)
+    end
+
+    it 'clears favourites when given an empty list' do
+      other = create(:user, :active)
+      user.update_column(:settings, { 'favorite_user_ids' => [other.id] })
+
+      patch '/api/v1/me/settings', params: { settings: { favorite_user_ids: [] } },
+            headers: auth_headers(user), as: :json
+
+      expect(response).to have_http_status(:ok)
+      expect(json['settings']['favorite_user_ids']).to eq([])
+      expect(user.reload.favorite_user_ids).to eq([])
     end
 
     it 'returns 401 without a token' do

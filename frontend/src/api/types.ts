@@ -35,6 +35,9 @@ export interface UserSettings {
   push_reminders: boolean
   // Colour theme: 'light' (off), 'dark' (always), or 'auto' (dark at night).
   theme: ThemePreference
+  // IDs of users the viewer starred as favourites in the ranking. They are
+  // highlighted in the ranking and in a match's participant ("typy") list.
+  favorite_user_ids: number[]
 }
 
 // A registered Web Push device for the signed-in user (GET /push/subscriptions).

@@ -63,7 +63,7 @@ function Movement({ entry }: { entry: RankingEntry }) {
 export default function RankingPage() {
   const { data, isLoading, isError } = useRanking()
   const { user } = useAuth()
-  const { drzewkoMode } = useSettings()
+  const { drzewkoMode, favoriteUserIds, toggleFavorite } = useSettings()
   const meRowRef = useRef<HTMLLIElement>(null)
 
   // The active subpage lives in the URL (?view=chart) so a refresh or shared link
@@ -80,6 +80,7 @@ export default function RankingPage() {
 
   const meEntry = data.find((entry) => entry.user.id === user?.id)
   const scrollToMe = () => meRowRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' })
+  const favorites = new Set(favoriteUserIds)
 
   // Prize zone: the top N places are "in the money" (N decided per season, see
   // CurrentUser#rewarded_positions). Entries are sorted by position asc, so the
@@ -164,9 +165,22 @@ export default function RankingPage() {
             {data.map((entry, idx) => {
               const me = user?.id === entry.user.id
               const inPrize = rewarded > 0 && entry.position <= rewarded
+              const fav = !me && favorites.has(entry.user.id)
               const hint = zoneHint(entry, idx)
-              const accent = inPrize ? 'border-l-[3px] border-amber-400' : 'border-l-[3px] border-transparent'
-              const bg = me ? (drzewkoMode ? 'drzewko-flash' : 'bg-brand-tint') : inPrize ? 'bg-highlight/60' : ''
+              // Favourites and prize-zone rows both get a left accent; a favourite
+              // takes precedence on the background tint (a touch deeper amber than
+              // the zone) so a starred row stands out even when it's also in the zone.
+              const accent =
+                inPrize || fav ? 'border-l-[3px] border-amber-400' : 'border-l-[3px] border-transparent'
+              const bg = me
+                ? drzewkoMode
+                  ? 'drzewko-flash'
+                  : 'bg-brand-tint'
+                : fav
+                  ? 'bg-amber-100/80 dark:bg-amber-500/10'
+                  : inPrize
+                    ? 'bg-highlight/60'
+                    : ''
               return (
                 <Fragment key={entry.user.id}>
                   <li
@@ -182,7 +196,7 @@ export default function RankingPage() {
                       {entry.position}
                     </span>
                     <Movement entry={entry} />
-                    <span className="flex-1 truncate font-medium">
+                    <span className={`flex-1 truncate ${fav ? 'font-semibold' : 'font-medium'}`}>
                       <Link to={`/users/${entry.user.id}`} className="text-ink hover:text-brand">
                         {entry.user.username}
                       </Link>
@@ -195,6 +209,26 @@ export default function RankingPage() {
                       <span className="block text-xs text-muted">{entry.accuracy} trafień</span>
                       {hint && <span className={`block text-xs font-medium ${hint.tone}`}>{hint.text}</span>}
                     </span>
+                    {me ? (
+                      <span className="w-8 shrink-0" aria-hidden="true" />
+                    ) : (
+                      <button
+                        type="button"
+                        onClick={() => void toggleFavorite(entry.user.id)}
+                        aria-pressed={fav}
+                        aria-label={
+                          fav
+                            ? `Usuń ${entry.user.username} z ulubionych`
+                            : `Dodaj ${entry.user.username} do ulubionych`
+                        }
+                        title={fav ? 'Usuń z ulubionych' : 'Dodaj do ulubionych'}
+                        className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-base transition-colors hover:bg-black/5 dark:hover:bg-white/10 ${
+                          fav ? 'text-yellow-400 hover:text-yellow-500' : 'text-muted/40 hover:text-yellow-400'
+                        }`}
+                      >
+                        <i className={`${fav ? 'fas' : 'far'} fa-star`} aria-hidden="true" />
+                      </button>
+                    )}
                   </li>
                   {prizeCount > 0 && idx === prizeCount - 1 && idx < data.length - 1 && (
                     <li className="flex items-center gap-2 bg-highlight px-4 py-1.5 text-xs font-semibold uppercase tracking-wide text-highlight-fg">

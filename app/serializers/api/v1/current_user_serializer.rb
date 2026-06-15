@@ -26,7 +26,8 @@ module Api
             push_enabled: user.push_enabled?,
             push_results: user.push_results?,
             push_reminders: user.push_reminders?,
-            theme: user.theme
+            theme: user.theme,
+            favorite_user_ids: user.favorite_user_ids
           }
         }
       end

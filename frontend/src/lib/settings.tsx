@@ -35,6 +35,10 @@ interface Settings {
   pushReminders: boolean
   // Colour theme: 'light' (dark mode off), 'dark' (always on), 'auto' (dark at night).
   theme: ThemePreference
+  // IDs of users the viewer starred as favourites in the ranking. They are
+  // highlighted in the ranking and in a match's participant list. Toggled from the
+  // ranking via toggleFavorite; persisted server-side like the other preferences.
+  favoriteUserIds: number[]
 }
 
 const DEFAULTS: Settings = {
@@ -46,6 +50,7 @@ const DEFAULTS: Settings = {
   pushResults: true,
   pushReminders: true,
   theme: 'light',
+  favoriteUserIds: [],
 }
 
 // Map between the server shape (snake_case, the API contract) and ours (camelCase).
@@ -63,6 +68,7 @@ function fromServer(settings: UserSettings | undefined): Settings {
     // doesn't flash from the cached dark back to light. Once a user loads, the
     // server value (always present — it defaults to 'light') takes over.
     theme: settings?.theme ?? readStoredPreference(),
+    favoriteUserIds: settings?.favorite_user_ids ?? DEFAULTS.favoriteUserIds,
   }
 }
 
@@ -77,6 +83,8 @@ interface SettingsState extends Settings {
   setPushResults: (value: boolean) => Promise<void>
   setPushReminders: (value: boolean) => Promise<void>
   setTheme: (value: ThemePreference) => Promise<void>
+  // Add or remove a user from the viewer's favourites (starred in the ranking).
+  toggleFavorite: (userId: number) => Promise<void>
 }
 
 const SettingsContext = createContext<SettingsState | undefined>(undefined)
@@ -131,6 +139,12 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
     setPushResults: (pushResults) => persist({ pushResults }, { push_results: pushResults }),
     setPushReminders: (pushReminders) => persist({ pushReminders }, { push_reminders: pushReminders }),
     setTheme: (theme) => persist({ theme }, { theme }),
+    toggleFavorite: (userId) => {
+      const next = settings.favoriteUserIds.includes(userId)
+        ? settings.favoriteUserIds.filter((id) => id !== userId)
+        : [...settings.favoriteUserIds, userId]
+      return persist({ favoriteUserIds: next }, { favorite_user_ids: next })
+    },
   }
 
   return <SettingsContext.Provider value={value}>{children}</SettingsContext.Provider>
