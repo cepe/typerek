@@ -4,6 +4,7 @@ import { useRanking } from '@/api/hooks'
 import { useAuth } from '@/auth/AuthContext'
 import { ErrorBox, Loading } from '@/components/Status'
 import RankingBumpChart from '@/components/RankingBumpChart'
+import RankingPointsChart from '@/components/RankingPointsChart'
 import { pointsDisplay } from '@/lib/format'
 import { useSettings } from '@/lib/settings'
 import { useDocumentTitle } from '@/lib/useDocumentTitle'
@@ -69,9 +70,15 @@ export default function RankingPage() {
   // The active subpage lives in the URL (?view=chart) so a refresh or shared link
   // keeps you on the same tab — same pattern as MatchesPage (?status=finished).
   const [searchParams, setSearchParams] = useSearchParams()
-  const view: 'table' | 'chart' = searchParams.get('view') === 'chart' ? 'chart' : 'table'
-  const selectView = (next: 'table' | 'chart') =>
-    setSearchParams(next === 'chart' ? { view: 'chart' } : {}, { replace: true })
+  type View = 'table' | 'chart' | 'points'
+  function parseView(param: string | null): View {
+    if (param === 'chart') return 'chart'
+    if (param === 'points') return 'points'
+    return 'table'
+  }
+  const view = parseView(searchParams.get('view'))
+  const selectView = (next: View) =>
+    setSearchParams(next === 'table' ? {} : { view: next }, { replace: true })
 
   useDocumentTitle('Ranking')
 
@@ -131,6 +138,13 @@ export default function RankingPage() {
           className={`tab${view === 'chart' ? ' tab-active' : ''}`}
         >
           Wykres pozycji
+        </button>
+        <button
+          type="button"
+          onClick={() => selectView('points')}
+          className={`tab${view === 'points' ? ' tab-active' : ''}`}
+        >
+          Punkty
         </button>
       </div>
 
@@ -241,8 +255,10 @@ export default function RankingPage() {
             })}
           </ul>
         </div>
-      ) : (
+      ) : view === 'chart' ? (
         <RankingBumpChart enabled={view === 'chart'} />
+      ) : (
+        <RankingPointsChart enabled={view === 'points'} />
       )}
     </>
   )
