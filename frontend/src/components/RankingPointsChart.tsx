@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react'
+import React, { useState } from 'react'
 import {
   LineChart, Line, XAxis, YAxis, Tooltip, CartesianGrid,
   ReferenceLine, ResponsiveContainer,
@@ -262,19 +262,15 @@ export default function RankingPointsChart({ enabled }: Props) {
   const desktopChartHeight = Math.max(DESKTOP_CHART_MIN_HEIGHT, totalUsers * DESKTOP_CHART_HEIGHT_PER_USER)
   const xDomain: [number, number] = matches.length === 1 ? [0.5, 1.5] : [1, matches.length]
 
-  const sortedForRender = useMemo(
-    () =>
-      [...series].sort((a, b) => {
-        const rank = (s: RankingHistorySeries) => {
-          if (s.user.id === me?.id)          return 3
-          if (favorites.has(s.user.id))      return 2
-          if (highlightedIds.has(s.user.id)) return 1
-          return 0
-        }
-        return rank(a) - rank(b)
-      }),
-    [series, me?.id, favorites, highlightedIds],
-  )
+  const sortedForRender = [...series].sort((a, b) => {
+    const rank = (s: RankingHistorySeries) => {
+      if (s.user.id === me?.id)          return 3
+      if (favorites.has(s.user.id))      return 2
+      if (highlightedIds.has(s.user.id)) return 1
+      return 0
+    }
+    return rank(a) - rank(b)
+  })
 
   const chart = (
     <LineChart
