@@ -88,10 +88,9 @@ interface CustomTooltipProps {
 
 function CustomTooltip({ active, label, payload, matches, series, userMap, meId, hoveredUserId }: CustomTooltipProps) {
   if (!active || label == null || !payload?.length) return null
-  const match = matches[label - 1]
-  if (!match) return null
-
   const matchIdx = label - 1
+  const match = matches[matchIdx]
+  if (!match) return null
   const score =
     match.result_a != null && match.result_b != null
       ? formattedScore(match.result_a, match.result_b)
@@ -101,6 +100,7 @@ function CustomTooltip({ active, label, payload, matches, series, userMap, meId,
   if (!hoveredEntry) return null
 
   const uid = parseInt(hoveredEntry.dataKey, 10)
+  if (!Number.isFinite(uid)) return null
   const userSeries = series.find(s => s.user.id === uid)
   const pts = userSeries?.points[matchIdx] ?? hoveredEntry.value
   const pos = userSeries?.positions[matchIdx] ?? null
