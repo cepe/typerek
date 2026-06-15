@@ -69,16 +69,69 @@ function makeEndDot(rank: number, color: string, lastMatchIdx: number) {
   }
 }
 
-function CustomTooltip(_props: {
+interface PayloadEntry {
+  dataKey: string
+  value: number
+  stroke: string
+}
+
+interface CustomTooltipProps {
   active?: boolean
   label?: number
-  payload?: unknown[]
+  payload?: PayloadEntry[]
   matches: RankingHistoryMatch[]
   series: RankingHistorySeries[]
   userMap: Map<string, string>
   meId?: number
   hoveredUserId: string | null
-}) { return null }
+}
+
+function CustomTooltip({ active, label, payload, matches, series, userMap, meId, hoveredUserId }: CustomTooltipProps) {
+  if (!active || label == null || !payload?.length) return null
+  const match = matches[label - 1]
+  if (!match) return null
+
+  const matchIdx = label - 1
+  const score =
+    match.result_a != null && match.result_b != null
+      ? formattedScore(match.result_a, match.result_b)
+      : '–:–'
+
+  const hoveredEntry = hoveredUserId ? payload.find(p => p.dataKey === hoveredUserId) : null
+  if (!hoveredEntry) return null
+
+  const uid = parseInt(hoveredEntry.dataKey, 10)
+  const userSeries = series.find(s => s.user.id === uid)
+  const pts = userSeries?.points[matchIdx] ?? hoveredEntry.value
+  const pos = userSeries?.positions[matchIdx] ?? null
+  const isMe = hoveredEntry.dataKey === String(meId)
+
+  return (
+    <div className="card card-body w-52 py-2 text-xs shadow-lg">
+      <p className="mb-1 font-semibold text-ink">
+        Mecz #{label}: {match.team_a} {score} {match.team_b}
+      </p>
+      <p className="text-muted">{formatDateLong(match.start)}</p>
+      <div className="mt-2 border-t border-line pt-2">
+        <div className="flex items-center gap-1.5">
+          <span
+            className="inline-block h-2 w-2.5 shrink-0 rounded-sm"
+            style={{ backgroundColor: hoveredEntry.stroke }}
+          />
+          <span className={`truncate ${isMe ? 'font-semibold text-brand' : 'text-ink'}`}>
+            {userMap.get(hoveredEntry.dataKey) ?? '—'}
+          </span>
+        </div>
+        <p className="mt-1 font-bold text-ink tabular-nums">
+          {pointsDisplay(pts)} pkt
+          {pos != null && (
+            <span className="ml-2 text-xs font-normal text-muted">({pos}. miejsce)</span>
+          )}
+        </p>
+      </div>
+    </div>
+  )
+}
 
 interface LegendProps {
   sortedSeries: RankingHistorySeries[]
