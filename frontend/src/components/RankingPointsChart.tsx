@@ -1,6 +1,6 @@
-import { useState } from 'react'
+import React, { useState } from 'react'
 import {
-  LineChart, XAxis, YAxis, Tooltip, CartesianGrid,
+  LineChart, Line, XAxis, YAxis, Tooltip, CartesianGrid,
   ReferenceLine, ResponsiveContainer,
 } from 'recharts'
 import { useRankingHistory } from '@/api/hooks'
@@ -34,6 +34,39 @@ function xTicks(matchCount: number): number[] {
   for (let i = 1; i < MAX_X_TICKS - 1; i++) ticks.push(Math.round(1 + i * step))
   ticks.push(matchCount)
   return ticks
+}
+
+function getLineProps(
+  s: RankingHistorySeries,
+  meId: number | undefined,
+  favorites: Set<number>,
+  highlightedIds: Set<number>,
+  finalRankMap: Map<number, number>,
+  totalUsers: number,
+): { stroke: string; strokeWidth: number; strokeOpacity: number } {
+  const uid = s.user.id
+  const finalRank = finalRankMap.get(uid) ?? totalUsers
+  const anyHighlighted = highlightedIds.size > 0
+
+  if (uid === meId)             return { stroke: '#12A751', strokeWidth: 2.5, strokeOpacity: 1 }
+  if (favorites.has(uid))       return { stroke: '#f59e0b', strokeWidth: 1.8, strokeOpacity: 1 }
+  if (highlightedIds.has(uid))  return { stroke: tierColor(finalRank, totalUsers), strokeWidth: 2,   strokeOpacity: 1 }
+  if (anyHighlighted)           return { stroke: tierColor(finalRank, totalUsers), strokeWidth: 1,   strokeOpacity: 0.05 }
+  return                               { stroke: tierColor(finalRank, totalUsers), strokeWidth: 1,   strokeOpacity: tierOpacity(finalRank, totalUsers) }
+}
+
+interface DotProps { cx?: number; cy?: number; index?: number }
+
+function makeEndDot(rank: number, color: string, lastMatchIdx: number) {
+  return function EndDot({ cx, cy, index }: DotProps) {
+    if (cx == null || cy == null || index !== lastMatchIdx) return null
+    return (
+      <g>
+        <circle cx={cx} cy={cy} r={3} fill={color} />
+        <text x={cx + 5} y={cy + 4} fontSize={9} fill={color} fontWeight={700}>{`#${rank}`}</text>
+      </g>
+    )
+  }
 }
 
 function CustomTooltip(_props: {
@@ -152,7 +185,40 @@ export default function RankingPointsChart({ enabled }: Props) {
           />
         }
       />
-      {/* Lines added in Task 3 */}
+      {[...series]
+        .sort((a, b) => {
+          const rank = (s: RankingHistorySeries) => {
+            if (s.user.id === me?.id)          return 3
+            if (favorites.has(s.user.id))      return 2
+            if (highlightedIds.has(s.user.id)) return 1
+            return 0
+          }
+          return rank(a) - rank(b)
+        })
+        .map(s => {
+          const uid = String(s.user.id)
+          const props = getLineProps(s, me?.id, favorites, highlightedIds, finalRankMap, totalUsers)
+          const finalRank = finalRankMap.get(s.user.id) ?? totalUsers
+          const showEndLabel = finalRank <= 3 && s.user.id !== me?.id && !favorites.has(s.user.id)
+
+          return (
+            <Line
+              key={uid}
+              dataKey={uid}
+              stroke={props.stroke}
+              strokeWidth={props.strokeWidth}
+              strokeOpacity={props.strokeOpacity}
+              dot={showEndLabel ? makeEndDot(finalRank, props.stroke, lastIdx) as unknown as React.ReactElement : false}
+              activeDot={{
+                r: 4,
+                onMouseEnter: () => setHoveredUserId(uid),
+                onMouseLeave: () => setHoveredUserId(null),
+              }}
+              isAnimationActive={false}
+              connectNulls
+            />
+          )
+        })}
     </LineChart>
   )
 
