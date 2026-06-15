@@ -208,7 +208,9 @@ export default function RankingPointsChart({ enabled }: Props) {
   const { data, isLoading, isError } = useRankingHistory(enabled)
   const { user: me } = useAuth()
   const { favoriteUserIds } = useSettings()
-  const [highlightedIds, setHighlightedIds] = useState<Set<number>>(new Set())
+  const [highlightedIds, setHighlightedIds] = useState<Set<number>>(() =>
+    me?.id != null ? new Set([me.id]) : new Set()
+  )
   const [hoveredUserId, setHoveredUserId] = useState<string | null>(null)
   const [legendOpen, setLegendOpen] = useState(false)
 
