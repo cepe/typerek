@@ -100,7 +100,7 @@ export default function RankingPointsChart({ enabled }: Props) {
     return row
   })
 
-  const globalMax = Math.max(...series.flatMap(s => s.points))
+  const globalMax = series.length > 0 ? Math.max(...series.flatMap(s => s.points)) : 100
 
   const inPrize = rewarded > 0
     ? series.filter(s => s.positions[lastIdx] <= rewarded)
