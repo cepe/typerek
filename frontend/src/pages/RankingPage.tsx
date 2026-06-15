@@ -139,14 +139,14 @@ export default function RankingPage() {
           onClick={() => selectView('chart')}
           className={`tab${view === 'chart' ? ' tab-active' : ''}`}
         >
-          Wykres pozycji
+          Historia pozycji
         </button>
         <button
           type="button"
           onClick={() => selectView('points')}
           className={`tab${view === 'points' ? ' tab-active' : ''}`}
         >
-          Punkty
+          Historia punktów
         </button>
       </div>
 
