@@ -364,6 +364,7 @@ export default function RankingPointsChart({ enabled }: Props) {
                 r: 4,
                 onMouseEnter: () => setHoveredUserId(uid),
                 onMouseLeave: () => setHoveredUserId(null),
+                onClick: () => toggleHighlight(s.user.id),
               }}
               isAnimationActive={false}
               connectNulls

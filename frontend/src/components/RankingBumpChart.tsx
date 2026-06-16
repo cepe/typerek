@@ -271,7 +271,12 @@ export default function RankingBumpChart({ enabled }: Props) {
             stroke={color}
             strokeWidth={isHighlighted ? 2.5 : 1.5}
             dot={showDots ? { r: 3, fill: color, strokeWidth: 0 } : false}
-            activeDot={{ r: 4, onMouseEnter: () => setHoveredUserId(uid), onMouseLeave: () => setHoveredUserId(null) }}
+            activeDot={{
+              r: 4,
+              onMouseEnter: () => setHoveredUserId(uid),
+              onMouseLeave: () => setHoveredUserId(null),
+              onClick: () => toggleHighlight(s.user.id),
+            }}
             strokeOpacity={isHighlighted ? 1 : tierOpacity(finalRank, totalUsers)}
             isAnimationActive={false}
             connectNulls
