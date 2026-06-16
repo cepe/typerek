@@ -1,5 +1,7 @@
+import { useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
 import { useMatch, usePlaceBet } from '@/api/hooks'
+import type { BetType } from '@/api/types'
 import { useAuth } from '@/auth/AuthContext'
 import { ErrorBox, Loading } from '@/components/Status'
 import Flag from '@/components/Flag'
@@ -19,6 +21,7 @@ export default function MatchPage() {
   const { data: match, isLoading, isError } = useMatch(id)
   const placeBet = usePlaceBet()
   const favorites = new Set(favoriteUserIds)
+  const [selectedResult, setSelectedResult] = useState<BetType | null>(null)
 
   useDocumentTitle(match ? `${match.team_a} – ${match.team_b}` : undefined)
 
@@ -27,6 +30,11 @@ export default function MatchPage() {
 
   const scored = match.finished ? new Set(winningBets(match.result_a, match.result_b)) : null
   const live = match.started && !match.finished
+  const visibleParticipants = match.participants
+    ? selectedResult === null
+      ? match.participants
+      : match.participants.filter((p) => p.result === selectedResult)
+    : []
 
   return (
     <div className="mx-auto max-w-3xl space-y-6">
@@ -95,11 +103,17 @@ export default function MatchPage() {
           </div>
           {match.participants.some((p) => p.result != null) && (
             <div className="border-b border-line/60">
-              <BetDistributionChart participants={match.participants} finished={match.finished} scoredBets={scored} />
+              <BetDistributionChart
+                participants={match.participants}
+                finished={match.finished}
+                scoredBets={scored}
+                selectedResult={selectedResult}
+                onSelect={setSelectedResult}
+              />
             </div>
           )}
           <div className="divide-y divide-line/60">
-            {match.participants.map((participant) => {
+            {visibleParticipants.map((participant) => {
               const fav = favorites.has(participant.user.id)
               return (
               <div

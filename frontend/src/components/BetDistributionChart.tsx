@@ -12,6 +12,8 @@ interface Props {
   participants: Participant[]
   finished: boolean
   scoredBets: Set<BetType> | null
+  selectedResult?: BetType | null
+  onSelect?: (result: BetType | null) => void
 }
 
 function pluralGraczy(n: number): string {
@@ -33,7 +35,7 @@ function CustomTooltip({ active, payload }: CustomTooltipProps) {
   )
 }
 
-export default function BetDistributionChart({ participants, finished, scoredBets }: Props) {
+export default function BetDistributionChart({ participants, finished, scoredBets, selectedResult = null, onSelect }: Props) {
   let greenIdx = 0, redIdx = 0, greyIdx = 0
   const data = BET_TYPES.map(([result, label]) => ({
     label,
@@ -55,6 +57,10 @@ export default function BetDistributionChart({ participants, finished, scoredBet
 
   const total = data.reduce((sum, d) => sum + d.count, 0)
 
+  function handleToggle(result: BetType) {
+    onSelect?.(selectedResult === result ? null : result)
+  }
+
   return (
     <div className="flex items-center justify-center gap-6 px-4 py-4 sm:px-5">
       <div className="relative shrink-0">
@@ -71,7 +77,16 @@ export default function BetDistributionChart({ participants, finished, scoredBet
             isAnimationActive={false}
           >
             {data.map((entry) => (
-              <Cell key={entry.label} fill={entry.color} />
+              <Cell
+                key={entry.label}
+                fill={entry.color}
+                style={{
+                  cursor: onSelect ? 'pointer' : 'default',
+                  opacity: selectedResult === null || selectedResult === entry.result ? 1 : 0.3,
+                  transition: 'opacity 0.15s',
+                }}
+                onClick={onSelect ? () => handleToggle(entry.result) : undefined}
+              />
             ))}
           </Pie>
           <Tooltip content={<CustomTooltip />} />
@@ -83,16 +98,24 @@ export default function BetDistributionChart({ participants, finished, scoredBet
       </div>
 
       <ul className="space-y-1 text-xs">
-        {data.map((entry) => (
-          <li key={entry.label} className="flex items-center gap-2">
-            <span
-              className="inline-block h-2.5 w-3 shrink-0 rounded-sm"
-              style={{ backgroundColor: entry.color }}
-            />
-            <span className="font-semibold text-ink">{entry.label}</span>
-            <span className="text-muted">— {entry.count} {pluralGraczy(entry.count)}</span>
-          </li>
-        ))}
+        {data.map((entry) => {
+          const isSelected = selectedResult === entry.result
+          const isDimmed = selectedResult !== null && !isSelected
+          return (
+            <li
+              key={entry.label}
+              className={`flex items-center gap-2 transition-opacity duration-150 ${onSelect ? 'cursor-pointer' : ''} ${isDimmed ? 'opacity-30' : ''}`}
+              onClick={onSelect ? () => handleToggle(entry.result) : undefined}
+            >
+              <span
+                className="inline-block h-2.5 w-3 shrink-0 rounded-sm"
+                style={{ backgroundColor: entry.color }}
+              />
+              <span className={`text-ink ${isSelected ? 'font-bold' : 'font-semibold'}`}>{entry.label}</span>
+              <span className="text-muted">— {entry.count} {pluralGraczy(entry.count)}</span>
+            </li>
+          )
+        })}
       </ul>
     </div>
   )

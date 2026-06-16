@@ -88,40 +88,57 @@ interface LegendProps {
   sortedSeries: { user: { id: number; username: string } }[]
   colorIndex: Map<number, number>
   totalUsers: number
-  highlightedId: number | null
+  highlightedIds: Set<number>
   meId?: number
   onToggle: (id: number) => void
+  onClear: () => void
   maxHeight?: number
 }
 
-function Legend({ sortedSeries, colorIndex, totalUsers, highlightedId, meId, onToggle, maxHeight }: LegendProps) {
+function Legend({ sortedSeries, colorIndex, totalUsers, highlightedIds, meId, onToggle, onClear, maxHeight }: LegendProps) {
   return (
-    <ul className="divide-y divide-line/60" style={maxHeight ? { maxHeight, overflowY: 'auto' } : undefined}>
-      {sortedSeries.map((s) => {
-        const idx = colorIndex.get(s.user.id) ?? 0
-        const color = hslColor(idx, totalUsers)
-        const isMe = s.user.id === meId
-        const isHighlighted = highlightedId === s.user.id
+    <div>
+      {highlightedIds.size > 0 && (
+        <div className="border-b border-line px-3 py-2">
+          <button
+            type="button"
+            onClick={onClear}
+            className="text-xs text-brand hover:underline"
+          >
+            Wyczyść ({highlightedIds.size})
+          </button>
+        </div>
+      )}
+      <ul className="divide-y divide-line/60" style={maxHeight ? { maxHeight, overflowY: 'auto' } : undefined}>
+        {sortedSeries.map((s) => {
+          const idx = colorIndex.get(s.user.id) ?? 0
+          const color = hslColor(idx, totalUsers)
+          const isMe = s.user.id === meId
+          const isSelected = highlightedIds.has(s.user.id)
 
-        return (
-          <li key={s.user.id}>
-            <button
-              type="button"
-              onClick={() => onToggle(s.user.id)}
-              className={`flex w-full items-center gap-2 px-3 py-2 text-left text-xs transition-colors hover:bg-surface ${
-                isHighlighted ? 'bg-surface font-semibold' : ''
-              }`}
-            >
-              <span className="inline-block h-2.5 w-4 shrink-0 rounded-sm" style={{ backgroundColor: color }} />
-              <span className={`truncate ${isMe ? 'font-semibold text-brand' : 'text-ink'}`}>
-                {s.user.username}
-                {isMe && <span className="ml-1 text-[10px] font-normal">(Ty)</span>}
-              </span>
-            </button>
-          </li>
-        )
-      })}
-    </ul>
+          return (
+            <li key={s.user.id}>
+              <button
+                type="button"
+                onClick={() => onToggle(s.user.id)}
+                className={`flex w-full items-center gap-2 px-3 py-2 text-left text-xs transition-colors hover:bg-surface ${
+                  isSelected ? 'bg-surface font-semibold' : ''
+                }`}
+              >
+                <span className="inline-block h-2.5 w-4 shrink-0 rounded-sm" style={{ backgroundColor: color }} />
+                <span className={`flex-1 truncate ${isMe ? 'font-semibold text-brand' : 'text-ink'}`}>
+                  {s.user.username}
+                  {isMe && <span className="ml-1 text-[10px] font-normal">(Ty)</span>}
+                </span>
+                {isSelected && (
+                  <i className="fas fa-check text-brand" aria-hidden="true" />
+                )}
+              </button>
+            </li>
+          )
+        })}
+      </ul>
+    </div>
   )
 }
 
@@ -132,7 +149,9 @@ interface Props {
 export default function RankingBumpChart({ enabled }: Props) {
   const { data, isLoading, isError } = useRankingHistory(enabled)
   const { user: me } = useAuth()
-  const [highlightedId, setHighlightedId] = useState<number | null>(null)
+  const [highlightedIds, setHighlightedIds] = useState<Set<number>>(() =>
+    me?.id != null ? new Set([me.id]) : new Set()
+  )
   const [hoveredUserId, setHoveredUserId] = useState<string | null>(null)
   const [legendOpen, setLegendOpen] = useState(false)
 
@@ -162,16 +181,33 @@ export default function RankingBumpChart({ enabled }: Props) {
   const rewarded = me?.rewarded_positions ?? 0
   const chartWidth = Math.max(matches.length * COL_PX, 600)
   const desktopChartHeight = Math.max(DESKTOP_CHART_MIN_HEIGHT, totalUsers * DESKTOP_CHART_HEIGHT_PER_USER)
+  const anyHighlighted = highlightedIds.size > 0
 
   // Pick the smallest "nice" interval that yields ≤12 grid lines
   const niceIntervals = [1, 2, 5, 10, 20, 25, 50]
   const gridInterval = niceIntervals.find((i) => Math.ceil(totalUsers / i) <= 12) ?? 50
   const yTicks = Array.from({ length: Math.floor(totalUsers / gridInterval) }, (_, i) => (i + 1) * gridInterval)
 
-  const toggleHighlight = (id: number) => setHighlightedId((prev) => (prev === id ? null : id))
+  const toggleHighlight = (id: number) =>
+    setHighlightedIds(prev => {
+      const next = new Set(prev)
+      if (next.has(id)) next.delete(id)
+      else next.add(id)
+      return next
+    })
+  const clearHighlight = () => setHighlightedIds(new Set())
 
   const xDomain: [number, number] = matches.length === 1 ? [0.5, 1.5] : [1, matches.length]
   const showDots = matches.length <= 5
+
+  const sortedForRender = [...series].sort((a, b) => {
+    const rank = (s: { user: { id: number } }) => {
+      if (s.user.id === me?.id)           return 2
+      if (highlightedIds.has(s.user.id))  return 1
+      return 0
+    }
+    return rank(a) - rank(b)
+  })
 
   const chart = (
     <LineChart
@@ -199,20 +235,21 @@ export default function RankingBumpChart({ enabled }: Props) {
           <CustomTooltip matches={matches} userMap={userMap} meId={me?.id} hoveredUserId={hoveredUserId} />
         }
       />
-      {series.map((s) => {
+      {sortedForRender.map((s) => {
         const uid = String(s.user.id)
         const idx = colorIndex.get(s.user.id) ?? 0
         const color = hslColor(idx, totalUsers)
         const isMe = s.user.id === me?.id
-        const isHighlighted = highlightedId === s.user.id
-        const isDimmed = highlightedId !== null && !isHighlighted && !isMe
+        const isHighlighted = highlightedIds.has(s.user.id)
+        const isDimmed = anyHighlighted && !isHighlighted
+        const isProminent = isHighlighted || (!anyHighlighted && isMe)
 
         return (
           <Line
             key={uid}
             dataKey={uid}
             stroke={color}
-            strokeWidth={isMe || isHighlighted ? 2.5 : 1.5}
+            strokeWidth={isProminent ? 2.5 : 1.5}
             dot={showDots ? { r: 3, fill: color, strokeWidth: 0 } : false}
             activeDot={{ r: 4, onMouseEnter: () => setHoveredUserId(uid), onMouseLeave: () => setHoveredUserId(null) }}
             strokeOpacity={isDimmed ? 0.1 : 1}
@@ -259,9 +296,9 @@ export default function RankingBumpChart({ enabled }: Props) {
             <span>
               <i className="fas fa-list mr-2 text-muted" aria-hidden="true" />
               Gracze
-              {highlightedId !== null && (
+              {highlightedIds.size > 0 && (
                 <span className="ml-2 text-xs font-normal text-brand">
-                  (zaznaczony: {userMap.get(String(highlightedId))})
+                  (zaznaczono: {highlightedIds.size})
                 </span>
               )}
             </span>
@@ -273,9 +310,10 @@ export default function RankingBumpChart({ enabled }: Props) {
                 sortedSeries={sortedSeries}
                 colorIndex={colorIndex}
                 totalUsers={totalUsers}
-                highlightedId={highlightedId}
+                highlightedIds={highlightedIds}
                 meId={me?.id}
                 onToggle={toggleHighlight}
+                onClear={clearHighlight}
               />
             </div>
           )}
@@ -310,9 +348,10 @@ export default function RankingBumpChart({ enabled }: Props) {
             sortedSeries={sortedSeries}
             colorIndex={colorIndex}
             totalUsers={totalUsers}
-            highlightedId={highlightedId}
+            highlightedIds={highlightedIds}
             meId={me?.id}
             onToggle={toggleHighlight}
+            onClear={clearHighlight}
             maxHeight={desktopChartHeight}
           />
         </div>
