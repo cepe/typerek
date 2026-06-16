@@ -1,7 +1,7 @@
 import React, { useState } from 'react'
 import {
   LineChart, Line, XAxis, YAxis, Tooltip, CartesianGrid,
-  ReferenceLine, ResponsiveContainer,
+  ResponsiveContainer,
 } from 'recharts'
 import { useRankingHistory } from '@/api/hooks'
 import { useAuth } from '@/auth/AuthContext'
@@ -274,21 +274,27 @@ export default function RankingPointsChart({ enabled }: Props) {
     a.user.username.localeCompare(b.user.username, undefined, { sensitivity: 'base' })
   )
 
+  const PRIZE_BOUNDARY_KEY = '__prizeBoundary'
+
+  // The points needed to be "in the money" moves after every match, not just
+  // the final one — recompute the cutoff per match index instead of pinning
+  // it to the current standings, so the line traces its actual history.
+  const prizeBoundary: (number | null)[] = matches.map((_, i) => {
+    if (rewarded <= 0) return null
+    const inPrizeAtI = series.filter(s => (s.positions[i] ?? totalUsers) <= rewarded)
+    return inPrizeAtI.length > 0 ? Math.min(...inPrizeAtI.map(s => s.points[i])) : null
+  })
+  const hasPrizeBoundary = prizeBoundary.some(v => v != null)
+
   type Row = { x: number } & Record<string, number>
   const rows: Row[] = matches.map((_, i) => {
     const row: Row = { x: i + 1 }
     series.forEach(s => { row[String(s.user.id)] = s.points[i] })
+    if (prizeBoundary[i] != null) row[PRIZE_BOUNDARY_KEY] = prizeBoundary[i] as number
     return row
   })
 
   const globalMax = series.length > 0 ? Math.max(...series.flatMap(s => s.points)) : 100
-
-  const inPrize = rewarded > 0
-    ? series.filter(s => s.positions[lastIdx] <= rewarded)
-    : []
-  const prizePoints = inPrize.length > 0
-    ? Math.min(...inPrize.map(s => s.points[lastIdx]))
-    : null
 
   const toggleHighlight = (id: number) =>
     setHighlightedIds(prev => {
@@ -325,13 +331,16 @@ export default function RankingPointsChart({ enabled }: Props) {
       <XAxis dataKey="x" type="number" domain={xDomain} ticks={xTicks(matches.length)} />
       <YAxis domain={yDomain} ticks={yAxisTicks} width={40}
         tickFormatter={(v: number) => pointsDisplay(v)} />
-      {prizePoints != null && rewarded > 0 && (
-        <ReferenceLine
-          y={prizePoints}
+      {hasPrizeBoundary && (
+        <Line
+          dataKey={PRIZE_BOUNDARY_KEY}
           stroke="#f59e0b"
           strokeDasharray="5 4"
           strokeWidth={1.5}
-          label={{ value: 'strefa nagród', position: 'insideTopLeft', fill: '#b45309', fontSize: 10 }}
+          dot={false}
+          activeDot={false}
+          isAnimationActive={false}
+          connectNulls
         />
       )}
       <Tooltip
@@ -397,6 +406,12 @@ export default function RankingPointsChart({ enabled }: Props) {
             </div>
           </div>
           <p className="mt-1 text-center text-[10px] font-medium text-muted">Numer meczu</p>
+          {hasPrizeBoundary && (
+            <p className="mt-1 flex items-center justify-center gap-1.5 text-[10px] font-medium text-muted">
+              <span className="inline-block h-0 w-4 border-t-2 border-dashed border-[#f59e0b]" />
+              strefa nagród (próg do wygranej)
+            </p>
+          )}
         </div>
         <div className="card mt-3 overflow-hidden">
           <button
@@ -452,6 +467,12 @@ export default function RankingPointsChart({ enabled }: Props) {
             </div>
           </div>
           <p className="mt-1 text-center text-xs font-medium text-muted">Numer meczu</p>
+          {hasPrizeBoundary && (
+            <p className="mt-1 flex items-center justify-center gap-1.5 text-xs font-medium text-muted">
+              <span className="inline-block h-0 w-4 border-t-2 border-dashed border-[#f59e0b]" />
+              strefa nagród (próg do wygranej)
+            </p>
+          )}
         </div>
         <div className="card w-48 shrink-0 overflow-hidden">
           <Legend
