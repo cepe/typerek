@@ -1,7 +1,7 @@
 import React, { useState } from 'react'
 import {
   LineChart, Line, XAxis, YAxis, Tooltip, CartesianGrid,
-  ReferenceLine, ResponsiveContainer,
+  ResponsiveContainer,
 } from 'recharts'
 import { useRankingHistory } from '@/api/hooks'
 import { useAuth } from '@/auth/AuthContext'
@@ -13,26 +13,57 @@ import type { RankingHistoryMatch, RankingHistorySeries } from '@/api/types'
 const COL_PX = 20
 const MAX_X_TICKS = 12
 const MOBILE_CHART_HEIGHT = 320
-const DESKTOP_CHART_HEIGHT_PER_USER = 14
-const DESKTOP_CHART_MIN_HEIGHT = 500
+const DESKTOP_CHART_HEIGHT = 500
 
-function tierColor(finalRank: number, total: number): string {
-  const frac = finalRank / total
-  if (frac <= 0.15) return '#34d399'
-  if (frac <= 0.65) return '#6b7280'
-  return '#f87171'
+// Golden-angle hue stepping spreads colors evenly around the wheel so that
+// even adjacent users (by id) get visually distinct lines, no matter how
+// many series are plotted.
+const GOLDEN_ANGLE = 137.508
+
+function userColor(colorIndex: number): string {
+  const hue = (colorIndex * GOLDEN_ANGLE) % 360
+  return `hsl(${hue.toFixed(0)}, 55%, 55%)`
+}
+
+// Stable per-user color, independent of sort order: keyed by user id so a
+// given user always renders the same color across re-renders and views.
+function assignColors(series: RankingHistorySeries[]): Map<number, string> {
+  const byId = [...series].sort((a, b) => a.user.id - b.user.id)
+  return new Map(byId.map((s, i) => [s.user.id, userColor(i)]))
 }
 
 function tierOpacity(finalRank: number, total: number): number {
-  return finalRank / total <= 0.15 ? 0.20 : 0.12
+  const frac = finalRank / total
+  return frac <= 0.15 || frac > 0.65 ? 0.3 : 0.13
 }
 
 function xTicks(matchCount: number): number[] {
   if (matchCount <= MAX_X_TICKS) return Array.from({ length: matchCount }, (_, i) => i + 1)
-  const ticks: number[] = [1]
-  const step = (matchCount - 1) / (MAX_X_TICKS - 1)
-  for (let i = 1; i < MAX_X_TICKS - 1; i++) ticks.push(Math.round(1 + i * step))
+  const step = Math.ceil(matchCount / MAX_X_TICKS)
+  const ticks: number[] = []
+  for (let x = 1; x < matchCount; x += step) ticks.push(x)
   ticks.push(matchCount)
+  return ticks
+}
+
+const Y_TICK_TARGET = 8
+
+// Points are odds-based and fractional, so a plain "nice round number" step
+// (1/2/5 * 10^n) keeps the axis dense and readable instead of collapsing to
+// one or two integer ticks.
+// Always ends exactly on `max` (like the bump chart always shows position 1
+// at the top) so the current highest score is labeled, even if that means
+// the last gap is shorter than the others.
+function yTicks(max: number): number[] {
+  if (max <= 0) return [0, 1]
+  const roughStep = max / Y_TICK_TARGET
+  const exponent = Math.floor(Math.log10(roughStep))
+  const fraction = roughStep / 10 ** exponent
+  const niceFraction = fraction <= 1 ? 1 : fraction <= 2 ? 2 : fraction <= 5 ? 5 : 10
+  const step = niceFraction * 10 ** exponent
+  const ticks: number[] = []
+  for (let v = 0; v + step / 2 < max; v += step) ticks.push(Math.round(v * 100) / 100)
+  ticks.push(Math.round(max * 100) / 100)
   return ticks
 }
 
@@ -43,24 +74,25 @@ function getLineProps(
   highlightedIds: Set<number>,
   finalRankMap: Map<number, number>,
   totalUsers: number,
+  colorMap: Map<number, string>,
 ): { stroke: string; strokeWidth: number; strokeOpacity: number } {
   const uid = s.user.id
   const finalRank = finalRankMap.get(uid) ?? totalUsers
-  const anyHighlighted = highlightedIds.size > 0
+  const color = colorMap.get(uid) ?? '#6b7280'
 
+  // Selecting a user only emphasizes that line (full opacity + thicker stroke).
+  // Everyone else always keeps their normal tier opacity, so the background
+  // doesn't visually shift just because something got selected.
   if (uid === meId) {
     if (highlightedIds.has(uid)) return { stroke: '#12A751', strokeWidth: 2.5, strokeOpacity: 1 }
-    if (anyHighlighted)          return { stroke: '#12A751', strokeWidth: 1,   strokeOpacity: 0.05 }
     return                              { stroke: '#12A751', strokeWidth: 1,   strokeOpacity: tierOpacity(finalRank, totalUsers) }
   }
   if (favorites.has(uid)) {
     if (highlightedIds.has(uid)) return { stroke: '#f59e0b', strokeWidth: 1.8, strokeOpacity: 1 }
-    if (anyHighlighted)          return { stroke: '#f59e0b', strokeWidth: 1,   strokeOpacity: 0.05 }
     return                              { stroke: '#f59e0b', strokeWidth: 1,   strokeOpacity: tierOpacity(finalRank, totalUsers) }
   }
-  if (highlightedIds.has(uid))  return { stroke: tierColor(finalRank, totalUsers), strokeWidth: 2,   strokeOpacity: 1 }
-  if (anyHighlighted)           return { stroke: tierColor(finalRank, totalUsers), strokeWidth: 1,   strokeOpacity: 0.05 }
-  return                               { stroke: tierColor(finalRank, totalUsers), strokeWidth: 1,   strokeOpacity: tierOpacity(finalRank, totalUsers) }
+  if (highlightedIds.has(uid))  return { stroke: color, strokeWidth: 2,   strokeOpacity: 1 }
+  return                               { stroke: color, strokeWidth: 1,   strokeOpacity: tierOpacity(finalRank, totalUsers) }
 }
 
 interface EndDotProps { cx?: number; cy?: number; index?: number }
@@ -143,8 +175,7 @@ function CustomTooltip({ active, label, payload, matches, series, userMap, meId,
 
 interface LegendProps {
   sortedSeries: RankingHistorySeries[]
-  finalRankMap: Map<number, number>
-  totalUsers: number
+  colorMap: Map<number, string>
   highlightedIds: Set<number>
   favorites: Set<number>
   meId?: number
@@ -152,7 +183,7 @@ interface LegendProps {
   onClear: () => void
   maxHeight?: number
 }
-function Legend({ sortedSeries, finalRankMap, totalUsers, highlightedIds, favorites, meId, onToggle, onClear, maxHeight }: LegendProps) {
+function Legend({ sortedSeries, colorMap, highlightedIds, favorites, meId, onToggle, onClear, maxHeight }: LegendProps) {
   return (
     <div>
       {highlightedIds.size > 0 && (
@@ -172,11 +203,10 @@ function Legend({ sortedSeries, finalRankMap, totalUsers, highlightedIds, favori
       >
         {sortedSeries.map(s => {
           const uid = s.user.id
-          const finalRank = finalRankMap.get(uid) ?? totalUsers
           const isMe = uid === meId
           const isFav = favorites.has(uid)
           const isSelected = highlightedIds.has(uid)
-          const lineColor = isMe ? '#12A751' : isFav ? '#f59e0b' : tierColor(finalRank, totalUsers)
+          const lineColor = isMe ? '#12A751' : isFav ? '#f59e0b' : (colorMap.get(uid) ?? '#6b7280')
 
           return (
             <li key={uid}>
@@ -238,26 +268,33 @@ export default function RankingPointsChart({ enabled }: Props) {
 
   const finalRankMap = new Map(series.map(s => [s.user.id, s.positions[lastIdx] ?? totalUsers]))
   const userMap = new Map(series.map(s => [String(s.user.id), s.user.username]))
+  const colorMap = assignColors(series)
 
   const sortedSeries = [...series].sort((a, b) =>
     a.user.username.localeCompare(b.user.username, undefined, { sensitivity: 'base' })
   )
 
+  const PRIZE_BOUNDARY_KEY = '__prizeBoundary'
+
+  // The points needed to be "in the money" moves after every match, not just
+  // the final one — recompute the cutoff per match index instead of pinning
+  // it to the current standings, so the line traces its actual history.
+  const prizeBoundary: (number | null)[] = matches.map((_, i) => {
+    if (rewarded <= 0) return null
+    const inPrizeAtI = series.filter(s => (s.positions[i] ?? totalUsers) <= rewarded)
+    return inPrizeAtI.length > 0 ? Math.min(...inPrizeAtI.map(s => s.points[i])) : null
+  })
+  const hasPrizeBoundary = prizeBoundary.some(v => v != null)
+
   type Row = { x: number } & Record<string, number>
   const rows: Row[] = matches.map((_, i) => {
     const row: Row = { x: i + 1 }
     series.forEach(s => { row[String(s.user.id)] = s.points[i] })
+    if (prizeBoundary[i] != null) row[PRIZE_BOUNDARY_KEY] = prizeBoundary[i] as number
     return row
   })
 
   const globalMax = series.length > 0 ? Math.max(...series.flatMap(s => s.points)) : 100
-
-  const inPrize = rewarded > 0
-    ? series.filter(s => s.positions[lastIdx] <= rewarded)
-    : []
-  const prizePoints = inPrize.length > 0
-    ? Math.min(...inPrize.map(s => s.points[lastIdx]))
-    : null
 
   const toggleHighlight = (id: number) =>
     setHighlightedIds(prev => {
@@ -269,8 +306,10 @@ export default function RankingPointsChart({ enabled }: Props) {
   const clearHighlight = () => setHighlightedIds(new Set())
 
   const chartWidth = Math.max(matches.length * COL_PX, 600)
-  const desktopChartHeight = Math.max(DESKTOP_CHART_MIN_HEIGHT, totalUsers * DESKTOP_CHART_HEIGHT_PER_USER)
+  const desktopChartHeight = DESKTOP_CHART_HEIGHT
   const xDomain: [number, number] = matches.length === 1 ? [0.5, 1.5] : [1, matches.length]
+  const yAxisTicks = yTicks(globalMax)
+  const yDomain: [number, number] = [0, yAxisTicks[yAxisTicks.length - 1]]
 
   const sortedForRender = [...series].sort((a, b) => {
     const rank = (s: RankingHistorySeries) => {
@@ -290,15 +329,18 @@ export default function RankingPointsChart({ enabled }: Props) {
     >
       <CartesianGrid horizontal vertical={false} strokeDasharray="4 4" stroke="#E4E4E4" />
       <XAxis dataKey="x" type="number" domain={xDomain} ticks={xTicks(matches.length)} />
-      <YAxis domain={[0, globalMax]} allowDecimals={false} width={40}
+      <YAxis domain={yDomain} ticks={yAxisTicks} width={40}
         tickFormatter={(v: number) => pointsDisplay(v)} />
-      {prizePoints != null && rewarded > 0 && (
-        <ReferenceLine
-          y={prizePoints}
+      {hasPrizeBoundary && (
+        <Line
+          dataKey={PRIZE_BOUNDARY_KEY}
           stroke="#f59e0b"
           strokeDasharray="5 4"
           strokeWidth={1.5}
-          label={{ value: 'strefa nagród', position: 'insideTopLeft', fill: '#b45309', fontSize: 10 }}
+          dot={false}
+          activeDot={false}
+          isAnimationActive={false}
+          connectNulls
         />
       )}
       <Tooltip
@@ -314,7 +356,7 @@ export default function RankingPointsChart({ enabled }: Props) {
       />
       {sortedForRender.map(s => {
           const uid = String(s.user.id)
-          const props = getLineProps(s, me?.id, favorites, highlightedIds, finalRankMap, totalUsers)
+          const props = getLineProps(s, me?.id, favorites, highlightedIds, finalRankMap, totalUsers, colorMap)
           const finalRank = finalRankMap.get(s.user.id) ?? totalUsers
           const showEndLabel = finalRank <= 3 && s.user.id !== me?.id && !favorites.has(s.user.id)
 
@@ -331,6 +373,7 @@ export default function RankingPointsChart({ enabled }: Props) {
                 r: 4,
                 onMouseEnter: () => setHoveredUserId(uid),
                 onMouseLeave: () => setHoveredUserId(null),
+                onClick: () => toggleHighlight(s.user.id),
               }}
               isAnimationActive={false}
               connectNulls
@@ -363,6 +406,12 @@ export default function RankingPointsChart({ enabled }: Props) {
             </div>
           </div>
           <p className="mt-1 text-center text-[10px] font-medium text-muted">Numer meczu</p>
+          {hasPrizeBoundary && (
+            <p className="mt-1 flex items-center justify-center gap-1.5 text-[10px] font-medium text-muted">
+              <span className="inline-block h-0 w-4 border-t-2 border-dashed border-[#f59e0b]" />
+              strefa nagród (próg do wygranej)
+            </p>
+          )}
         </div>
         <div className="card mt-3 overflow-hidden">
           <button
@@ -385,8 +434,7 @@ export default function RankingPointsChart({ enabled }: Props) {
             <div className="border-t border-line">
               <Legend
                 sortedSeries={sortedSeries}
-                finalRankMap={finalRankMap}
-                totalUsers={totalUsers}
+                colorMap={colorMap}
                 highlightedIds={highlightedIds}
                 favorites={favorites}
                 meId={me?.id}
@@ -419,12 +467,17 @@ export default function RankingPointsChart({ enabled }: Props) {
             </div>
           </div>
           <p className="mt-1 text-center text-xs font-medium text-muted">Numer meczu</p>
+          {hasPrizeBoundary && (
+            <p className="mt-1 flex items-center justify-center gap-1.5 text-xs font-medium text-muted">
+              <span className="inline-block h-0 w-4 border-t-2 border-dashed border-[#f59e0b]" />
+              strefa nagród (próg do wygranej)
+            </p>
+          )}
         </div>
         <div className="card w-48 shrink-0 overflow-hidden">
           <Legend
             sortedSeries={sortedSeries}
-            finalRankMap={finalRankMap}
-            totalUsers={totalUsers}
+            colorMap={colorMap}
             highlightedIds={highlightedIds}
             favorites={favorites}
             meId={me?.id}

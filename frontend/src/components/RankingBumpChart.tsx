@@ -9,12 +9,26 @@ import type { RankingHistoryMatch } from '@/api/types'
 const COL_PX = 20
 const MAX_X_TICKS = 12
 const MOBILE_CHART_HEIGHT = 320
-const DESKTOP_CHART_HEIGHT_PER_USER = 14
+const DESKTOP_CHART_HEIGHT_PER_USER = 8
 const DESKTOP_CHART_MIN_HEIGHT = 500
+const DESKTOP_CHART_MAX_HEIGHT = 700
 
-function hslColor(index: number, total: number): string {
-  const hue = Math.round((index / Math.max(total, 1)) * 360)
-  return `hsl(${hue}, 65%, 48%)`
+// Golden-angle hue stepping spreads colors evenly around the wheel so that
+// even adjacent users get visually distinct lines, no matter how many series
+// are plotted. Matches RankingPointsChart's palette for visual consistency
+// between the two history charts.
+const GOLDEN_ANGLE = 137.508
+
+function userColor(colorIndex: number): string {
+  const hue = (colorIndex * GOLDEN_ANGLE) % 360
+  return `hsl(${hue.toFixed(0)}, 55%, 55%)`
+}
+
+// Emphasize the top/bottom of the standings, fade the middle pack — same
+// rationale as RankingPointsChart's tierOpacity.
+function tierOpacity(finalRank: number, total: number): number {
+  const frac = finalRank / total
+  return frac <= 0.15 || frac > 0.65 ? 0.3 : 0.13
 }
 
 interface PayloadEntry {
@@ -77,17 +91,16 @@ function CustomTooltip({ active, label, payload, matches, userMap, meId, hovered
 
 function xTicks(matchCount: number): number[] {
   if (matchCount <= MAX_X_TICKS) return Array.from({ length: matchCount }, (_, i) => i + 1)
-  const ticks: number[] = [1]
-  const step = (matchCount - 1) / (MAX_X_TICKS - 1)
-  for (let i = 1; i < MAX_X_TICKS - 1; i++) ticks.push(Math.round(1 + i * step))
+  const step = Math.ceil(matchCount / MAX_X_TICKS)
+  const ticks: number[] = []
+  for (let x = 1; x < matchCount; x += step) ticks.push(x)
   ticks.push(matchCount)
   return ticks
 }
 
 interface LegendProps {
   sortedSeries: { user: { id: number; username: string } }[]
-  colorIndex: Map<number, number>
-  totalUsers: number
+  colorMap: Map<number, string>
   highlightedIds: Set<number>
   meId?: number
   onToggle: (id: number) => void
@@ -95,7 +108,7 @@ interface LegendProps {
   maxHeight?: number
 }
 
-function Legend({ sortedSeries, colorIndex, totalUsers, highlightedIds, meId, onToggle, onClear, maxHeight }: LegendProps) {
+function Legend({ sortedSeries, colorMap, highlightedIds, meId, onToggle, onClear, maxHeight }: LegendProps) {
   return (
     <div>
       {highlightedIds.size > 0 && (
@@ -111,9 +124,8 @@ function Legend({ sortedSeries, colorIndex, totalUsers, highlightedIds, meId, on
       )}
       <ul className="divide-y divide-line/60" style={maxHeight ? { maxHeight, overflowY: 'auto' } : undefined}>
         {sortedSeries.map((s) => {
-          const idx = colorIndex.get(s.user.id) ?? 0
-          const color = hslColor(idx, totalUsers)
           const isMe = s.user.id === meId
+          const color = isMe ? '#12A751' : (colorMap.get(s.user.id) ?? '#6b7280')
           const isSelected = highlightedIds.has(s.user.id)
 
           return (
@@ -167,7 +179,9 @@ export default function RankingBumpChart({ enabled }: Props) {
   const sortedSeries = [...series].sort((a, b) =>
     a.user.username.localeCompare(b.user.username, undefined, { sensitivity: 'base' })
   )
-  const colorIndex = new Map(series.map((s, idx) => [s.user.id, idx]))
+  const colorMap = new Map(
+    [...series].sort((a, b) => a.user.id - b.user.id).map((s, idx) => [s.user.id, userColor(idx)])
+  )
   const userMap = new Map(series.map((s) => [String(s.user.id), s.user.username]))
 
   type Row = { x: number } & Record<string, number>
@@ -178,15 +192,20 @@ export default function RankingBumpChart({ enabled }: Props) {
   })
 
   const totalUsers = series.length
+  const lastIdx = matches.length - 1
+  const finalRankMap = new Map(series.map((s) => [s.user.id, s.positions[lastIdx] ?? totalUsers]))
   const rewarded = me?.rewarded_positions ?? 0
   const chartWidth = Math.max(matches.length * COL_PX, 600)
-  const desktopChartHeight = Math.max(DESKTOP_CHART_MIN_HEIGHT, totalUsers * DESKTOP_CHART_HEIGHT_PER_USER)
-  const anyHighlighted = highlightedIds.size > 0
+  const desktopChartHeight = Math.min(
+    DESKTOP_CHART_MAX_HEIGHT,
+    Math.max(DESKTOP_CHART_MIN_HEIGHT, totalUsers * DESKTOP_CHART_HEIGHT_PER_USER)
+  )
 
   // Pick the smallest "nice" interval that yields ≤12 grid lines
   const niceIntervals = [1, 2, 5, 10, 20, 25, 50]
   const gridInterval = niceIntervals.find((i) => Math.ceil(totalUsers / i) <= 12) ?? 50
   const yTicks = Array.from({ length: Math.floor(totalUsers / gridInterval) }, (_, i) => (i + 1) * gridInterval)
+  if (yTicks[0] !== 1) yTicks.unshift(1)
 
   const toggleHighlight = (id: number) =>
     setHighlightedIds(prev => {
@@ -237,22 +256,28 @@ export default function RankingBumpChart({ enabled }: Props) {
       />
       {sortedForRender.map((s) => {
         const uid = String(s.user.id)
-        const idx = colorIndex.get(s.user.id) ?? 0
-        const color = hslColor(idx, totalUsers)
         const isMe = s.user.id === me?.id
+        const color = isMe ? '#12A751' : (colorMap.get(s.user.id) ?? '#6b7280')
         const isHighlighted = highlightedIds.has(s.user.id)
-        const isDimmed = anyHighlighted && !isHighlighted
-        const isProminent = isHighlighted || (!anyHighlighted && isMe)
+        const finalRank = finalRankMap.get(s.user.id) ?? totalUsers
+        // Selecting a user only emphasizes that one line; everyone else
+        // always keeps their normal tier opacity, so the background doesn't
+        // shift just because something got selected (see RankingPointsChart).
 
         return (
           <Line
             key={uid}
             dataKey={uid}
             stroke={color}
-            strokeWidth={isProminent ? 2.5 : 1.5}
+            strokeWidth={isHighlighted ? 2.5 : 1.5}
             dot={showDots ? { r: 3, fill: color, strokeWidth: 0 } : false}
-            activeDot={{ r: 4, onMouseEnter: () => setHoveredUserId(uid), onMouseLeave: () => setHoveredUserId(null) }}
-            strokeOpacity={isDimmed ? 0.1 : 1}
+            activeDot={{
+              r: 4,
+              onMouseEnter: () => setHoveredUserId(uid),
+              onMouseLeave: () => setHoveredUserId(null),
+              onClick: () => toggleHighlight(s.user.id),
+            }}
+            strokeOpacity={isHighlighted ? 1 : tierOpacity(finalRank, totalUsers)}
             isAnimationActive={false}
             connectNulls
           />
@@ -308,8 +333,7 @@ export default function RankingBumpChart({ enabled }: Props) {
             <div className="border-t border-line">
               <Legend
                 sortedSeries={sortedSeries}
-                colorIndex={colorIndex}
-                totalUsers={totalUsers}
+                colorMap={colorMap}
                 highlightedIds={highlightedIds}
                 meId={me?.id}
                 onToggle={toggleHighlight}
@@ -346,8 +370,7 @@ export default function RankingBumpChart({ enabled }: Props) {
         <div className="card w-44 shrink-0 overflow-hidden">
           <Legend
             sortedSeries={sortedSeries}
-            colorIndex={colorIndex}
-            totalUsers={totalUsers}
+            colorMap={colorMap}
             highlightedIds={highlightedIds}
             meId={me?.id}
             onToggle={toggleHighlight}
