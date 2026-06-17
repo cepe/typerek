@@ -1,4 +1,4 @@
-import { Fragment, useRef } from 'react'
+import { Fragment, useRef, useState } from 'react'
 import { Link, useSearchParams } from 'react-router-dom'
 import { useRanking } from '@/api/hooks'
 import { useAuth } from '@/auth/AuthContext'
@@ -60,6 +60,17 @@ function Movement({ entry }: { entry: RankingEntry }) {
   )
 }
 
+// Fold a string for accent-insensitive search: lowercase, drop combining marks
+// (ą→a, ć→c, …) and special-case ł, which has no NFD decomposition. Lets
+// "lukasz" match "Łukasz" and "wegrzyn" match "Węgrzyn".
+function fold(value: string): string {
+  return value
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .replace(/ł/g, 'l')
+}
+
 type View = 'table' | 'chart' | 'points'
 
 function parseView(param: string | null): View {
@@ -74,6 +85,7 @@ export default function RankingPage() {
   const { user } = useAuth()
   const { drzewkoMode, favoriteUserIds, toggleFavorite } = useSettings()
   const meRowRef = useRef<HTMLLIElement>(null)
+  const [query, setQuery] = useState('')
 
   // The active subpage lives in the URL (?view=chart) so a refresh or shared link
   // keeps you on the same tab — same pattern as MatchesPage (?status=finished).
@@ -90,6 +102,13 @@ export default function RankingPage() {
   const meEntry = data.find((entry) => entry.user.id === user?.id)
   const scrollToMe = () => meRowRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' })
   const favorites = new Set(favoriteUserIds)
+
+  // Quick find: filter the table by username, accent-insensitive (see fold).
+  // The filtered view drops the prize-zone divider and the cutoff hints since
+  // those only make sense against the full, contiguous ranking.
+  const folded = fold(query.trim())
+  const filtering = folded !== ''
+  const visible = filtering ? data.filter((entry) => fold(entry.user.username).includes(folded)) : data
 
   // Prize zone: the top N places are "in the money" (N decided per season, see
   // CurrentUser#rewarded_positions). Entries are sorted by position asc, so the
@@ -177,12 +196,45 @@ export default function RankingPage() {
               </button>
             </div>
           )}
+          <div className="relative mb-3">
+            <i
+              className="fas fa-magnifying-glass pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-muted"
+              aria-hidden="true"
+            />
+            <input
+              type="text"
+              inputMode="search"
+              value={query}
+              onChange={(event) => setQuery(event.target.value)}
+              placeholder="Szukaj zawodnika…"
+              aria-label="Szukaj zawodnika"
+              autoCapitalize="none"
+              autoCorrect="off"
+              className="field pl-9 pr-9"
+            />
+            {filtering && (
+              <button
+                type="button"
+                onClick={() => setQuery('')}
+                aria-label="Wyczyść wyszukiwanie"
+                title="Wyczyść"
+                className="absolute right-2 top-1/2 flex h-7 w-7 -translate-y-1/2 items-center justify-center rounded-full text-muted transition-colors hover:bg-black/5 hover:text-ink dark:hover:bg-white/10"
+              >
+                <i className="fas fa-xmark" aria-hidden="true" />
+              </button>
+            )}
+          </div>
+          {visible.length === 0 ? (
+            <div className="card card-body text-center text-muted">
+              Brak zawodników pasujących do „{query.trim()}”.
+            </div>
+          ) : (
           <ul className="card divide-y divide-line/60 overflow-hidden">
-            {data.map((entry, idx) => {
+            {visible.map((entry, idx) => {
               const me = user?.id === entry.user.id
               const inPrize = rewarded > 0 && entry.position <= rewarded
               const fav = !me && favorites.has(entry.user.id)
-              const hint = zoneHint(entry, idx)
+              const hint = filtering ? null : zoneHint(entry, idx)
               // Favourites and prize-zone rows both get a left accent; a favourite
               // takes precedence on the background tint (a touch deeper amber than
               // the zone) so a starred row stands out even when it's also in the zone.
@@ -246,7 +298,7 @@ export default function RankingPage() {
                       </button>
                     )}
                   </li>
-                  {prizeCount > 0 && idx === prizeCount - 1 && idx < data.length - 1 && (
+                  {!filtering && prizeCount > 0 && idx === prizeCount - 1 && idx < data.length - 1 && (
                     <li className="flex items-center gap-2 bg-highlight px-4 py-1.5 text-xs font-semibold uppercase tracking-wide text-highlight-fg">
                       <i className="fas fa-trophy" aria-hidden="true" />
                       Strefa nagród · {rewarded} {placesLabel(rewarded)}
@@ -256,6 +308,7 @@ export default function RankingPage() {
               )
             })}
           </ul>
+          )}
         </div>
       ) : view === 'chart' ? (
         <RankingBumpChart enabled={view === 'chart'} />
