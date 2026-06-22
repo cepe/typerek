@@ -10,17 +10,6 @@ export const BET_TYPES: ReadonlyArray<readonly [BetType, string]> = [
   ['not_tie', '12'],
 ]
 
-// The "double chance" bets (1X, X2, 12) — they each cover two of the three
-// outcomes. A user setting can hide them so only the plain 1 / X / 2 remain.
-export const DOUBLE_CHANCE_BETS: ReadonlySet<BetType> = new Set(['win_tie_a', 'win_tie_b', 'not_tie'])
-
-// The bet options to render, narrowed to 1 / X / 2 when the viewer opted to hide
-// the double-chance options. Used for both the pills and their legend so the two
-// stay column-aligned.
-export function visibleBetTypes(hideDoubleChance: boolean): ReadonlyArray<readonly [BetType, string]> {
-  return hideDoubleChance ? BET_TYPES.filter(([type]) => !DOUBLE_CHANCE_BETS.has(type)) : BET_TYPES
-}
-
 // Human-readable meaning of each symbol, shown as the aligned legend above the
 // pills (mirrors the column headers in Ania's typerek).
 export const BET_LEGEND: Record<BetType, string> = {

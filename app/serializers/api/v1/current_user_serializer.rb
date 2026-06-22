@@ -21,8 +21,6 @@ module Api
           settings: {
             drzewko_mode: user.drzewko_mode?,
             bet_lock: user.bet_lock?,
-            hide_odds: user.hide_odds?,
-            hide_double_chance: user.hide_double_chance?,
             push_enabled: user.push_enabled?,
             push_results: user.push_results?,
             push_reminders: user.push_reminders?,

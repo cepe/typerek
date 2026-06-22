@@ -9,8 +9,6 @@ class User < ApplicationRecord
   SETTINGS_DEFAULTS = {
     'drzewko_mode' => false,
     'bet_lock' => false,
-    'hide_odds' => false,
-    'hide_double_chance' => false,
     'push_enabled' => false,
     'push_results' => true,
     'push_reminders' => true,
@@ -30,7 +28,7 @@ class User < ApplicationRecord
   # Settings we surface a "Włączone przez N osób" count for on the settings screen.
   # The push sub-toggles are excluded: they default on, so a raw `= 'true'` count
   # would be meaningless for them.
-  COUNTED_SETTINGS = %w[drzewko_mode bet_lock hide_odds hide_double_chance push_enabled].freeze
+  COUNTED_SETTINGS = %w[drzewko_mode bet_lock push_enabled].freeze
 
   has_secure_password validations: false
 
@@ -96,18 +94,6 @@ class User < ApplicationRecord
 
   def bet_lock?
     settings_with_defaults['bet_lock'] == true
-  end
-
-  # Hide the kursy (odds) printed under each 1 / X / 2 pill, so they don't
-  # influence the pick. Purely cosmetic; the odds still drive scoring.
-  def hide_odds?
-    settings_with_defaults['hide_odds'] == true
-  end
-
-  # Hide the double-chance options (1X, X2, 12) in the betting grid, leaving only
-  # 1 / X / 2. Purely a display preference; the options remain valid bets.
-  def hide_double_chance?
-    settings_with_defaults['hide_double_chance'] == true
   end
 
   def push_enabled?

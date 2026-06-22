@@ -17,7 +17,7 @@ import { useSettings } from '@/lib/settings'
 export default function MatchPage() {
   const { id = '' } = useParams()
   const { isAdmin } = useAuth()
-  const { hideOdds, favoriteUserIds } = useSettings()
+  const { favoriteUserIds } = useSettings()
   const { data: match, isLoading, isError } = useMatch(id)
   const placeBet = usePlaceBet()
   const favorites = new Set(favoriteUserIds)
@@ -152,9 +152,7 @@ export default function MatchPage() {
                           })}
                         >
                           <span className="bet-key">{label}</span>
-                          {(!hideOdds || match.finished) && (
-                            <span className="bet-odds">{formattedOdds(match.odds[result])}</span>
-                          )}
+                          <span className="bet-odds">{formattedOdds(match.odds[result])}</span>
                         </div>
                       )
                     })}
