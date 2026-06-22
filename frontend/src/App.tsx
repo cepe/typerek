@@ -28,7 +28,8 @@ export default function App() {
 
         {/* Authenticated (rendered inside the app Layout) */}
         <Route element={<ProtectedRoute />}>
-          <Route path="/" element={<HomePage />} />
+          <Route path="/" element={<Navigate to="/matches" replace />} />
+          <Route path="/info" element={<HomePage />} />
           <Route path="/matches" element={<MatchesPage />} />
           <Route path="/matches/:id" element={<MatchPage />} />
           <Route path="/matches/:id/edit" element={<MatchEditPage />} />
