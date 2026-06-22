@@ -42,7 +42,7 @@ export default function Layout({ children }: { children: ReactNode }) {
           >
             <ul className="flex flex-col gap-1 lg:flex-row lg:items-center" onClick={() => setOpen(false)}>
               <li>
-                <NavLink to="/" end className={linkClass}>
+                <NavLink to="/info" className={linkClass}>
                   <i className="fas fa-info-circle" aria-hidden="true" /> Informacje
                 </NavLink>
               </li>

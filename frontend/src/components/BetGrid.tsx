@@ -1,4 +1,4 @@
-import { betPillClass, visibleBetTypes, winningBets } from '@/lib/bets'
+import { BET_TYPES, betPillClass, winningBets } from '@/lib/bets'
 import { formattedOdds } from '@/lib/format'
 import { useSettings } from '@/lib/settings'
 import type { BetType, Match } from '@/api/types'
@@ -19,21 +19,16 @@ interface Props {
 // marks the viewer's own pick as a hit or a miss. A bet the viewer locked
 // (my_locked) is read-only too, until they unlock it via LockToggle.
 export default function BetGrid({ match, myAnswer, onBet, pending, started }: Props) {
-  const { betLock, hideOdds, hideDoubleChance } = useSettings()
+  const { betLock } = useSettings()
   const hasStarted = started ?? match.started
   // The lock only restricts editing when the viewer has the feature enabled.
   const locked = betLock && match.my_locked
   const interactive = Boolean(onBet) && !hasStarted && !locked
   const scored = match.finished ? new Set(winningBets(match.result_a, match.result_b)) : null
-  // Both "hide" preferences are about not being swayed while you can still bet, so
-  // they switch off once the match is finished — then you see the full picture
-  // (every option and its odds, with your pick marked a hit or a miss).
-  const showOdds = !hideOdds || match.finished
-  const types = visibleBetTypes(hideDoubleChance && !match.finished)
 
   return (
-    <div className={`bet-grid${types.length === 3 ? ' grid-cols-3' : ''}`}>
-      {types.map(([result, label]) => {
+    <div className="bet-grid">
+      {BET_TYPES.map(([result, label]) => {
         const active = myAnswer === result
         const isScored = scored?.has(result) ?? false
         const odds = formattedOdds(match.odds[result])
@@ -43,13 +38,13 @@ export default function BetGrid({ match, myAnswer, onBet, pending, started }: Pr
             type="button"
             disabled={!interactive || pending}
             onClick={() => onBet?.(result)}
-            aria-label={`Typ ${label}${showOdds ? `, kurs ${odds}` : ''}${
+            aria-label={`Typ ${label}, kurs ${odds}${
               active ? `, wybrany${match.finished ? (isScored ? ', trafiony' : ', nietrafiony') : ''}` : ''
             }`}
             className={betPillClass({ active, scored: isScored, finished: match.finished, interactive })}
           >
             <span className="bet-key">{label}</span>
-            {showOdds && <span className="bet-odds">{odds}</span>}
+            <span className="bet-odds">{odds}</span>
           </button>
         )
       })}

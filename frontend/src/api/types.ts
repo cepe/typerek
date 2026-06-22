@@ -24,10 +24,6 @@ export interface Standing {
 export interface UserSettings {
   drzewko_mode: boolean
   bet_lock: boolean
-  // Hide the kursy (odds) under each 1 / X / 2 pill in the match views.
-  hide_odds: boolean
-  // Hide the double-chance options (1X, X2, 12) in the match views.
-  hide_double_chance: boolean
   // Opt-in master switch for Web Push notifications.
   push_enabled: boolean
   // Which kinds of push the user wants (only relevant when push_enabled). Default on.

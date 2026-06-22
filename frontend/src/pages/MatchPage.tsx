@@ -16,8 +16,8 @@ import { useSettings } from '@/lib/settings'
 // Mirrors matches/show.html.erb.
 export default function MatchPage() {
   const { id = '' } = useParams()
-  const { isAdmin } = useAuth()
-  const { hideOdds, favoriteUserIds } = useSettings()
+  const { isAdmin, user } = useAuth()
+  const { favoriteUserIds, toggleFavorite } = useSettings()
   const { data: match, isLoading, isError } = useMatch(id)
   const placeBet = usePlaceBet()
   const favorites = new Set(favoriteUserIds)
@@ -114,7 +114,8 @@ export default function MatchPage() {
           )}
           <div className="divide-y divide-line/60">
             {visibleParticipants.map((participant) => {
-              const fav = favorites.has(participant.user.id)
+              const me = participant.user.id === user?.id
+              const fav = !me && favorites.has(participant.user.id)
               return (
               <div
                 key={participant.user.id}
@@ -123,12 +124,23 @@ export default function MatchPage() {
                 }`}
               >
                 <div className={`flex items-center gap-1.5 ${fav ? 'font-semibold' : 'font-medium'}`}>
-                  {fav && (
-                    <i
-                      className="fas fa-star text-xs text-yellow-400"
-                      aria-label="Ulubiony"
-                      title="Ulubiony"
-                    />
+                  {!me && (
+                    <button
+                      type="button"
+                      onClick={() => void toggleFavorite(participant.user.id)}
+                      aria-pressed={fav}
+                      aria-label={
+                        fav
+                          ? `Usuń ${participant.user.username} z ulubionych`
+                          : `Dodaj ${participant.user.username} do ulubionych`
+                      }
+                      title={fav ? 'Usuń z ulubionych' : 'Dodaj do ulubionych'}
+                      className={`flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-sm transition-colors hover:bg-black/5 dark:hover:bg-white/10 ${
+                        fav ? 'text-yellow-400 hover:text-yellow-500' : 'text-muted/40 hover:text-yellow-400'
+                      }`}
+                    >
+                      <i className={`${fav ? 'fas' : 'far'} fa-star`} aria-hidden="true" />
+                    </button>
                   )}
                   <Link to={`/users/${participant.user.id}`} className="text-ink hover:text-brand">
                     {participant.user.username}
@@ -152,9 +164,7 @@ export default function MatchPage() {
                           })}
                         >
                           <span className="bet-key">{label}</span>
-                          {(!hideOdds || match.finished) && (
-                            <span className="bet-odds">{formattedOdds(match.odds[result])}</span>
-                          )}
+                          <span className="bet-odds">{formattedOdds(match.odds[result])}</span>
                         </div>
                       )
                     })}
