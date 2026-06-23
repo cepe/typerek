@@ -86,6 +86,7 @@ export default function RankingPage() {
   const { drzewkoMode, favoriteUserIds, toggleFavorite } = useSettings()
   const meRowRef = useRef<HTMLLIElement>(null)
   const [query, setQuery] = useState('')
+  const [favoritesOnly, setFavoritesOnly] = useState(false)
 
   // The active subpage lives in the URL (?view=chart) so a refresh or shared link
   // keeps you on the same tab — same pattern as MatchesPage (?status=finished).
@@ -102,13 +103,20 @@ export default function RankingPage() {
   const meEntry = data.find((entry) => entry.user.id === user?.id)
   const scrollToMe = () => meRowRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' })
   const favorites = new Set(favoriteUserIds)
+  const hasFavorites = favorites.size > 0
 
-  // Quick find: filter the table by username, accent-insensitive (see fold).
-  // The filtered view drops the prize-zone divider and the cutoff hints since
-  // those only make sense against the full, contiguous ranking.
+  // Quick find (by username, accent-insensitive — see fold) plus an optional
+  // "favourites only" filter, so you can pull your starred players together
+  // without scrolling. Either one narrows the table, so both drop the prize-zone
+  // divider and the cutoff hints, which only make sense against the full,
+  // contiguous ranking.
   const folded = fold(query.trim())
-  const filtering = folded !== ''
-  const visible = filtering ? data.filter((entry) => fold(entry.user.username).includes(folded)) : data
+  const filtering = folded !== '' || favoritesOnly
+  const visible = data.filter(
+    (entry) =>
+      (!favoritesOnly || favorites.has(entry.user.id)) &&
+      (folded === '' || fold(entry.user.username).includes(folded)),
+  )
 
   // Prize zone: the top N places are "in the money" (N decided per season, see
   // CurrentUser#rewarded_positions). Entries are sorted by position asc, so the
@@ -212,7 +220,7 @@ export default function RankingPage() {
               autoCorrect="off"
               className="field pl-9 pr-9"
             />
-            {filtering && (
+            {query !== '' && (
               <button
                 type="button"
                 onClick={() => setQuery('')}
@@ -224,9 +232,26 @@ export default function RankingPage() {
               </button>
             )}
           </div>
+          {(hasFavorites || favoritesOnly) && (
+            <button
+              type="button"
+              onClick={() => setFavoritesOnly((value) => !value)}
+              aria-pressed={favoritesOnly}
+              className={`mb-3 inline-flex items-center gap-2 rounded-full border px-3 py-1.5 text-sm font-medium transition-colors ${
+                favoritesOnly
+                  ? 'border-amber-400 bg-amber-100/80 text-amber-700 dark:bg-amber-500/15 dark:text-amber-300'
+                  : 'border-line text-muted hover:bg-black/5 dark:hover:bg-white/10'
+              }`}
+            >
+              <i className={`${favoritesOnly ? 'fas text-yellow-400' : 'far'} fa-star`} aria-hidden="true" />
+              Tylko ulubieni
+            </button>
+          )}
           {visible.length === 0 ? (
             <div className="card card-body text-center text-muted">
-              Brak zawodników pasujących do „{query.trim()}”.
+              {query.trim()
+                ? `Brak zawodników pasujących do „${query.trim()}”.`
+                : 'Nie masz jeszcze ulubionych zawodników do pokazania.'}
             </div>
           ) : (
           <ul className="card divide-y divide-line/60 overflow-hidden">
