@@ -145,7 +145,11 @@ export default function MatchPage() {
                 }`}
               >
                 <div className={`flex items-center gap-1.5 ${fav ? 'font-semibold' : 'font-medium'}`}>
-                  {!me && (
+                  {/* Reserve the star's slot for your own row (you can't favourite
+                      yourself) so every username lines up. */}
+                  {me ? (
+                    <span className="h-6 w-6 shrink-0" aria-hidden="true" />
+                  ) : (
                     <button
                       type="button"
                       onClick={() => void toggleFavorite(participant.user.id)}
