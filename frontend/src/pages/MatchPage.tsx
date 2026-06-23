@@ -22,6 +22,7 @@ export default function MatchPage() {
   const placeBet = usePlaceBet()
   const favorites = new Set(favoriteUserIds)
   const [selectedResult, setSelectedResult] = useState<BetType | null>(null)
+  const [favoritesOnly, setFavoritesOnly] = useState(false)
 
   useDocumentTitle(match ? `${match.team_a} – ${match.team_b}` : undefined)
 
@@ -30,11 +31,12 @@ export default function MatchPage() {
 
   const scored = match.finished ? new Set(winningBets(match.result_a, match.result_b)) : null
   const live = match.started && !match.finished
-  const visibleParticipants = match.participants
-    ? selectedResult === null
-      ? match.participants
-      : match.participants.filter((p) => p.result === selectedResult)
-    : []
+  // "Favourites only" lets you pull your starred players out of a long participant
+  // list without scrolling; it stacks with the chart's result filter.
+  const hasFavorites = (match.participants ?? []).some((p) => favorites.has(p.user.id))
+  const visibleParticipants = (match.participants ?? [])
+    .filter((p) => selectedResult === null || p.result === selectedResult)
+    .filter((p) => !favoritesOnly || favorites.has(p.user.id))
 
   return (
     <div className="mx-auto max-w-3xl space-y-6">
@@ -100,6 +102,21 @@ export default function MatchPage() {
             <h3 className="flex items-center gap-2">
               <i className="fas fa-users text-brand" aria-hidden="true" /> Typy uczestników
             </h3>
+            {(hasFavorites || favoritesOnly) && (
+              <button
+                type="button"
+                onClick={() => setFavoritesOnly((value) => !value)}
+                aria-pressed={favoritesOnly}
+                className={`inline-flex items-center gap-2 rounded-full border px-3 py-1.5 text-sm font-medium transition-colors ${
+                  favoritesOnly
+                    ? 'border-amber-400 bg-amber-100/80 text-amber-700 dark:bg-amber-500/15 dark:text-amber-300'
+                    : 'border-line text-muted hover:bg-black/5 dark:hover:bg-white/10'
+                }`}
+              >
+                <i className={`${favoritesOnly ? 'fas text-yellow-400' : 'far'} fa-star`} aria-hidden="true" />
+                Tylko ulubieni
+              </button>
+            )}
           </div>
           {match.participants.some((p) => p.result != null) && (
             <div className="border-b border-line/60">
@@ -113,6 +130,9 @@ export default function MatchPage() {
             </div>
           )}
           <div className="divide-y divide-line/60">
+            {visibleParticipants.length === 0 && (
+              <p className="px-4 py-6 text-center text-sm text-muted">Brak uczestników do pokazania.</p>
+            )}
             {visibleParticipants.map((participant) => {
               const me = participant.user.id === user?.id
               const fav = !me && favorites.has(participant.user.id)
