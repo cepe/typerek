@@ -107,14 +107,15 @@ export default function RankingPage() {
 
   // Quick find (by username, accent-insensitive — see fold) plus an optional
   // "favourites only" filter, so you can pull your starred players together
-  // without scrolling. Either one narrows the table, so both drop the prize-zone
-  // divider and the cutoff hints, which only make sense against the full,
-  // contiguous ranking.
+  // without scrolling. Favourites-only keeps your own row visible too, so you can
+  // see where you stand among them. Either filter narrows the table, so both drop
+  // the prize-zone divider and the cutoff hints, which only make sense against the
+  // full, contiguous ranking.
   const folded = fold(query.trim())
   const filtering = folded !== '' || favoritesOnly
   const visible = data.filter(
     (entry) =>
-      (!favoritesOnly || favorites.has(entry.user.id)) &&
+      (!favoritesOnly || favorites.has(entry.user.id) || entry.user.id === user?.id) &&
       (folded === '' || fold(entry.user.username).includes(folded)),
   )
 
