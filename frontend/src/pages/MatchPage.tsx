@@ -32,11 +32,12 @@ export default function MatchPage() {
   const scored = match.finished ? new Set(winningBets(match.result_a, match.result_b)) : null
   const live = match.started && !match.finished
   // "Favourites only" lets you pull your starred players out of a long participant
-  // list without scrolling; it stacks with the chart's result filter.
+  // list without scrolling (your own row stays too); it stacks with the chart's
+  // result filter.
   const hasFavorites = (match.participants ?? []).some((p) => favorites.has(p.user.id))
   const visibleParticipants = (match.participants ?? [])
     .filter((p) => selectedResult === null || p.result === selectedResult)
-    .filter((p) => !favoritesOnly || favorites.has(p.user.id))
+    .filter((p) => !favoritesOnly || favorites.has(p.user.id) || p.user.id === user?.id)
 
   return (
     <div className="mx-auto max-w-3xl space-y-6">
