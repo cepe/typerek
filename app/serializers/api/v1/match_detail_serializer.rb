@@ -13,17 +13,20 @@ module Api
 
       def self.participants(match)
         answers = match.answers.group_by(&:user_id).transform_values(&:first)
-        # Each participant's current ranking position, so the client can optionally
-        # order the list by standings (the match_order_by_ranking setting). Read from
-        # the cached standings map — every active user has an entry. Default order
-        # stays alphabetical; the client re-sorts when the setting is on.
+        # Each participant's current ranking position and points, so the client can
+        # optionally order the list by standings (the match_order_by_ranking setting)
+        # and show how many points each player is on — making it easy to reason about
+        # how a correct bet would move them. Read from the cached standings map —
+        # every active user has an entry. Default order stays alphabetical; the
+        # client re-sorts when the setting is on.
         standings = Typerek::Ranking::Query.standings
         User.active.order(:username).map do |user|
           answer = answers[user.id]
           {
             user: { id: user.id, username: user.username },
             result: answer&.result,
-            position: standings.dig(user.id, :position)
+            position: standings.dig(user.id, :position),
+            points: standings.dig(user.id, :points)
           }
         end
       end
