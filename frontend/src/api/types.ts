@@ -88,9 +88,11 @@ export interface Match {
 export interface Participant {
   user: { id: number; username: string }
   result: BetType | null
-  // The participant's current ranking position, used to optionally order the list
-  // by standings (the match_order_by_ranking setting). null if not ranked.
+  // The participant's current ranking position and points, used to optionally order
+  // the list by standings (the match_order_by_ranking setting) and show how a
+  // correct bet would move them. null if not ranked.
   position: number | null
+  points: number | null
 }
 
 export interface MatchDetail extends Match {

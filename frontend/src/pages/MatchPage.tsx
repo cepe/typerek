@@ -9,7 +9,7 @@ import BetGrid from '@/components/BetGrid'
 import LockToggle from '@/components/LockToggle'
 import BetDistributionChart from '@/components/BetDistributionChart'
 import { BET_TYPES, betPillClass, winningBets } from '@/lib/bets'
-import { formatShort, formattedOdds, formattedScore } from '@/lib/format'
+import { formatShort, formattedOdds, formattedScore, pointsDisplay } from '@/lib/format'
 import { useDocumentTitle } from '@/lib/useDocumentTitle'
 import { useSettings } from '@/lib/settings'
 
@@ -150,7 +150,7 @@ export default function MatchPage() {
                   fav ? 'bg-amber-100/80 dark:bg-amber-500/10' : ''
                 }`}
               >
-                <div className={`flex items-center gap-1.5 ${fav ? 'font-semibold' : 'font-medium'}`}>
+                <div className={`flex min-w-0 items-center gap-1.5 sm:flex-1 ${fav ? 'font-semibold' : 'font-medium'}`}>
                   {/* When ordering by ranking, lead each row with its position so the
                       standings read off at a glance. */}
                   {matchOrderByRanking && (
@@ -180,14 +180,23 @@ export default function MatchPage() {
                       <i className={`${fav ? 'fas' : 'far'} fa-star`} aria-hidden="true" />
                     </button>
                   )}
-                  <Link to={`/users/${participant.user.id}`} className="text-ink hover:text-brand">
+                  <Link to={`/users/${participant.user.id}`} className="truncate text-ink hover:text-brand">
                     {participant.user.username}
                   </Link>
+                  {/* In ranking order, show the player's current points right-aligned in
+                      a fixed column (ml-auto against the flex-1 name), so they line up
+                      down the list and it's easy to work out how a correct bet (its odds
+                      are in the pill) moves them. */}
+                  {matchOrderByRanking && participant.points != null && (
+                    <span className="ml-auto shrink-0 pl-2 text-xs font-normal text-muted tabular-nums">
+                      {pointsDisplay(participant.points)} pkt
+                    </span>
+                  )}
                 </div>
                 {participant.result == null ? (
-                  <span className="text-sm text-muted sm:ml-auto">Brak typu</span>
+                  <span className="text-sm text-muted sm:w-[340px] sm:shrink-0 sm:text-right">Brak typu</span>
                 ) : (
-                  <div className="bet-grid sm:ml-auto sm:w-[340px]">
+                  <div className="bet-grid sm:w-[340px] sm:shrink-0">
                     {BET_TYPES.map(([result, label]) => {
                       const chosen = participant.result === result
                       const isScored = scored?.has(result) ?? false

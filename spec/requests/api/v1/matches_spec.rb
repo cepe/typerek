@@ -28,7 +28,7 @@ RSpec.describe 'API V1 Matches', type: :request do
     context 'when the match has started' do
       let(:match) { create(:match, :start_in_past, :without_results) }
 
-      it 'includes participants with their bets and ranking position' do
+      it 'includes participants with their bets and ranking standing' do
         other = create(:user, :active, username: 'zzz')
         create(:answer, match: match, user: other, result: :tie)
 
@@ -39,6 +39,7 @@ RSpec.describe 'API V1 Matches', type: :request do
         entry = json['participants'].find { |p| p['user']['id'] == other.id }
         expect(entry['result']).to eq('tie')
         expect(entry).to have_key('position')
+        expect(entry).to have_key('points')
       end
     end
 
