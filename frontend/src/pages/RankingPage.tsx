@@ -123,11 +123,25 @@ export default function RankingPage() {
   const perfectShare = (points: number): string | null =>
     perfectScore > 0 ? `${Math.round((points / perfectScore) * 100)}%` : null
 
-  // The naive benchmark "players" are mapped into the same row shape as real
-  // entries so they can be ranked and rendered together. They have no account, so
-  // they carry a negative sentinel id (never equal to a real user or the viewer)
-  // and a virtualKey to drive their distinct, account-less rendering.
   const showVirtual = virtualPlayers && data.virtual_players.length > 0
+
+  // Only the 'hits' ordering is "augmented" — a display-only view that drops the
+  // points-only chrome (movement arrows and the prize zone, the latter via rewarded
+  // being forced to 0 below). Virtual players do NOT make it augmented: they carry
+  // no position of their own, so the real field's numbering — and the points
+  // ranking it drives, prize zone included — is identical whether they are on or off.
+  const augmented = sort === 'hits'
+  const sortValue = (row: { points: number; accuracy: number }) =>
+    sort === 'hits' ? row.accuracy : row.points
+
+  // Real players keep their canonical numbering: the server's points order, or a
+  // hits re-rank among themselves. Virtual players never renumber them.
+  const realRanked: RankRow[] = sort === 'hits' ? rankEntries(entries, sort) : entries
+
+  // The benchmark "players" carry no rank of their own — they are slotted into the
+  // list purely by score (position 0, never rendered as a number). They have no
+  // account, hence a negative sentinel id and a virtualKey to drive their distinct,
+  // account-less rendering.
   const virtualRows: RankRow[] = data.virtual_players.map((vp, index) => ({
     position: 0,
     previous_position: null,
@@ -137,14 +151,11 @@ export default function RankingPage() {
     virtualKey: vp.key,
   }))
 
-  // 'hits' re-ranks by number of correct bets; adding virtual players shifts
-  // everyone's place. Either makes the order "augmented" — a display-only view that
-  // recomputes positions client-side and drops the points-only chrome (movement
-  // arrows and the prize zone, the latter via rewarded being forced to 0 below).
-  // Plain points order with no virtual players keeps the server's ranking as-is.
-  const augmented = sort === 'hits' || showVirtual
-  const base: RankRow[] = showVirtual ? [...entries, ...virtualRows] : entries
-  const ranked: RankRow[] = augmented ? rankEntries(base, sort) : entries
+  // Merge by score; a stable sort keeps a real player ahead of a virtual one they
+  // tie with and preserves the real field's own order.
+  const ranked: RankRow[] = showVirtual
+    ? [...realRanked, ...virtualRows].sort((a, b) => sortValue(b) - sortValue(a))
+    : realRanked
 
   const meEntry = ranked.find((entry) => entry.user.id === user?.id)
   const scrollToMe = () => meRowRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' })
@@ -170,9 +181,10 @@ export default function RankingPage() {
   // zone is the contiguous prefix `position <= rewarded` — which also covers ties
   // straddling the cutoff. cutoffPoints is the weakest score still in the zone;
   // firstOutPoints is the best score just outside it.
-  // The prize zone is a points-only concept, so an augmented ordering disables it
-  // wholesale by forcing rewarded to 0 (cascades through prizeCount, the hints and
-  // the badge colours). It always reads from `entries`, the canonical points order.
+  // The prize zone is a points-only concept, so the (hits) augmented ordering
+  // disables it wholesale by forcing rewarded to 0 (cascades through prizeCount, the
+  // hints and the badge colours). It always reads from `entries`, the canonical
+  // points order — so virtual players, which never touch that, leave it intact.
   const rewarded = augmented ? 0 : user?.rewarded_positions ?? 0
   const prizeCount = rewarded > 0 ? entries.filter((entry) => entry.position <= rewarded).length : 0
   const cutoffPoints = prizeCount > 0 ? entries[prizeCount - 1].points : null
@@ -180,6 +192,18 @@ export default function RankingPage() {
 
   const meInPrize = !!meEntry && rewarded > 0 && meEntry.position <= rewarded
   const meGap = meEntry && !meInPrize && cutoffPoints != null ? pointsDisplay(cutoffPoints - meEntry.points) : null
+
+  // Where the prize-zone divider sits in the visible list: right after the last real
+  // player still in the zone. Virtual rows carry no rank, so they are skipped — a
+  // benchmark slotted into the zone by score simply renders above the divider. -1
+  // when filtering or there is no zone (no divider then, same as before).
+  const prizeDividerIndex =
+    filtering || prizeCount === 0
+      ? -1
+      : visible.reduce(
+          (last, row, index) => (row.virtualKey == null && row.position <= rewarded ? index : last),
+          -1,
+        )
 
   // A small contextual note on rows near the cutoff: the cushion for the weakest
   // place still in the zone, or the points the nearest chasers need to break in.
@@ -337,9 +361,9 @@ export default function RankingPage() {
             {visible.map((entry, idx) => {
               const me = user?.id === entry.user.id
               const virtual = entry.virtualKey != null
-              const inPrize = rewarded > 0 && entry.position <= rewarded
+              const inPrize = !virtual && rewarded > 0 && entry.position <= rewarded
               const fav = !me && !virtual && favorites.has(entry.user.id)
-              const hint = filtering ? null : zoneHint(entry, idx)
+              const hint = filtering || virtual ? null : zoneHint(entry, idx)
               // Favourites and prize-zone rows both get a left accent; a favourite
               // takes precedence on the background tint (a touch deeper amber than
               // the zone) so a starred row stands out even when it's also in the zone.
@@ -362,19 +386,19 @@ export default function RankingPage() {
                     ref={me ? meRowRef : undefined}
                     className={`flex items-center gap-2.5 px-4 py-3 ${accent} ${bg}`}
                   >
+                    {/* Virtual players hold no rank — a muted bot chip stands in for
+                        the position number so the real numbering is never disturbed. */}
                     <span
-                      className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-sm font-bold tabular-nums ${positionBadgeClass(
-                        entry.position,
-                        rewarded,
-                      )}`}
+                      className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-sm font-bold tabular-nums ${
+                        virtual ? 'bg-surface text-muted/60' : positionBadgeClass(entry.position, rewarded)
+                      }`}
                     >
-                      {entry.position}
+                      {virtual ? <i className="fas fa-robot text-xs" aria-hidden="true" /> : entry.position}
                     </span>
                     {augmented ? null : <Movement entry={entry} />}
                     <span className={`flex-1 truncate ${fav ? 'font-semibold' : 'font-medium'}`}>
                       {virtual ? (
                         <span className="inline-flex items-center gap-1.5 text-muted">
-                          <i className="fas fa-robot" aria-hidden="true" />
                           <span className="italic">{entry.user.username}</span>
                           <span className="rounded bg-surface px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-muted">
                             wirtualny
@@ -420,7 +444,7 @@ export default function RankingPage() {
                       </button>
                     )}
                   </li>
-                  {!filtering && prizeCount > 0 && idx === prizeCount - 1 && idx < entries.length - 1 && (
+                  {idx === prizeDividerIndex && idx < visible.length - 1 && (
                     <li className="flex items-center gap-2 bg-highlight px-4 py-1.5 text-xs font-semibold uppercase tracking-wide text-highlight-fg">
                       <i className="fas fa-trophy" aria-hidden="true" />
                       Strefa nagród · {rewarded} {placesLabel(rewarded)}
