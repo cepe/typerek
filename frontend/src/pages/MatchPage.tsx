@@ -17,7 +17,7 @@ import { useSettings } from '@/lib/settings'
 export default function MatchPage() {
   const { id = '' } = useParams()
   const { isAdmin, user } = useAuth()
-  const { favoriteUserIds, toggleFavorite } = useSettings()
+  const { favoriteUserIds, toggleFavorite, matchOrderByRanking } = useSettings()
   const { data: match, isLoading, isError } = useMatch(id)
   const placeBet = usePlaceBet()
   const favorites = new Set(favoriteUserIds)
@@ -38,6 +38,12 @@ export default function MatchPage() {
   const visibleParticipants = (match.participants ?? [])
     .filter((p) => selectedResult === null || p.result === selectedResult)
     .filter((p) => !favoritesOnly || favorites.has(p.user.id) || p.user.id === user?.id)
+  // Opt-in: order the list by ranking position instead of the server's alphabetical
+  // order, so you can read the standings off after a match. Unranked players (no
+  // position) fall to the bottom; ties keep the alphabetical order (stable sort).
+  const orderedParticipants = matchOrderByRanking
+    ? [...visibleParticipants].sort((a, b) => (a.position ?? Infinity) - (b.position ?? Infinity))
+    : visibleParticipants
 
   return (
     <div className="mx-auto max-w-3xl space-y-6">
@@ -131,10 +137,10 @@ export default function MatchPage() {
             </div>
           )}
           <div className="divide-y divide-line/60">
-            {visibleParticipants.length === 0 && (
+            {orderedParticipants.length === 0 && (
               <p className="px-4 py-6 text-center text-sm text-muted">Brak uczestników do pokazania.</p>
             )}
-            {visibleParticipants.map((participant) => {
+            {orderedParticipants.map((participant) => {
               const me = participant.user.id === user?.id
               const fav = !me && favorites.has(participant.user.id)
               return (
@@ -145,6 +151,13 @@ export default function MatchPage() {
                 }`}
               >
                 <div className={`flex items-center gap-1.5 ${fav ? 'font-semibold' : 'font-medium'}`}>
+                  {/* When ordering by ranking, lead each row with its position so the
+                      standings read off at a glance. */}
+                  {matchOrderByRanking && (
+                    <span className="w-6 shrink-0 text-right text-xs font-semibold tabular-nums text-muted">
+                      {participant.position ?? '—'}
+                    </span>
+                  )}
                   {/* Reserve the star's slot for your own row (you can't favourite
                       yourself) so every username lines up. */}
                   {me ? (

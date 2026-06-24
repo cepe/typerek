@@ -53,4 +53,19 @@ class Match < ApplicationRecord
       %w[tie win_tie_a win_tie_b]
     end
   end
+
+  # The most points a single perfect bet on this match could have scored: the best
+  # odds among the outcomes that actually won (see #winning_list). 0.0 while the
+  # match is unfinished or when none of the winning outcomes has odds set.
+  def max_point
+    return 0.0 unless finished?
+
+    winning_list.filter_map { |result| send(result) }.max&.round(2) || 0.0
+  end
+
+  # The theoretical ceiling for the whole season: what a flawless tipster who hit
+  # the best-paying correct outcome on every finished match would have scored.
+  def self.perfect_score
+    finished.sum(&:max_point).round(2)
+  end
 end

@@ -19,7 +19,13 @@ class User < ApplicationRecord
     # IDs of users this user starred as favourites in the ranking. Highlighted in
     # the ranking and in a match's participant ("typy") list. Unlike the others
     # this is an array, not a scalar — see #favorite_user_ids.
-    'favorite_user_ids' => []
+    'favorite_user_ids' => [],
+    # Order a match's participant ("typy") list by ranking position instead of
+    # alphabetically, so the standings are easy to read off after a match. Opt-in.
+    'match_order_by_ranking' => false,
+    # Show three naive benchmark "players" (always-favourite / always-underdog /
+    # always-draw) interleaved in the ranking, to compare against. Opt-in.
+    'virtual_players' => false
   }.freeze
 
   # Allowed values for the `theme` setting. Anything else falls back to 'light'.
@@ -28,7 +34,7 @@ class User < ApplicationRecord
   # Settings we surface a "Włączone przez N osób" count for on the settings screen.
   # The push sub-toggles are excluded: they default on, so a raw `= 'true'` count
   # would be meaningless for them.
-  COUNTED_SETTINGS = %w[drzewko_mode bet_lock push_enabled].freeze
+  COUNTED_SETTINGS = %w[drzewko_mode bet_lock push_enabled match_order_by_ranking virtual_players].freeze
 
   has_secure_password validations: false
 
@@ -94,6 +100,14 @@ class User < ApplicationRecord
 
   def bet_lock?
     settings_with_defaults['bet_lock'] == true
+  end
+
+  def match_order_by_ranking?
+    settings_with_defaults['match_order_by_ranking'] == true
+  end
+
+  def virtual_players?
+    settings_with_defaults['virtual_players'] == true
   end
 
   def push_enabled?

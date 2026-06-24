@@ -10,7 +10,7 @@ import type {
   Match,
   MatchDetail,
   MatchList,
-  RankingEntry,
+  Ranking,
   RankingHistory,
   User,
   UserProfile,
@@ -59,7 +59,7 @@ export function useMatch(id: number | string) {
 export function useRanking() {
   return useQuery({
     queryKey: queryKeys.ranking,
-    queryFn: () => api.get<RankingEntry[]>('/ranking'),
+    queryFn: () => api.get<Ranking>('/ranking'),
   })
 }
 

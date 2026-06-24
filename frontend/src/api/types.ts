@@ -34,6 +34,10 @@ export interface UserSettings {
   // IDs of users the viewer starred as favourites in the ranking. They are
   // highlighted in the ranking and in a match's participant ("typy") list.
   favorite_user_ids: number[]
+  // Order a match's participant list by ranking position instead of alphabetically.
+  match_order_by_ranking: boolean
+  // Show the naive benchmark "players" interleaved in the ranking.
+  virtual_players: boolean
 }
 
 // A registered Web Push device for the signed-in user (GET /push/subscriptions).
@@ -84,6 +88,9 @@ export interface Match {
 export interface Participant {
   user: { id: number; username: string }
   result: BetType | null
+  // The participant's current ranking position, used to optionally order the list
+  // by standings (the match_order_by_ranking setting). null if not ranked.
+  position: number | null
 }
 
 export interface MatchDetail extends Match {
@@ -109,6 +116,24 @@ export interface RankingEntry {
   user: { id: number; username: string }
   points: number
   accuracy: number
+}
+
+// A naive benchmark strategy scored over the finished matches, shown interleaved
+// in the ranking when the virtual_players setting is on. Has no user account.
+export interface VirtualPlayer {
+  key: string
+  username: string
+  points: number
+  accuracy: number
+}
+
+export interface Ranking {
+  entries: RankingEntry[]
+  // The season's point ceiling — what a flawless tipster could have scored on the
+  // finished matches. 0 until at least one match has finished. Used to show each
+  // player's points as a share of the maximum obtainable.
+  perfect_score: number
+  virtual_players: VirtualPlayer[]
 }
 
 export interface UserProfileMatch extends Match {

@@ -33,6 +33,11 @@ interface Settings {
   // highlighted in the ranking and in a match's participant list. Toggled from the
   // ranking via toggleFavorite; persisted server-side like the other preferences.
   favoriteUserIds: number[]
+  // Order a match's participant list by ranking position instead of alphabetically.
+  // Opt-in: off by default, toggled from the settings screen.
+  matchOrderByRanking: boolean
+  // Interleave the naive benchmark "players" into the ranking. Opt-in.
+  virtualPlayers: boolean
 }
 
 const DEFAULTS: Settings = {
@@ -43,6 +48,8 @@ const DEFAULTS: Settings = {
   pushReminders: true,
   theme: 'light',
   favoriteUserIds: [],
+  matchOrderByRanking: false,
+  virtualPlayers: false,
 }
 
 // Map between the server shape (snake_case, the API contract) and ours (camelCase).
@@ -59,6 +66,8 @@ function fromServer(settings: UserSettings | undefined): Settings {
     // server value (always present — it defaults to 'light') takes over.
     theme: settings?.theme ?? readStoredPreference(),
     favoriteUserIds: settings?.favorite_user_ids ?? DEFAULTS.favoriteUserIds,
+    matchOrderByRanking: settings?.match_order_by_ranking ?? DEFAULTS.matchOrderByRanking,
+    virtualPlayers: settings?.virtual_players ?? DEFAULTS.virtualPlayers,
   }
 }
 
@@ -73,6 +82,8 @@ interface SettingsState extends Settings {
   setTheme: (value: ThemePreference) => Promise<void>
   // Add or remove a user from the viewer's favourites (starred in the ranking).
   toggleFavorite: (userId: number) => Promise<void>
+  setMatchOrderByRanking: (value: boolean) => Promise<void>
+  setVirtualPlayers: (value: boolean) => Promise<void>
 }
 
 const SettingsContext = createContext<SettingsState | undefined>(undefined)
@@ -130,6 +141,10 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
         : [...settings.favoriteUserIds, userId]
       return persist({ favoriteUserIds: next }, { favorite_user_ids: next })
     },
+    setMatchOrderByRanking: (matchOrderByRanking) =>
+      persist({ matchOrderByRanking }, { match_order_by_ranking: matchOrderByRanking }),
+    setVirtualPlayers: (virtualPlayers) =>
+      persist({ virtualPlayers }, { virtual_players: virtualPlayers }),
   }
 
   return <SettingsContext.Provider value={value}>{children}</SettingsContext.Provider>

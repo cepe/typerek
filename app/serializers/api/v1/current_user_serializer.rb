@@ -25,7 +25,9 @@ module Api
             push_results: user.push_results?,
             push_reminders: user.push_reminders?,
             theme: user.theme,
-            favorite_user_ids: user.favorite_user_ids
+            favorite_user_ids: user.favorite_user_ids,
+            match_order_by_ranking: user.match_order_by_ranking?,
+            virtual_players: user.virtual_players?
           }
         }
       end

@@ -55,7 +55,8 @@ export function createTools(queryClient: QueryClient): ToolDescriptor[] {
     },
     {
       name: 'get_ranking',
-      description: 'Current leaderboard: position, user, points, and prediction accuracy per player.',
+      description:
+        'Current leaderboard. Returns { entries, perfect_score }: entries lists position, user, points and prediction accuracy per player; perfect_score is the most points obtainable so far (a flawless tipster).',
       inputSchema: NO_INPUT,
       execute: () => authed(() => api.get('/ranking')),
     },

@@ -9,7 +9,17 @@ module Api
           [query::CACHE_KEY, query.cache_version],
           expires_in: 1.day
         ) do
-          RankingEntrySerializer.many(query.new.call).to_json
+          {
+            entries: RankingEntrySerializer.many(query.new.call),
+            # The season's point ceiling (a flawless tipster), so the client can
+            # show how far the field is from perfect. Depends only on finished
+            # matches, so it shares the ranking's cache fingerprint.
+            perfect_score: Match.perfect_score,
+            # Three naive benchmark strategies, scored over the finished matches. An
+            # opt-in client overlay (the virtual_players setting); always computed
+            # here since it shares the ranking's cache fingerprint and is cheap.
+            virtual_players: Typerek::Ranking::VirtualPlayers.call
+          }.to_json
         end
         render json: json
       end
