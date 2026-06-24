@@ -64,4 +64,47 @@ RSpec.describe Match, type: :model do
       it { expect(match.winning_list).to eq(%w[tie win_tie_a win_tie_b]) }
     end
   end
+
+  describe '#max_point' do
+    it 'is the best odds among the winning outcomes' do
+      match = described_class.new(result_a: 1, result_b: 0, win_a: 5.0, win_tie_a: 1.5, not_tie: 1.2)
+
+      expect(match.max_point).to eq(5.0)
+    end
+
+    it 'ignores odds of outcomes that did not win' do
+      # A draw, so only tie / win_tie_a / win_tie_b score — win_a's high odds are out.
+      match = described_class.new(result_a: 0, result_b: 0, win_a: 9.9, tie: 3.0, win_tie_a: 1.4, win_tie_b: 1.6)
+
+      expect(match.max_point).to eq(3.0)
+    end
+
+    it 'is zero while the match is unfinished' do
+      match = described_class.new(result_a: nil, result_b: nil, win_a: 5.0)
+
+      expect(match.max_point).to eq(0.0)
+    end
+
+    it 'is zero when none of the winning outcomes has odds set' do
+      match = described_class.new(result_a: 1, result_b: 0, win_a: nil, win_tie_a: nil, not_tie: nil)
+
+      expect(match.max_point).to eq(0.0)
+    end
+  end
+
+  describe '.perfect_score' do
+    it 'sums the best obtainable points across finished matches only' do
+      create(:match, :start_in_past, :winner_a, win_a: 5.0, win_tie_a: 1.5, not_tie: 1.2)
+      create(:match, :start_in_past, :tie, tie: 3.0, win_tie_a: 1.4, win_tie_b: 1.6)
+      create(:match, :start_in_future, :without_results, win_a: 9.9)
+
+      expect(described_class.perfect_score).to eq(8.0)
+    end
+
+    it 'is zero when nothing has finished' do
+      create(:match, :start_in_future, :without_results)
+
+      expect(described_class.perfect_score).to eq(0.0)
+    end
+  end
 end

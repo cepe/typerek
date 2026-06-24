@@ -8,6 +8,7 @@ import RankingPointsChart from '@/components/RankingPointsChart'
 import { pointsDisplay } from '@/lib/format'
 import { useSettings } from '@/lib/settings'
 import { useDocumentTitle } from '@/lib/useDocumentTitle'
+import { rankEntries, parseRankSort, type RankSort } from '@/lib/ranking'
 import type { RankingEntry } from '@/api/types'
 
 // Colour of the round position badge. Gold / silver / bronze for the podium, a
@@ -71,6 +72,10 @@ function fold(value: string): string {
     .replace(/ł/g, 'l')
 }
 
+// A ranking table row: a real entry, or a virtual benchmark player (virtualKey
+// set, with a negative sentinel user id and no account to link to).
+type RankRow = RankingEntry & { virtualKey?: string }
+
 type View = 'table' | 'chart' | 'points'
 
 function parseView(param: string | null): View {
@@ -83,24 +88,65 @@ function parseView(param: string | null): View {
 export default function RankingPage() {
   const { data, isLoading, isError } = useRanking()
   const { user } = useAuth()
-  const { drzewkoMode, favoriteUserIds, toggleFavorite } = useSettings()
+  const { drzewkoMode, favoriteUserIds, toggleFavorite, virtualPlayers } = useSettings()
   const meRowRef = useRef<HTMLLIElement>(null)
   const [query, setQuery] = useState('')
   const [favoritesOnly, setFavoritesOnly] = useState(false)
 
-  // The active subpage lives in the URL (?view=chart) so a refresh or shared link
-  // keeps you on the same tab — same pattern as MatchesPage (?status=finished).
+  // The active subpage and the table sort both live in the URL (?view=chart&sort=hits)
+  // so a refresh or shared link keeps the same tab and ordering — same pattern as
+  // MatchesPage (?status=finished). The defaults (table / points) are left off the URL.
   const [searchParams, setSearchParams] = useSearchParams()
   const view = parseView(searchParams.get('view'))
-  const selectView = (next: View) =>
-    setSearchParams(next === 'table' ? {} : { view: next }, { replace: true })
+  const sort = parseRankSort(searchParams.get('sort'))
+  const updateParams = (next: { view?: View; sort?: RankSort }) => {
+    const nextView = next.view ?? view
+    const nextSort = next.sort ?? sort
+    const params: Record<string, string> = {}
+    if (nextView !== 'table') params.view = nextView
+    if (nextSort !== 'points') params.sort = nextSort
+    setSearchParams(params, { replace: true })
+  }
+  const selectView = (next: View) => updateParams({ view: next })
+  const selectSort = (next: RankSort) => updateParams({ sort: next })
 
   useDocumentTitle('Ranking')
 
   if (isLoading) return <Loading />
   if (isError || !data) return <ErrorBox />
 
-  const meEntry = data.find((entry) => entry.user.id === user?.id)
+  const entries = data.entries
+  const perfectScore = data.perfect_score
+  // Each player's points as a share of the season's ceiling (see Match.perfect_score),
+  // shown in parentheses next to their points. null while nothing has finished yet,
+  // so we never divide by zero or show a meaningless 0%.
+  const perfectShare = (points: number): string | null =>
+    perfectScore > 0 ? `${Math.round((points / perfectScore) * 100)}%` : null
+
+  // The naive benchmark "players" are mapped into the same row shape as real
+  // entries so they can be ranked and rendered together. They have no account, so
+  // they carry a negative sentinel id (never equal to a real user or the viewer)
+  // and a virtualKey to drive their distinct, account-less rendering.
+  const showVirtual = virtualPlayers && data.virtual_players.length > 0
+  const virtualRows: RankRow[] = data.virtual_players.map((vp, index) => ({
+    position: 0,
+    previous_position: null,
+    user: { id: -(index + 1), username: vp.username },
+    points: vp.points,
+    accuracy: vp.accuracy,
+    virtualKey: vp.key,
+  }))
+
+  // 'hits' re-ranks by number of correct bets; adding virtual players shifts
+  // everyone's place. Either makes the order "augmented" — a display-only view that
+  // recomputes positions client-side and drops the points-only chrome (movement
+  // arrows and the prize zone, the latter via rewarded being forced to 0 below).
+  // Plain points order with no virtual players keeps the server's ranking as-is.
+  const augmented = sort === 'hits' || showVirtual
+  const base: RankRow[] = showVirtual ? [...entries, ...virtualRows] : entries
+  const ranked: RankRow[] = augmented ? rankEntries(base, sort) : entries
+
+  const meEntry = ranked.find((entry) => entry.user.id === user?.id)
   const scrollToMe = () => meRowRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' })
   const favorites = new Set(favoriteUserIds)
   const hasFavorites = favorites.size > 0
@@ -113,7 +159,7 @@ export default function RankingPage() {
   // full, contiguous ranking.
   const folded = fold(query.trim())
   const filtering = folded !== '' || favoritesOnly
-  const visible = data.filter(
+  const visible = ranked.filter(
     (entry) =>
       (!favoritesOnly || favorites.has(entry.user.id) || entry.user.id === user?.id) &&
       (folded === '' || fold(entry.user.username).includes(folded)),
@@ -124,10 +170,13 @@ export default function RankingPage() {
   // zone is the contiguous prefix `position <= rewarded` — which also covers ties
   // straddling the cutoff. cutoffPoints is the weakest score still in the zone;
   // firstOutPoints is the best score just outside it.
-  const rewarded = user?.rewarded_positions ?? 0
-  const prizeCount = rewarded > 0 ? data.filter((entry) => entry.position <= rewarded).length : 0
-  const cutoffPoints = prizeCount > 0 ? data[prizeCount - 1].points : null
-  const firstOutPoints = prizeCount < data.length ? data[prizeCount]?.points ?? null : null
+  // The prize zone is a points-only concept, so an augmented ordering disables it
+  // wholesale by forcing rewarded to 0 (cascades through prizeCount, the hints and
+  // the badge colours). It always reads from `entries`, the canonical points order.
+  const rewarded = augmented ? 0 : user?.rewarded_positions ?? 0
+  const prizeCount = rewarded > 0 ? entries.filter((entry) => entry.position <= rewarded).length : 0
+  const cutoffPoints = prizeCount > 0 ? entries[prizeCount - 1].points : null
+  const firstOutPoints = prizeCount < entries.length ? entries[prizeCount]?.points ?? null : null
 
   const meInPrize = !!meEntry && rewarded > 0 && meEntry.position <= rewarded
   const meGap = meEntry && !meInPrize && cutoffPoints != null ? pointsDisplay(cutoffPoints - meEntry.points) : null
@@ -151,7 +200,7 @@ export default function RankingPage() {
     <>
       <h1 className="mb-4 flex items-center gap-2">
         <i className="fas fa-trophy text-brand" aria-hidden="true" /> Ranking{' '}
-        <span className="badge-count">{data.length}</span>
+        <span className="badge-count">{entries.length}</span>
       </h1>
 
       <div className="mb-5 flex border-b border-line">
@@ -180,14 +229,43 @@ export default function RankingPage() {
 
       {view === 'table' ? (
         <div className="mx-auto max-w-xl">
+          <div className="mb-4 flex items-center gap-2">
+            <span className="text-sm font-medium text-muted">Sortuj:</span>
+            <div className="inline-flex rounded-full bg-surface p-0.5">
+              {(
+                [
+                  ['points', 'Punkty'],
+                  ['hits', 'Trafienia'],
+                ] as const
+              ).map(([value, label]) => (
+                <button
+                  key={value}
+                  type="button"
+                  onClick={() => selectSort(value)}
+                  aria-pressed={sort === value}
+                  className={`rounded-full px-3 py-1.5 text-sm font-medium transition-colors ${
+                    sort === value ? 'bg-brand text-white shadow-sm' : 'text-muted hover:text-ink'
+                  }`}
+                >
+                  {label}
+                </button>
+              ))}
+            </div>
+          </div>
           {meEntry && (
             <div className="card card-body mb-4 flex items-center justify-between gap-3 border border-brand bg-brand-tint">
               <span className="leading-tight">
                 <i className="fas fa-star text-brand" aria-hidden="true" /> Twoja pozycja:{' '}
                 <span className="font-bold text-ink">
-                  {meEntry.position} / {data.length}
+                  {meEntry.position} / {entries.length}
                 </span>{' '}
                 · <span className="font-bold text-ink tabular-nums">{pointsDisplay(meEntry.points)}</span> pkt
+                {perfectShare(meEntry.points) && (
+                  <span className="text-muted">
+                    {' '}
+                    ({perfectShare(meEntry.points)} z {pointsDisplay(perfectScore)} pkt)
+                  </span>
+                )}
                 {rewarded > 0 && (meInPrize || meGap != null) && (
                   <span className="mt-0.5 block text-xs font-medium">
                     {meInPrize ? (
@@ -258,8 +336,9 @@ export default function RankingPage() {
           <ul className="card divide-y divide-line/60 overflow-hidden">
             {visible.map((entry, idx) => {
               const me = user?.id === entry.user.id
+              const virtual = entry.virtualKey != null
               const inPrize = rewarded > 0 && entry.position <= rewarded
-              const fav = !me && favorites.has(entry.user.id)
+              const fav = !me && !virtual && favorites.has(entry.user.id)
               const hint = filtering ? null : zoneHint(entry, idx)
               // Favourites and prize-zone rows both get a left accent; a favourite
               // takes precedence on the background tint (a touch deeper amber than
@@ -274,7 +353,9 @@ export default function RankingPage() {
                   ? 'bg-amber-100/80 dark:bg-amber-500/10'
                   : inPrize
                     ? 'bg-highlight/60'
-                    : ''
+                    : virtual
+                      ? 'bg-surface/50'
+                      : ''
               return (
                 <Fragment key={entry.user.id}>
                   <li
@@ -289,21 +370,36 @@ export default function RankingPage() {
                     >
                       {entry.position}
                     </span>
-                    <Movement entry={entry} />
+                    {augmented ? null : <Movement entry={entry} />}
                     <span className={`flex-1 truncate ${fav ? 'font-semibold' : 'font-medium'}`}>
-                      <Link to={`/users/${entry.user.id}`} className="text-ink hover:text-brand">
-                        {entry.user.username}
-                      </Link>
+                      {virtual ? (
+                        <span className="inline-flex items-center gap-1.5 text-muted">
+                          <i className="fas fa-robot" aria-hidden="true" />
+                          <span className="italic">{entry.user.username}</span>
+                          <span className="rounded bg-surface px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-muted">
+                            wirtualny
+                          </span>
+                        </span>
+                      ) : (
+                        <Link to={`/users/${entry.user.id}`} className="text-ink hover:text-brand">
+                          {entry.user.username}
+                        </Link>
+                      )}
                       {me && <span className="ml-1 text-xs font-normal text-brand">(Ty)</span>}
                     </span>
                     <span className="text-right leading-tight">
                       <span className="font-bold text-ink tabular-nums">
                         {pointsDisplay(entry.points)} <span className="text-xs font-normal text-muted">pkt</span>
+                        {perfectShare(entry.points) && (
+                          <span className="ml-1 text-xs font-normal text-muted tabular-nums">
+                            ({perfectShare(entry.points)})
+                          </span>
+                        )}
                       </span>
                       <span className="block text-xs text-muted">{entry.accuracy} trafień</span>
                       {hint && <span className={`block text-xs font-medium ${hint.tone}`}>{hint.text}</span>}
                     </span>
-                    {me ? (
+                    {me || virtual ? (
                       <span className="w-8 shrink-0" aria-hidden="true" />
                     ) : (
                       <button
@@ -324,7 +420,7 @@ export default function RankingPage() {
                       </button>
                     )}
                   </li>
-                  {!filtering && prizeCount > 0 && idx === prizeCount - 1 && idx < data.length - 1 && (
+                  {!filtering && prizeCount > 0 && idx === prizeCount - 1 && idx < entries.length - 1 && (
                     <li className="flex items-center gap-2 bg-highlight px-4 py-1.5 text-xs font-semibold uppercase tracking-wide text-highlight-fg">
                       <i className="fas fa-trophy" aria-hidden="true" />
                       Strefa nagród · {rewarded} {placesLabel(rewarded)}
