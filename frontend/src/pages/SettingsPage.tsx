@@ -24,7 +24,6 @@ type SettingsStats = {
   bet_lock: number
   push_enabled: number
   match_order_by_ranking: number
-  virtual_players: number
   // How many users have dark mode on (theme 'dark' or 'auto').
   theme: number
 }
@@ -84,8 +83,6 @@ export default function SettingsPage() {
     setBetLock,
     matchOrderByRanking,
     setMatchOrderByRanking,
-    virtualPlayers,
-    setVirtualPlayers,
     pushResults,
     setPushResults,
     pushReminders,
@@ -368,23 +365,6 @@ export default function SettingsPage() {
               alfabetycznie — łatwiej odczytać ranking po meczu.
             </span>
             <UsageHint count={stats?.match_order_by_ranking} />
-          </span>
-        </label>
-
-        <label className="flex cursor-pointer items-start gap-3 px-4 py-4 sm:px-5">
-          <input
-            type="checkbox"
-            className="mt-0.5 h-5 w-5 shrink-0 accent-brand"
-            checked={virtualPlayers}
-            onChange={(event) => toggle('virtual_players', setVirtualPlayers, event.target.checked)}
-          />
-          <span className="leading-snug">
-            <span className="block font-semibold text-ink">Wirtualni gracze</span>
-            <span className="block text-muted">
-              W rankingu pojawiają się trzej gracze-strategie do porównania: „Faworyt” (zawsze typuje
-              faworyta), „Underdog” (zawsze niżej notowanego) i „Remis” (zawsze remis).
-            </span>
-            <UsageHint count={stats?.virtual_players} />
           </span>
         </label>
       </section>

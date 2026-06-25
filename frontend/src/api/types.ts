@@ -147,6 +147,13 @@ export interface UserProfile {
   started_matches: UserProfileMatch[]
 }
 
+// A virtual benchmark strategy's profile: its totals plus its pick on every
+// started match, so its hits and misses can be shown like a real player's.
+export interface VirtualPlayerProfile {
+  player: { key: string; username: string; points: number; accuracy: number }
+  started_matches: UserProfileMatch[]
+}
+
 export interface InvitationInfo {
   username: string
 }

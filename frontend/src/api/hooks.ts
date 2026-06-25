@@ -14,6 +14,7 @@ import type {
   RankingHistory,
   User,
   UserProfile,
+  VirtualPlayerProfile,
 } from './types'
 
 export const queryKeys = {
@@ -82,6 +83,13 @@ export function useUserProfile(id: number | string) {
   return useQuery({
     queryKey: queryKeys.user(id),
     queryFn: () => api.get<UserProfile>(`/users/${id}`),
+  })
+}
+
+export function useVirtualPlayer(key: string) {
+  return useQuery({
+    queryKey: ['ranking', 'virtual', key],
+    queryFn: () => api.get<VirtualPlayerProfile>(`/ranking/virtual_players/${key}`),
   })
 }
 

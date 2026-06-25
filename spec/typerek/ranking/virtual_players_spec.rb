@@ -54,4 +54,20 @@ RSpec.describe Typerek::Ranking::VirtualPlayers do
       expect(result.map { |row| row[:points] }).to all(eq(0.0))
     end
   end
+
+  describe '.profile' do
+    it 'returns the strategy totals plus its pick on every started match' do
+      create(:match, :start_in_past, :winner_a, win_a: 1.5, win_b: 4.0)
+
+      profile = described_class.profile('favourite')
+
+      expect(profile).to include(key: 'favourite', username: 'Faworyt', points: 1.5, accuracy: 1)
+      expect(profile[:matches].length).to eq(1)
+      expect(profile[:matches].first[:pick]).to eq(:win_a)
+    end
+
+    it 'returns nil for an unknown strategy key' do
+      expect(described_class.profile('nope')).to be_nil
+    end
+  end
 end

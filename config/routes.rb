@@ -21,6 +21,7 @@ Rails.application.routes.draw do
 
       get 'ranking', to: 'rankings#show'
       get 'ranking/history', to: 'rankings#history'
+      get 'ranking/virtual_players/:key', to: 'rankings#virtual_player'
 
       get 'bets', to: 'bets#index'
 
