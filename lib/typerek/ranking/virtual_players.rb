@@ -24,14 +24,35 @@ module Typerek
         Player.new(key: 'draw',      username: 'Remis',    strategy: :draw)
       ].freeze
 
+      # Valid strategy keys, for routing/validation of the per-strategy profile.
+      KEYS = PLAYERS.map(&:key).freeze
+
       def self.call
         new.call
+      end
+
+      # Per-match breakdown for one strategy, or nil for an unknown key: the same
+      # totals shown in the ranking plus, for every started match, the pick the
+      # strategy would make — so the client can render that strategy's hits/misses.
+      def self.profile(key)
+        player = PLAYERS.find { |entry| entry.key == key }
+        player && new.profile(player)
       end
 
       def call
         matches = Match.finished.to_a
         PLAYERS.map { |player| score(player, matches) }
                .sort_by { |row| [-row[:points], row[:username]] }
+      end
+
+      def profile(player)
+        # Totals stay scored over finished matches (matching the ranking); the
+        # per-match list mirrors a real player's profile, which shows started matches.
+        score(player, Match.finished.to_a).merge(
+          matches: Match.started.includes(:answers).map do |match|
+            { match: match, pick: pick_for(player, match) }
+          end
+        )
       end
 
       private

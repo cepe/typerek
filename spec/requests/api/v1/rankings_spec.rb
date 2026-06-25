@@ -52,6 +52,28 @@ RSpec.describe 'API V1 Ranking', type: :request do
     end
   end
 
+  describe 'GET /api/v1/ranking/virtual_players/:key' do
+    it 'returns the strategy totals and its pick on each started match' do
+      create(:match, :start_in_past, :winner_a, win_a: 1.5, win_b: 4.0)
+      amy = create(:user, :active, username: 'amy')
+
+      get '/api/v1/ranking/virtual_players/favourite', headers: auth_headers(amy)
+
+      expect(response).to have_http_status(:ok)
+      expect(json['player']).to include('key' => 'favourite', 'username' => 'Faworyt', 'accuracy' => 1)
+      expect(json['started_matches'].length).to eq(1)
+      expect(json['started_matches'].first['answer']).to eq('win_a')
+    end
+
+    it 'returns 404 for an unknown strategy key' do
+      amy = create(:user, :active, username: 'amy')
+
+      get '/api/v1/ranking/virtual_players/nope', headers: auth_headers(amy)
+
+      expect(response).to have_http_status(:not_found)
+    end
+  end
+
   describe 'GET /api/v1/ranking/history' do
     it 'returns matches and aligned series arrays' do
       match1 = create(:match, :winner_a, win_a: 3.0, start: 2.days.ago)

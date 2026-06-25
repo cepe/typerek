@@ -88,7 +88,7 @@ function parseView(param: string | null): View {
 export default function RankingPage() {
   const { data, isLoading, isError } = useRanking()
   const { user } = useAuth()
-  const { drzewkoMode, favoriteUserIds, toggleFavorite, virtualPlayers } = useSettings()
+  const { drzewkoMode, favoriteUserIds, toggleFavorite, virtualPlayers, setVirtualPlayers } = useSettings()
   const meRowRef = useRef<HTMLLIElement>(null)
   const [query, setQuery] = useState('')
   const [favoritesOnly, setFavoritesOnly] = useState(false)
@@ -172,7 +172,12 @@ export default function RankingPage() {
   const filtering = folded !== '' || favoritesOnly
   const visible = ranked.filter(
     (entry) =>
-      (!favoritesOnly || favorites.has(entry.user.id) || entry.user.id === user?.id) &&
+      // Favourites-only keeps your own row and the virtual benchmarks (they are an
+      // opt-in overlay, not players you'd filter away), plus your starred users.
+      (!favoritesOnly ||
+        favorites.has(entry.user.id) ||
+        entry.user.id === user?.id ||
+        entry.virtualKey != null) &&
       (folded === '' || fold(entry.user.username).includes(folded)),
   )
 
@@ -223,8 +228,7 @@ export default function RankingPage() {
   return (
     <>
       <h1 className="mb-4 flex items-center gap-2">
-        <i className="fas fa-trophy text-brand" aria-hidden="true" /> Ranking{' '}
-        <span className="badge-count">{entries.length}</span>
+        <i className="fas fa-trophy text-brand" aria-hidden="true" /> Ranking
       </h1>
 
       <div className="mb-5 flex border-b border-line">
@@ -253,29 +257,6 @@ export default function RankingPage() {
 
       {view === 'table' ? (
         <div className="mx-auto max-w-xl">
-          <div className="mb-4 flex items-center gap-2">
-            <span className="text-sm font-medium text-muted">Sortuj:</span>
-            <div className="inline-flex rounded-full bg-surface p-0.5">
-              {(
-                [
-                  ['points', 'Punkty'],
-                  ['hits', 'Trafienia'],
-                ] as const
-              ).map(([value, label]) => (
-                <button
-                  key={value}
-                  type="button"
-                  onClick={() => selectSort(value)}
-                  aria-pressed={sort === value}
-                  className={`rounded-full px-3 py-1.5 text-sm font-medium transition-colors ${
-                    sort === value ? 'bg-brand text-white shadow-sm' : 'text-muted hover:text-ink'
-                  }`}
-                >
-                  {label}
-                </button>
-              ))}
-            </div>
-          </div>
           {meEntry && (
             <div className="card card-body mb-4 flex items-center justify-between gap-3 border border-brand bg-brand-tint">
               <span className="leading-tight">
@@ -307,49 +288,92 @@ export default function RankingPage() {
               </button>
             </div>
           )}
-          <div className="relative mb-3">
-            <i
-              className="fas fa-magnifying-glass pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-muted"
-              aria-hidden="true"
-            />
-            <input
-              type="text"
-              inputMode="search"
-              value={query}
-              onChange={(event) => setQuery(event.target.value)}
-              placeholder="Szukaj zawodnika…"
-              aria-label="Szukaj zawodnika"
-              autoCapitalize="none"
-              autoCorrect="off"
-              className="field pl-9 pr-9"
-            />
-            {query !== '' && (
+          {/* Filters grouped in one box so they read as a set of view options
+              rather than loose controls blending into the page. */}
+          <div className="card card-body mb-4 space-y-3">
+            <div className="relative">
+              <i
+                className="fas fa-magnifying-glass pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-muted"
+                aria-hidden="true"
+              />
+              <input
+                type="text"
+                inputMode="search"
+                value={query}
+                onChange={(event) => setQuery(event.target.value)}
+                placeholder="Szukaj zawodnika…"
+                aria-label="Szukaj zawodnika"
+                autoCapitalize="none"
+                autoCorrect="off"
+                className="field pl-9 pr-9"
+              />
+              {query !== '' && (
+                <button
+                  type="button"
+                  onClick={() => setQuery('')}
+                  aria-label="Wyczyść wyszukiwanie"
+                  title="Wyczyść"
+                  className="absolute right-2 top-1/2 flex h-7 w-7 -translate-y-1/2 items-center justify-center rounded-full text-muted transition-colors hover:bg-black/5 hover:text-ink dark:hover:bg-white/10"
+                >
+                  <i className="fas fa-xmark" aria-hidden="true" />
+                </button>
+              )}
+            </div>
+            <div className="flex flex-wrap items-center gap-2">
+              <div className="inline-flex items-center gap-2">
+                <span className="text-sm font-medium text-muted">Sortuj:</span>
+                <div className="inline-flex rounded-full bg-surface p-0.5">
+                  {(
+                    [
+                      ['points', 'Punkty'],
+                      ['hits', 'Trafienia'],
+                    ] as const
+                  ).map(([value, label]) => (
+                    <button
+                      key={value}
+                      type="button"
+                      onClick={() => selectSort(value)}
+                      aria-pressed={sort === value}
+                      className={`rounded-full px-3 py-1.5 text-sm font-medium transition-colors ${
+                        sort === value ? 'bg-brand text-white shadow-sm' : 'text-muted hover:text-ink'
+                      }`}
+                    >
+                      {label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+              {(hasFavorites || favoritesOnly) && (
+                <button
+                  type="button"
+                  onClick={() => setFavoritesOnly((value) => !value)}
+                  aria-pressed={favoritesOnly}
+                  className={`inline-flex items-center gap-2 rounded-full border px-3 py-1.5 text-sm font-medium transition-colors ${
+                    favoritesOnly
+                      ? 'border-amber-400 bg-amber-100/80 text-amber-700 dark:bg-amber-500/15 dark:text-amber-300'
+                      : 'border-line text-muted hover:bg-black/5 dark:hover:bg-white/10'
+                  }`}
+                >
+                  <i className={`${favoritesOnly ? 'fas text-yellow-400' : 'far'} fa-star`} aria-hidden="true" />
+                  Tylko ulubieni
+                </button>
+              )}
               <button
                 type="button"
-                onClick={() => setQuery('')}
-                aria-label="Wyczyść wyszukiwanie"
-                title="Wyczyść"
-                className="absolute right-2 top-1/2 flex h-7 w-7 -translate-y-1/2 items-center justify-center rounded-full text-muted transition-colors hover:bg-black/5 hover:text-ink dark:hover:bg-white/10"
+                onClick={() => void setVirtualPlayers(!virtualPlayers)}
+                aria-pressed={virtualPlayers}
+                title="Pokaż w rankingu strategie-benchmarki: Faworyt, Underdog, Remis"
+                className={`inline-flex items-center gap-2 rounded-full border px-3 py-1.5 text-sm font-medium transition-colors ${
+                  virtualPlayers
+                    ? 'border-brand bg-brand-tint text-brand'
+                    : 'border-line text-muted hover:bg-black/5 dark:hover:bg-white/10'
+                }`}
               >
-                <i className="fas fa-xmark" aria-hidden="true" />
+                <i className="fas fa-robot" aria-hidden="true" />
+                Wirtualni gracze
               </button>
-            )}
+            </div>
           </div>
-          {(hasFavorites || favoritesOnly) && (
-            <button
-              type="button"
-              onClick={() => setFavoritesOnly((value) => !value)}
-              aria-pressed={favoritesOnly}
-              className={`mb-3 inline-flex items-center gap-2 rounded-full border px-3 py-1.5 text-sm font-medium transition-colors ${
-                favoritesOnly
-                  ? 'border-amber-400 bg-amber-100/80 text-amber-700 dark:bg-amber-500/15 dark:text-amber-300'
-                  : 'border-line text-muted hover:bg-black/5 dark:hover:bg-white/10'
-              }`}
-            >
-              <i className={`${favoritesOnly ? 'fas text-yellow-400' : 'far'} fa-star`} aria-hidden="true" />
-              Tylko ulubieni
-            </button>
-          )}
           {visible.length === 0 ? (
             <div className="card card-body text-center text-muted">
               {query.trim()
@@ -398,12 +422,15 @@ export default function RankingPage() {
                     {augmented ? null : <Movement entry={entry} />}
                     <span className={`flex-1 truncate ${fav ? 'font-semibold' : 'font-medium'}`}>
                       {virtual ? (
-                        <span className="inline-flex items-center gap-1.5 text-muted">
+                        <Link
+                          to={`/ranking/virtual/${entry.virtualKey}`}
+                          className="inline-flex items-center gap-1.5 text-muted hover:text-brand"
+                        >
                           <span className="italic">{entry.user.username}</span>
                           <span className="rounded bg-surface px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-muted">
                             wirtualny
                           </span>
-                        </span>
+                        </Link>
                       ) : (
                         <Link to={`/users/${entry.user.id}`} className="text-ink hover:text-brand">
                           {entry.user.username}
