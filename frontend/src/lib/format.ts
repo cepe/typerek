@@ -48,6 +48,11 @@ export function toDateTimeLocalValue(iso: string): string {
   return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}T${pad(date.getHours())}:${pad(date.getMinutes())}`
 }
 
+// Short "day month" label, e.g. "12 cze" — used in the team match history list.
+export function formatDayMonth(iso: string): string {
+  return new Date(iso).toLocaleDateString(LOCALE, { day: 'numeric', month: 'short' })
+}
+
 export function formatShort(iso: string): string {
   return new Date(iso).toLocaleString(LOCALE, {
     day: 'numeric',
