@@ -38,14 +38,14 @@ RSpec.describe 'API V1 Ranking', type: :request do
       expect(json['perfect_score']).to eq(0.0)
     end
 
-    it 'includes the three virtual benchmark players' do
+    it 'includes the four virtual benchmark players' do
       create(:match, :start_in_past, :winner_a, win_a: 1.5, win_b: 4.0)
       amy = create(:user, :active, username: 'amy')
 
       get '/api/v1/ranking', headers: auth_headers(amy)
 
       expect(json['virtual_players'].map { |p| p['key'] })
-        .to contain_exactly('favourite', 'underdog', 'draw')
+        .to contain_exactly('favourite', 'underdog', 'second_odds', 'draw')
       favourite = json['virtual_players'].find { |p| p['key'] == 'favourite' }
       # win_a (1.5) is the favourite and team A won, so the favourite scores its odds.
       expect(favourite).to include('username' => 'Faworyt', 'points' => 1.5, 'accuracy' => 1)

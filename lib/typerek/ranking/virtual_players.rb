@@ -2,15 +2,16 @@
 
 module Typerek
   module Ranking
-    # Three synthetic benchmark "players" scored over the finished matches with the
+    # Four synthetic benchmark "players" scored over the finished matches with the
     # same rule as a real bet (Answer#point): a pick scores the match's odds for it
     # when that outcome won, otherwise 0. They are an opt-in overlay on the ranking
     # (the virtual_players setting) that lets a real player see how their tipping
-    # stacks up against three naive strategies:
+    # stacks up against naive strategies:
     #
-    #   Faworyt  — always backs the more likely side (the lower of win_a / win_b)
-    #   Underdog — always backs the less likely side (the higher of win_a / win_b)
-    #   Remis    — always bets a tie
+    #   Faworyt    — always backs the more likely side (the lower of win_a / win_b)
+    #   Underdog   — always backs the less likely side (the higher of win_a / win_b)
+    #   Drugi kurs — always backs the second highest-paying outcome of win_a / tie / win_b
+    #   Remis      — always bets a tie
     #
     # Returns plain data ([{ key:, username:, points:, accuracy: }], best first).
     # Depends only on finished matches' odds and results, so it shares the ranking's
@@ -19,9 +20,10 @@ module Typerek
       Player = Struct.new(:key, :username, :strategy, keyword_init: true)
 
       PLAYERS = [
-        Player.new(key: 'favourite', username: 'Faworyt',  strategy: :favourite),
-        Player.new(key: 'underdog',  username: 'Underdog', strategy: :underdog),
-        Player.new(key: 'draw',      username: 'Remis',    strategy: :draw)
+        Player.new(key: 'favourite',   username: 'Faworyt',    strategy: :favourite),
+        Player.new(key: 'underdog',    username: 'Underdog',   strategy: :underdog),
+        Player.new(key: 'second_odds', username: 'Drugi kurs', strategy: :second_odds),
+        Player.new(key: 'draw',        username: 'Remis',      strategy: :draw)
       ].freeze
 
       # Valid strategy keys, for routing/validation of the per-strategy profile.
@@ -80,6 +82,7 @@ module Typerek
         when :draw then :tie
         when :favourite then head_to_head(match)&.first
         when :underdog then head_to_head(match)&.last
+        when :second_odds then second_highest_odds(match)
         end
       end
 
@@ -89,6 +92,18 @@ module Typerek
         return nil if match.win_a.nil? || match.win_b.nil?
 
         match.win_a <= match.win_b ? %i[win_a win_b] : %i[win_b win_a]
+      end
+
+      # The outcome with the second highest odds among win_a / tie / win_b (the
+      # second most-rewarding pick), or nil when any of the three odds is missing.
+      # Ties in odds keep the 1 / X / 2 order so the pick stays deterministic
+      # (Ruby's sort_by is not stable).
+      def second_highest_odds(match)
+        odds = { win_a: match.win_a, tie: match.tie, win_b: match.win_b }
+        return nil if odds.values.any?(&:nil?)
+
+        order = { win_a: 0, tie: 1, win_b: 2 }
+        odds.keys.sort_by { |outcome| [-odds[outcome], order[outcome]] }[1]
       end
     end
   end
