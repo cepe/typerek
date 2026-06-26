@@ -111,16 +111,17 @@ export default function SeedStrategyCard({ seed, onSeedChange }: Props) {
               </div>
               <div className="divide-y divide-line/60">
                 {group.items.map((match) => (
+                  // Always stacked (MatchLine over a full-width BetGrid): the ranking
+                  // column is narrow (max-w-xl), so the side-by-side layout the wider
+                  // profile pages use would squeeze MatchLine and misalign it here.
                   <div
                     key={match.id}
-                    className={`flex flex-col gap-3 px-4 py-3 sm:flex-row sm:items-center sm:gap-4 sm:px-5${
+                    className={`flex flex-col gap-2 px-4 py-3 sm:px-5${
                       match.started && !match.finished ? ' bg-highlight/70' : ''
                     }`}
                   >
                     <MatchLine match={match} />
-                    <div className="sm:w-[340px]">
-                      <BetGrid match={match} myAnswer={seededPick(trimmed, match.id)} />
-                    </div>
+                    <BetGrid match={match} myAnswer={seededPick(trimmed, match.id)} />
                   </div>
                 ))}
               </div>
