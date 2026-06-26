@@ -43,23 +43,12 @@ function Countdown({ start }: { start: string }) {
 // with the score centered. Mirrors matches/_match_line.html.erb.
 // `started` can be passed from a parent that already holds the value to avoid a
 // duplicate hook call; when omitted, the component computes it internally.
-//
-// The row opens the match, but each team name links to that team's history
-// instead. Anchors can't nest, so the match link is an overlay (`absolute
-// inset-0`) painted beneath the raised team-name links rather than wrapping them:
-// clicking a name hits the name's link, clicking anywhere else falls through to
-// the match.
 export default function MatchLine({ match, started }: { match: Match; started?: boolean }) {
   const internal = useLocalStarted(match)
   const localStarted = started ?? internal
   const live = localStarted && !match.finished
   return (
-    <div className="group relative flex items-center gap-2 sm:flex-1 sm:gap-3">
-      <Link
-        to={`/matches/${match.id}`}
-        aria-label={`${match.team_a} – ${match.team_b}`}
-        className="absolute inset-0"
-      />
+    <Link to={`/matches/${match.id}`} className="group flex items-center gap-2 sm:flex-1 sm:gap-3">
       <span className="flex w-14 shrink-0 flex-col gap-0.5">
         <span className="text-sm font-semibold tabular-nums text-muted">{formatTime(match.start)}</span>
         {live && (
@@ -71,28 +60,18 @@ export default function MatchLine({ match, started }: { match: Match; started?: 
         {!localStarted && <Countdown start={match.start} />}
       </span>
       <span className="flex flex-1 items-center justify-center gap-2 sm:gap-3">
-        <span className="flex flex-1 items-center justify-end gap-2 font-semibold text-ink">
-          <Link
-            to={`/teams/${encodeURIComponent(match.team_a)}`}
-            className="relative z-10 group-hover:text-brand hover:text-brand hover:underline"
-          >
-            {match.team_a}
-          </Link>
+        <span className="flex flex-1 items-center justify-end gap-2 font-semibold text-ink group-hover:text-brand">
+          {match.team_a}
           <Flag team={match.team_a} className="h-3.5 w-5 shrink-0 rounded-sm" />
         </span>
         <span className="shrink-0 rounded-md bg-surface px-2 py-1 text-sm font-bold tabular-nums text-ink">
           {formattedScore(match.result_a, match.result_b)}
         </span>
-        <span className="flex flex-1 items-center gap-2 font-semibold text-ink">
+        <span className="flex flex-1 items-center gap-2 font-semibold text-ink group-hover:text-brand">
           <Flag team={match.team_b} className="h-3.5 w-5 shrink-0 rounded-sm" />
-          <Link
-            to={`/teams/${encodeURIComponent(match.team_b)}`}
-            className="relative z-10 group-hover:text-brand hover:text-brand hover:underline"
-          >
-            {match.team_b}
-          </Link>
+          {match.team_b}
         </span>
       </span>
-    </div>
+    </Link>
   )
 }
