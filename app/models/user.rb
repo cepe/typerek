@@ -25,7 +25,10 @@ class User < ApplicationRecord
     'match_order_by_ranking' => false,
     # Show three naive benchmark "players" (always-favourite / always-underdog /
     # always-draw) interleaved in the ranking, to compare against. Opt-in.
-    'virtual_players' => false
+    'virtual_players' => false,
+    # Show the experimental seed-driven strategy in the ranking (inside the virtual
+    # players overlay). Opt-in, off by default.
+    'seed_strategy' => false
   }.freeze
 
   # Allowed values for the `theme` setting. Anything else falls back to 'light'.
@@ -34,7 +37,8 @@ class User < ApplicationRecord
   # Settings we surface a "Włączone przez N osób" count for on the settings screen.
   # The push sub-toggles are excluded: they default on, so a raw `= 'true'` count
   # would be meaningless for them.
-  COUNTED_SETTINGS = %w[drzewko_mode bet_lock push_enabled match_order_by_ranking virtual_players].freeze
+  COUNTED_SETTINGS = %w[drzewko_mode bet_lock push_enabled match_order_by_ranking virtual_players
+                        seed_strategy].freeze
 
   has_secure_password validations: false
 
@@ -108,6 +112,10 @@ class User < ApplicationRecord
 
   def virtual_players?
     settings_with_defaults['virtual_players'] == true
+  end
+
+  def seed_strategy?
+    settings_with_defaults['seed_strategy'] == true
   end
 
   def push_enabled?

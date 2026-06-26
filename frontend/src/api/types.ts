@@ -38,6 +38,9 @@ export interface UserSettings {
   match_order_by_ranking: boolean
   // Show the naive benchmark "players" interleaved in the ranking.
   virtual_players: boolean
+  // Show the experimental seed-driven strategy in the ranking (within the virtual
+  // players overlay). Opt-in, off by default.
+  seed_strategy: boolean
 }
 
 // A registered Web Push device for the signed-in user (GET /push/subscriptions).

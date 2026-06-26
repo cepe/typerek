@@ -36,7 +36,7 @@ module Api
       # integers with the user's own id stripped (you can't favourite yourself).
       def settings_params
         permitted = params.require(:settings).permit(
-          :drzewko_mode, :bet_lock, :match_order_by_ranking, :virtual_players,
+          :drzewko_mode, :bet_lock, :match_order_by_ranking, :virtual_players, :seed_strategy,
           :push_enabled, :push_results, :push_reminders, :theme,
           favorite_user_ids: []
         ).to_h

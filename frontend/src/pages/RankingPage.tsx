@@ -95,7 +95,8 @@ function parseView(param: string | null): View {
 export default function RankingPage() {
   const { data, isLoading, isError } = useRanking()
   const { user } = useAuth()
-  const { drzewkoMode, favoriteUserIds, toggleFavorite, virtualPlayers, setVirtualPlayers } = useSettings()
+  const { drzewkoMode, favoriteUserIds, toggleFavorite, virtualPlayers, setVirtualPlayers, seedStrategy } =
+    useSettings()
   const meRowRef = useRef<HTMLLIElement>(null)
   const [query, setQuery] = useState('')
   const [favoritesOnly, setFavoritesOnly] = useState(false)
@@ -168,11 +169,13 @@ export default function RankingPage() {
     virtualKey: vp.key,
   }))
 
-  // The seed strategy joins the same overlay when a seed is set: an account-less
-  // row (virtualKey marks it as one for all the rank-less handling) slotted by its
+  // The seed strategy joins the same overlay when a seed is set — but only when the
+  // (opt-in, off by default) seed_strategy setting is on. An account-less row
+  // (virtualKey marks it as one for all the rank-less handling) slotted by its
   // score, but flagged `seed` so it renders with the seed word, not a profile link.
-  const seedRow: RankRow | null = seedScore
-    ? {
+  const seedRow: RankRow | null =
+    seedStrategy && seedScore
+      ? {
         position: 0,
         previous_position: null,
         user: { id: SEED_ROW_ID, username: trimmedSeed },
@@ -395,7 +398,7 @@ export default function RankingPage() {
                 type="button"
                 onClick={() => void setVirtualPlayers(!virtualPlayers)}
                 aria-pressed={virtualPlayers}
-                title="Pokaż w rankingu strategie-benchmarki (Faworyt, Underdog, Remis) i strategię z seeda"
+                title="Pokaż w rankingu strategie-benchmarki: Faworyt, Underdog, Drugi kurs, Remis"
                 className={`inline-flex items-center gap-2 rounded-full border px-3 py-1.5 text-sm font-medium transition-colors ${
                   virtualPlayers
                     ? 'border-brand bg-brand-tint text-brand'
@@ -407,7 +410,7 @@ export default function RankingPage() {
               </button>
             </div>
           </div>
-          {virtualPlayers && <SeedStrategyCard seed={seed} onSeedChange={setSeed} />}
+          {virtualPlayers && seedStrategy && <SeedStrategyCard seed={seed} onSeedChange={setSeed} />}
           {visible.length === 0 ? (
             <div className="card card-body text-center text-muted">
               {query.trim()
