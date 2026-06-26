@@ -6,7 +6,6 @@ import HomePage from '@/pages/HomePage'
 import MatchesPage from '@/pages/MatchesPage'
 import MatchPage from '@/pages/MatchPage'
 import MatchEditPage from '@/pages/MatchEditPage'
-import TeamPage from '@/pages/TeamPage'
 import RankingPage from '@/pages/RankingPage'
 import VirtualPlayerPage from '@/pages/VirtualPlayerPage'
 import SettingsPage from '@/pages/SettingsPage'
@@ -35,7 +34,6 @@ export default function App() {
           <Route path="/matches" element={<MatchesPage />} />
           <Route path="/matches/:id" element={<MatchPage />} />
           <Route path="/matches/:id/edit" element={<MatchEditPage />} />
-          <Route path="/teams/:name" element={<TeamPage />} />
           <Route path="/ranking" element={<RankingPage />} />
           <Route path="/ranking/virtual/:key" element={<VirtualPlayerPage />} />
           <Route path="/settings" element={<SettingsPage />} />

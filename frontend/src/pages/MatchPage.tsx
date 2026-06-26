@@ -8,6 +8,7 @@ import Flag from '@/components/Flag'
 import BetGrid from '@/components/BetGrid'
 import LockToggle from '@/components/LockToggle'
 import BetDistributionChart from '@/components/BetDistributionChart'
+import MatchTeamStats from '@/components/MatchTeamStats'
 import { BET_TYPES, betPillClass, winningBets } from '@/lib/bets'
 import { formatShort, formattedOdds, formattedScore, pointsDisplay } from '@/lib/format'
 import { useDocumentTitle } from '@/lib/useDocumentTitle'
@@ -61,9 +62,7 @@ export default function MatchPage() {
         )}
         <div className="flex items-center justify-center gap-2 sm:gap-3">
           <div className="flex flex-1 items-center justify-end gap-4 text-right text-lg font-bold text-ink">
-            <Link to={`/teams/${encodeURIComponent(match.team_a)}`} className="hover:text-brand hover:underline">
-              {match.team_a}
-            </Link>
+            {match.team_a}
             <Flag team={match.team_a} className="h-5 w-7 shrink-0 rounded-sm" />
           </div>
           <div className="shrink-0 rounded-lg bg-surface px-4 py-2 text-2xl font-bold tabular-nums text-ink">
@@ -71,9 +70,7 @@ export default function MatchPage() {
           </div>
           <div className="flex flex-1 items-center gap-4 text-left text-lg font-bold text-ink">
             <Flag team={match.team_b} className="h-5 w-7 shrink-0 rounded-sm" />
-            <Link to={`/teams/${encodeURIComponent(match.team_b)}`} className="hover:text-brand hover:underline">
-              {match.team_b}
-            </Link>
+            {match.team_b}
           </div>
         </div>
         {live && (
@@ -88,6 +85,8 @@ export default function MatchPage() {
           <i className="far fa-clock" aria-hidden="true" /> {formatShort(match.start)}
         </p>
       </section>
+
+      <MatchTeamStats match={match} />
 
       <section className="card">
         <div className="card-header">
