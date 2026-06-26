@@ -38,6 +38,9 @@ interface Settings {
   matchOrderByRanking: boolean
   // Interleave the naive benchmark "players" into the ranking. Opt-in.
   virtualPlayers: boolean
+  // Show the experimental seed-driven strategy in the ranking (within the virtual
+  // players overlay). Opt-in, off by default.
+  seedStrategy: boolean
 }
 
 const DEFAULTS: Settings = {
@@ -50,6 +53,7 @@ const DEFAULTS: Settings = {
   favoriteUserIds: [],
   matchOrderByRanking: false,
   virtualPlayers: false,
+  seedStrategy: false,
 }
 
 // Map between the server shape (snake_case, the API contract) and ours (camelCase).
@@ -68,6 +72,7 @@ function fromServer(settings: UserSettings | undefined): Settings {
     favoriteUserIds: settings?.favorite_user_ids ?? DEFAULTS.favoriteUserIds,
     matchOrderByRanking: settings?.match_order_by_ranking ?? DEFAULTS.matchOrderByRanking,
     virtualPlayers: settings?.virtual_players ?? DEFAULTS.virtualPlayers,
+    seedStrategy: settings?.seed_strategy ?? DEFAULTS.seedStrategy,
   }
 }
 
@@ -84,6 +89,7 @@ interface SettingsState extends Settings {
   toggleFavorite: (userId: number) => Promise<void>
   setMatchOrderByRanking: (value: boolean) => Promise<void>
   setVirtualPlayers: (value: boolean) => Promise<void>
+  setSeedStrategy: (value: boolean) => Promise<void>
 }
 
 const SettingsContext = createContext<SettingsState | undefined>(undefined)
@@ -145,6 +151,7 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
       persist({ matchOrderByRanking }, { match_order_by_ranking: matchOrderByRanking }),
     setVirtualPlayers: (virtualPlayers) =>
       persist({ virtualPlayers }, { virtual_players: virtualPlayers }),
+    setSeedStrategy: (seedStrategy) => persist({ seedStrategy }, { seed_strategy: seedStrategy }),
   }
 
   return <SettingsContext.Provider value={value}>{children}</SettingsContext.Provider>
