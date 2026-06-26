@@ -1,6 +1,6 @@
-import { Fragment, useRef, useState } from 'react'
+import { Fragment, useMemo, useRef, useState } from 'react'
 import { Link, useSearchParams } from 'react-router-dom'
-import { useRanking } from '@/api/hooks'
+import { useMatches, useRanking } from '@/api/hooks'
 import { useAuth } from '@/auth/AuthContext'
 import { ErrorBox, Loading } from '@/components/Status'
 import RankingBumpChart from '@/components/RankingBumpChart'
@@ -10,6 +10,7 @@ import { pointsDisplay } from '@/lib/format'
 import { useSettings } from '@/lib/settings'
 import { useDocumentTitle } from '@/lib/useDocumentTitle'
 import { rankEntries, parseRankSort, type RankSort } from '@/lib/ranking'
+import { scoreSeed } from '@/lib/seedStrategy'
 import type { RankingEntry } from '@/api/types'
 
 // Colour of the round position badge. Gold / silver / bronze for the podium, a
@@ -73,9 +74,14 @@ function fold(value: string): string {
     .replace(/ł/g, 'l')
 }
 
-// A ranking table row: a real entry, or a virtual benchmark player (virtualKey
-// set, with a negative sentinel user id and no account to link to).
-type RankRow = RankingEntry & { virtualKey?: string }
+// A ranking table row: a real entry, a virtual benchmark player (virtualKey set,
+// with a negative sentinel user id and no account to link to), or the seed
+// strategy (seed flag, rendered with the seed word instead of a profile link).
+type RankRow = RankingEntry & { virtualKey?: string; seed?: boolean }
+
+// Sentinel user id for the seed strategy's row, distinct from the benchmark
+// players' -(index + 1) ids so React keys never collide.
+const SEED_ROW_ID = -1000
 
 type View = 'table' | 'chart' | 'points'
 
@@ -93,6 +99,16 @@ export default function RankingPage() {
   const meRowRef = useRef<HTMLLIElement>(null)
   const [query, setQuery] = useState('')
   const [favoritesOnly, setFavoritesOnly] = useState(false)
+  // The seed strategy rides the virtual-players toggle; its word lives here (not in
+  // the card) so it can also be scored into a ranking row. Scored off the cached
+  // finished matches, like the benchmark strategies.
+  const [seed, setSeed] = useState('')
+  const { data: matchData } = useMatches()
+  const trimmedSeed = seed.trim()
+  const seedScore = useMemo(() => {
+    const finishedMatches = matchData?.finished ?? []
+    return trimmedSeed === '' || finishedMatches.length === 0 ? null : scoreSeed(trimmedSeed, finishedMatches)
+  }, [trimmedSeed, matchData])
 
   // The active subpage and the table sort both live in the URL (?view=chart&sort=hits)
   // so a refresh or shared link keeps the same tab and ordering — same pattern as
@@ -152,10 +168,26 @@ export default function RankingPage() {
     virtualKey: vp.key,
   }))
 
+  // The seed strategy joins the same overlay when a seed is set: an account-less
+  // row (virtualKey marks it as one for all the rank-less handling) slotted by its
+  // score, but flagged `seed` so it renders with the seed word, not a profile link.
+  const seedRow: RankRow | null = seedScore
+    ? {
+        position: 0,
+        previous_position: null,
+        user: { id: SEED_ROW_ID, username: trimmedSeed },
+        points: seedScore.points,
+        accuracy: seedScore.accuracy,
+        virtualKey: 'seed',
+        seed: true,
+      }
+    : null
+  const overlayRows = seedRow ? [...virtualRows, seedRow] : virtualRows
+
   // Merge by score; a stable sort keeps a real player ahead of a virtual one they
   // tie with and preserves the real field's own order.
   const ranked: RankRow[] = showVirtual
-    ? [...realRanked, ...virtualRows].sort((a, b) => sortValue(b) - sortValue(a))
+    ? [...realRanked, ...overlayRows].sort((a, b) => sortValue(b) - sortValue(a))
     : realRanked
 
   const meEntry = ranked.find((entry) => entry.user.id === user?.id)
@@ -363,7 +395,7 @@ export default function RankingPage() {
                 type="button"
                 onClick={() => void setVirtualPlayers(!virtualPlayers)}
                 aria-pressed={virtualPlayers}
-                title="Pokaż w rankingu strategie-benchmarki: Faworyt, Underdog, Remis"
+                title="Pokaż w rankingu strategie-benchmarki (Faworyt, Underdog, Remis) i strategię z seeda"
                 className={`inline-flex items-center gap-2 rounded-full border px-3 py-1.5 text-sm font-medium transition-colors ${
                   virtualPlayers
                     ? 'border-brand bg-brand-tint text-brand'
@@ -375,7 +407,7 @@ export default function RankingPage() {
               </button>
             </div>
           </div>
-          <SeedStrategyCard />
+          {virtualPlayers && <SeedStrategyCard seed={seed} onSeedChange={setSeed} />}
           {visible.length === 0 ? (
             <div className="card card-body text-center text-muted">
               {query.trim()
@@ -419,11 +451,22 @@ export default function RankingPage() {
                         virtual ? 'bg-surface text-muted/60' : positionBadgeClass(entry.position, rewarded)
                       }`}
                     >
-                      {virtual ? <i className="fas fa-robot text-xs" aria-hidden="true" /> : entry.position}
+                      {virtual ? (
+                        <i className={`fas ${entry.seed ? 'fa-dice' : 'fa-robot'} text-xs`} aria-hidden="true" />
+                      ) : (
+                        entry.position
+                      )}
                     </span>
                     {augmented ? null : <Movement entry={entry} />}
                     <span className={`flex-1 truncate ${fav ? 'font-semibold' : 'font-medium'}`}>
-                      {virtual ? (
+                      {entry.seed ? (
+                        <span className="inline-flex items-center gap-1.5 text-muted">
+                          <span className="italic">{entry.user.username}</span>
+                          <span className="rounded bg-surface px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-muted">
+                            seed
+                          </span>
+                        </span>
+                      ) : virtual ? (
                         <Link
                           to={`/ranking/virtual/${entry.virtualKey}`}
                           className="inline-flex items-center gap-1.5 text-muted hover:text-brand"

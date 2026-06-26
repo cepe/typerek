@@ -10,6 +10,7 @@ import { useDocumentTitle } from '@/lib/useDocumentTitle'
 const STRATEGY_HINT: Record<string, string> = {
   favourite: 'Zawsze typuje faworyta — niższy z kursów 1 / 2 (najbardziej prawdopodobny wynik).',
   underdog: 'Zawsze typuje niżej notowanego — wyższy z kursów 1 / 2.',
+  second_odds: 'Zawsze typuje wynik z drugim najwyższym kursem spośród 1 / X / 2 (drugi najwyżej punktowany typ).',
   draw: 'Zawsze typuje remis.',
 }
 

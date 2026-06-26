@@ -14,7 +14,21 @@ RSpec.describe Typerek::Ranking::VirtualPlayers do
       by_key = result.index_by { |row| row[:key] }
       expect(by_key['favourite']).to include(username: 'Faworyt', points: 1.5, accuracy: 1)
       expect(by_key['underdog']).to include(username: 'Underdog', points: 0.0, accuracy: 0)
+      # Prices win_b 4.0 > tie 3.0 > win_a 1.5, so the second-odds pick is the draw,
+      # which loses here.
+      expect(by_key['second_odds']).to include(username: 'Drugi kurs', points: 0.0, accuracy: 0)
       expect(by_key['draw']).to include(username: 'Remis', points: 0.0, accuracy: 0)
+    end
+
+    it 'backs the outcome with the second highest odds' do
+      # Prices: tie 5.0 (highest), win_b 3.0 (second), win_a 2.0 (lowest). Team B won,
+      # so the second-priced outcome (win_b) scores — not the dearest (the draw) nor
+      # the favourite.
+      create(:match, :start_in_past, :winner_b, win_a: 2.0, win_b: 3.0, tie: 5.0)
+
+      by_key = described_class.call.index_by { |row| row[:key] }
+
+      expect(by_key['second_odds']).to include(username: 'Drugi kurs', points: 3.0, accuracy: 1)
     end
 
     it 'backs the higher-odds side as the underdog when it wins' do
@@ -36,14 +50,16 @@ RSpec.describe Typerek::Ranking::VirtualPlayers do
     end
 
     it 'accumulates across matches and returns rows ordered by points desc' do
-      create(:match, :start_in_past, :winner_a, win_a: 2.0, win_b: 5.0)
-      create(:match, :start_in_past, :winner_b, win_a: 1.5, win_b: 6.0)
+      create(:match, :start_in_past, :winner_a, win_a: 2.0, win_b: 5.0, tie: 3.0)
+      create(:match, :start_in_past, :winner_b, win_a: 1.5, win_b: 6.0, tie: 4.0)
 
       result = described_class.call
 
-      # favourite: hits match 1 only (2.0); underdog: hits match 2 only (6.0); draw: 0.
-      expect(result.map { |row| row[:key] }).to eq(%w[underdog favourite draw])
-      expect(result.map { |row| row[:points] }).to eq([6.0, 2.0, 0.0])
+      # favourite hits match 1 only (2.0); underdog hits match 2 only (6.0). The
+      # second-odds pick is the draw on both (the middle price) and never lands, like
+      # the draw strategy — the two zero-point rows fall back to alphabetical username.
+      expect(result.map { |row| row[:key] }).to eq(%w[underdog favourite second_odds draw])
+      expect(result.map { |row| row[:points] }).to eq([6.0, 2.0, 0.0, 0.0])
     end
 
     it 'ignores matches that have not finished' do
