@@ -5,6 +5,7 @@ import { useAuth } from '@/auth/AuthContext'
 import { ErrorBox, Loading } from '@/components/Status'
 import RankingBumpChart from '@/components/RankingBumpChart'
 import RankingPointsChart from '@/components/RankingPointsChart'
+import SeedStrategyCard from '@/components/SeedStrategyCard'
 import { pointsDisplay } from '@/lib/format'
 import { useSettings } from '@/lib/settings'
 import { useDocumentTitle } from '@/lib/useDocumentTitle'
@@ -374,6 +375,7 @@ export default function RankingPage() {
               </button>
             </div>
           </div>
+          <SeedStrategyCard />
           {visible.length === 0 ? (
             <div className="card card-body text-center text-muted">
               {query.trim()
