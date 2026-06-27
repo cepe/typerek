@@ -2,6 +2,7 @@ import { useState, type ReactNode } from 'react'
 import { Link, NavLink, useNavigate } from 'react-router-dom'
 import { useAuth } from '@/auth/AuthContext'
 import { pointsDisplay } from '@/lib/format'
+import { useSwipeNav } from '@/lib/useSwipeNav'
 
 // Header + top navigation + footer, ported from the Rails application layout and
 // shared/_menu.html.erb.
@@ -10,6 +11,9 @@ export default function Layout({ children }: { children: ReactNode }) {
   const navigate = useNavigate()
   const [open, setOpen] = useState(false)
   const standing = user?.standing
+  // Mobile: swipe left/right to move between Mecze and Ranking. navKey changes only
+  // on a swipe, so the slide-in animation replays for swipes but not click nav.
+  const { dir, navKey } = useSwipeNav()
 
   const handleSignOut = () => {
     signOut()
@@ -98,7 +102,11 @@ export default function Layout({ children }: { children: ReactNode }) {
         </nav>
       </header>
 
-      <main className="container-app flex-1 py-6">{children}</main>
+      <main className="container-app flex-1 py-6">
+        <div key={navKey} className={dir === 'right' ? 'swipe-from-right' : dir === 'left' ? 'swipe-from-left' : ''}>
+          {children}
+        </div>
+      </main>
 
       <footer className="border-t border-line/70 py-4 text-center text-xs text-muted">
         Typerek &middot; Mistrzostwa Świata 2026
