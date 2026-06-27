@@ -10,6 +10,7 @@ import { ErrorBox, Loading } from '@/components/Status'
 import type { BetType, Match } from '@/api/types'
 import { useSettings } from '@/lib/settings'
 import { useDocumentTitle } from '@/lib/useDocumentTitle'
+import { useSwipeTabs } from '@/lib/useSwipeTabs'
 
 function DayBadge({ iso }: { iso: string }) {
   const label = relativeDay(iso)
@@ -101,6 +102,10 @@ export default function MatchesPage() {
   const tab: 'future' | 'finished' = searchParams.get('status') === 'finished' ? 'finished' : 'future'
   const selectTab = (next: 'future' | 'finished') =>
     setSearchParams(next === 'finished' ? { status: 'finished' } : {}, { replace: true })
+  // Mobile: swipe left/right to move between the Aktualne / Zakończone tabs. navKey
+  // changes only on a swipe, so the slide-in animation replays for swipes but not
+  // for a tab click.
+  const { dir, navKey } = useSwipeTabs(['future', 'finished'] as const, tab, selectTab)
 
   useDocumentTitle('Mecze')
 
@@ -126,11 +131,13 @@ export default function MatchesPage() {
         </button>
       </div>
 
-      {tab === 'future' ? (
-        <MatchSection matches={data.not_finished} />
-      ) : (
-        <MatchSection matches={data.finished} />
-      )}
+      <div key={navKey} className={dir === 'right' ? 'swipe-from-right' : dir === 'left' ? 'swipe-from-left' : ''}>
+        {tab === 'future' ? (
+          <MatchSection matches={data.not_finished} />
+        ) : (
+          <MatchSection matches={data.finished} />
+        )}
+      </div>
     </div>
   )
 }

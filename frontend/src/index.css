@@ -140,8 +140,8 @@
   .bet-lock-on { @apply text-brand hover:text-brand; }
 }
 
-/* Page enter animation for the mobile swipe between Mecze and Ranking: the incoming
-   page slides in from the side the swipe carried it from (see useSwipeNav). */
+/* Enter animation for the mobile tab swipe (see useSwipeTabs): the incoming tab
+   slides in from the side the swipe carried it from. */
 @keyframes swipe-in-right {
   from { transform: translateX(28px); opacity: 0; }
   to   { transform: translateX(0);    opacity: 1; }

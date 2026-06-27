@@ -1,26 +1,24 @@
 import { useEffect, useRef, useState } from 'react'
-import { useLocation, useNavigate } from 'react-router-dom'
 
-// The swipeable top-level pages, in left-to-right order. A horizontal swipe moves
-// to the neighbouring page: swipe left → next (Ranking), swipe right → previous
-// (Mecze). Keep this in sync with the nav order in Layout.
-const PAGES = ['/matches', '/ranking'] as const
-type Page = (typeof PAGES)[number]
+// A horizontal touch swipe between an ordered list of in-page tabs: swipe left →
+// next tab, swipe right → previous, clamped at both ends (no wrap). The visible
+// tab buttons stay the primary control; this gesture is purely additive. Used on
+// the Matches page (Aktualne / Zakończone).
 
 // A swipe must travel at least this far horizontally, beat the vertical travel by
-// this ratio (so a mostly-vertical scroll never navigates), and finish within this
-// time — a quick flick, not a slow drag or a text selection.
+// this ratio (so a mostly-vertical scroll never switches tabs), and finish within
+// this time — a quick flick, not a slow drag or a text selection.
 const MIN_DISTANCE = 60
 const HORIZONTAL_RATIO = 1.4
 const MAX_DURATION = 700
 
-// The direction the incoming page slides in from, used to pick the enter
-// animation. 'right' when we moved forward (swipe left), 'left' when back.
+// The direction the incoming tab slides in from, used to pick the enter animation.
+// 'right' when we moved forward (swipe left), 'left' when back.
 export type SwipeDir = 'left' | 'right'
 
 // Should this gesture be left alone? True when it starts on a form control (taps /
-// text selection) or inside something that can itself scroll horizontally (the
-// ranking charts) — that content owns the gesture, not the page switcher.
+// text selection) or inside something that can itself scroll horizontally — that
+// content owns the gesture, not the tab switcher.
 function shouldIgnore(target: EventTarget | null): boolean {
   let el = target instanceof Element ? target : null
   while (el && el !== document.body) {
@@ -37,16 +35,19 @@ function shouldIgnore(target: EventTarget | null): boolean {
   return false
 }
 
-// Touch-driven navigation between the matches and ranking pages. Returns the slide
-// direction and a key that changes on each swipe; Layout uses the key to replay the
-// enter animation only on swipes (a normal click navigation leaves the key alone).
-export function useSwipeNav(): { dir: SwipeDir | null; navKey: number } {
-  const navigate = useNavigate()
-  const location = useLocation()
-  // Read the live path inside the once-attached listeners without re-subscribing on
-  // every navigation.
-  const pathRef = useRef(location.pathname)
-  pathRef.current = location.pathname
+// Touch-driven switching between a page's tabs. Pass the ordered tab values, the
+// current value and a setter; returns the slide direction and a key that changes on
+// each swipe, so the consumer can replay the enter animation only on swipes (a tab
+// click leaves the key alone).
+export function useSwipeTabs<T extends string>(
+  values: readonly T[],
+  current: T,
+  onChange: (next: T) => void,
+): { dir: SwipeDir | null; navKey: number } {
+  // Keep the latest props reachable from the once-attached listeners without
+  // re-subscribing on every tab change.
+  const ref = useRef({ values, current, onChange })
+  ref.current = { values, current, onChange }
 
   const [state, setState] = useState<{ dir: SwipeDir | null; navKey: number }>({ dir: null, navKey: 0 })
 
@@ -57,8 +58,7 @@ export function useSwipeNav(): { dir: SwipeDir | null; navKey: number } {
     let active = false
 
     const onStart = (event: TouchEvent) => {
-      const index = PAGES.indexOf(pathRef.current as Page)
-      if (index === -1 || event.touches.length !== 1 || shouldIgnore(event.target)) {
+      if (event.touches.length !== 1 || shouldIgnore(event.target)) {
         active = false
         return
       }
@@ -72,7 +72,8 @@ export function useSwipeNav(): { dir: SwipeDir | null; navKey: number } {
     const onEnd = (event: TouchEvent) => {
       if (!active) return
       active = false
-      const index = PAGES.indexOf(pathRef.current as Page)
+      const { values, current, onChange } = ref.current
+      const index = values.indexOf(current)
       if (index === -1) return
       const touch = event.changedTouches[0]
       const dx = touch.clientX - startX
@@ -80,9 +81,9 @@ export function useSwipeNav(): { dir: SwipeDir | null; navKey: number } {
       if (Date.now() - startT > MAX_DURATION) return
       if (Math.abs(dx) < MIN_DISTANCE || Math.abs(dx) < Math.abs(dy) * HORIZONTAL_RATIO) return
       const next = index + (dx < 0 ? 1 : -1)
-      if (next < 0 || next >= PAGES.length) return
+      if (next < 0 || next >= values.length) return
       setState((prev) => ({ dir: dx < 0 ? 'right' : 'left', navKey: prev.navKey + 1 }))
-      navigate(PAGES[next])
+      onChange(values[next])
     }
 
     document.addEventListener('touchstart', onStart, { passive: true })
@@ -91,7 +92,7 @@ export function useSwipeNav(): { dir: SwipeDir | null; navKey: number } {
       document.removeEventListener('touchstart', onStart)
       document.removeEventListener('touchend', onEnd)
     }
-  }, [navigate])
+  }, [])
 
   return state
 }
