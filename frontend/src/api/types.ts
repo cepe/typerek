@@ -41,6 +41,9 @@ export interface UserSettings {
   // Show the experimental seed-driven strategy in the ranking (within the virtual
   // players overlay). Opt-in, off by default.
   seed_strategy: boolean
+  // Show the experimental rule-driven strategy in the ranking (within the virtual
+  // players overlay). Opt-in, off by default.
+  rule_strategy: boolean
 }
 
 // A registered Web Push device for the signed-in user (GET /push/subscriptions).

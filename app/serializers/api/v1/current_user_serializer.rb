@@ -28,7 +28,8 @@ module Api
             favorite_user_ids: user.favorite_user_ids,
             match_order_by_ranking: user.match_order_by_ranking?,
             virtual_players: user.virtual_players?,
-            seed_strategy: user.seed_strategy?
+            seed_strategy: user.seed_strategy?,
+            rule_strategy: user.rule_strategy?
           }
         }
       end

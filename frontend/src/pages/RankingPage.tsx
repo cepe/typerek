@@ -6,11 +6,13 @@ import { ErrorBox, Loading } from '@/components/Status'
 import RankingBumpChart from '@/components/RankingBumpChart'
 import RankingPointsChart from '@/components/RankingPointsChart'
 import SeedStrategyCard from '@/components/SeedStrategyCard'
+import RuleStrategyCard from '@/components/RuleStrategyCard'
 import { pointsDisplay } from '@/lib/format'
 import { useSettings } from '@/lib/settings'
 import { useDocumentTitle } from '@/lib/useDocumentTitle'
 import { rankEntries, parseRankSort, type RankSort } from '@/lib/ranking'
 import { scoreSeed } from '@/lib/seedStrategy'
+import { parseRules, scoreRules } from '@/lib/ruleStrategy'
 import type { RankingEntry } from '@/api/types'
 
 // Colour of the round position badge. Gold / silver / bronze for the podium, a
@@ -75,13 +77,15 @@ function fold(value: string): string {
 }
 
 // A ranking table row: a real entry, a virtual benchmark player (virtualKey set,
-// with a negative sentinel user id and no account to link to), or the seed
-// strategy (seed flag, rendered with the seed word instead of a profile link).
-type RankRow = RankingEntry & { virtualKey?: string; seed?: boolean }
+// with a negative sentinel user id and no account to link to), or one of the
+// experimental strategies — the seed (seed flag) or the rules (rule flag), both
+// rendered with a label and badge instead of a profile link.
+type RankRow = RankingEntry & { virtualKey?: string; seed?: boolean; rule?: boolean }
 
-// Sentinel user id for the seed strategy's row, distinct from the benchmark
-// players' -(index + 1) ids so React keys never collide.
+// Sentinel user ids for the strategy rows, distinct from the benchmark players'
+// -(index + 1) ids (and from each other) so React keys never collide.
 const SEED_ROW_ID = -1000
+const RULE_ROW_ID = -1001
 
 type View = 'table' | 'chart' | 'points'
 
@@ -95,7 +99,7 @@ function parseView(param: string | null): View {
 export default function RankingPage() {
   const { data, isLoading, isError } = useRanking()
   const { user } = useAuth()
-  const { drzewkoMode, favoriteUserIds, toggleFavorite, virtualPlayers, setVirtualPlayers, seedStrategy } =
+  const { drzewkoMode, favoriteUserIds, toggleFavorite, virtualPlayers, setVirtualPlayers, seedStrategy, ruleStrategy } =
     useSettings()
   const meRowRef = useRef<HTMLLIElement>(null)
   const [query, setQuery] = useState('')
@@ -110,6 +114,14 @@ export default function RankingPage() {
     const finishedMatches = matchData?.finished ?? []
     return trimmedSeed === '' || finishedMatches.length === 0 ? null : scoreSeed(trimmedSeed, finishedMatches)
   }, [trimmedSeed, matchData])
+  // The rule strategy rides the same overlay as the seed; its program lives here so
+  // it can also be scored into a ranking row. Only a parseable program scores.
+  const [rules, setRules] = useState('')
+  const ruleScore = useMemo(() => {
+    const finishedMatches = matchData?.finished ?? []
+    const parsed = parseRules(rules)
+    return !parsed.ok || finishedMatches.length === 0 ? null : scoreRules(parsed.rules, finishedMatches)
+  }, [rules, matchData])
 
   // The active subpage and the table sort both live in the URL (?view=chart&sort=hits)
   // so a refresh or shared link keeps the same tab and ordering — same pattern as
@@ -185,7 +197,23 @@ export default function RankingPage() {
         seed: true,
       }
     : null
-  const overlayRows = seedRow ? [...virtualRows, seedRow] : virtualRows
+
+  // The rule strategy joins the same overlay when its program parses and scores, but
+  // only when the (opt-in) rule_strategy setting is on. Like the seed row, an
+  // account-less row flagged `rule` so it renders with a label, not a profile link.
+  const ruleRow: RankRow | null =
+    ruleStrategy && ruleScore
+      ? {
+        position: 0,
+        previous_position: null,
+        user: { id: RULE_ROW_ID, username: 'Reguły' },
+        points: ruleScore.points,
+        accuracy: ruleScore.accuracy,
+        virtualKey: 'rule',
+        rule: true,
+      }
+    : null
+  const overlayRows = [...virtualRows, ...(seedRow ? [seedRow] : []), ...(ruleRow ? [ruleRow] : [])]
 
   // Merge by score; a stable sort keeps a real player ahead of a virtual one they
   // tie with and preserves the real field's own order.
@@ -411,6 +439,7 @@ export default function RankingPage() {
             </div>
           </div>
           {virtualPlayers && seedStrategy && <SeedStrategyCard seed={seed} onSeedChange={setSeed} />}
+          {virtualPlayers && ruleStrategy && <RuleStrategyCard rules={rules} onRulesChange={setRules} />}
           {visible.length === 0 ? (
             <div className="card card-body text-center text-muted">
               {query.trim()
@@ -455,18 +484,21 @@ export default function RankingPage() {
                       }`}
                     >
                       {virtual ? (
-                        <i className={`fas ${entry.seed ? 'fa-dice' : 'fa-robot'} text-xs`} aria-hidden="true" />
+                        <i
+                          className={`fas ${entry.seed ? 'fa-dice' : entry.rule ? 'fa-code' : 'fa-robot'} text-xs`}
+                          aria-hidden="true"
+                        />
                       ) : (
                         entry.position
                       )}
                     </span>
                     {augmented ? null : <Movement entry={entry} />}
                     <span className={`flex-1 truncate ${fav ? 'font-semibold' : 'font-medium'}`}>
-                      {entry.seed ? (
+                      {entry.seed || entry.rule ? (
                         <span className="inline-flex items-center gap-1.5 text-muted">
                           <span className="italic">{entry.user.username}</span>
                           <span className="rounded bg-surface px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-muted">
-                            seed
+                            {entry.seed ? 'seed' : 'reguły'}
                           </span>
                         </span>
                       ) : virtual ? (
