@@ -21,7 +21,7 @@ RSpec.describe 'API V1 Profile', type: :request do
         'drzewko_mode' => false, 'bet_lock' => false, 'push_enabled' => false,
         'push_results' => true, 'push_reminders' => true, 'theme' => 'light',
         'favorite_user_ids' => [], 'match_order_by_ranking' => false,
-        'virtual_players' => false, 'seed_strategy' => false
+        'virtual_players' => false, 'seed_strategy' => false, 'rule_strategy' => false
       )
     end
 
@@ -48,7 +48,8 @@ RSpec.describe 'API V1 Profile', type: :request do
       expect(response).to have_http_status(:ok)
       expect(json).to eq(
         'drzewko_mode' => 2, 'bet_lock' => 1, 'push_enabled' => 0,
-        'match_order_by_ranking' => 1, 'virtual_players' => 1, 'seed_strategy' => 0, 'theme' => 2
+        'match_order_by_ranking' => 1, 'virtual_players' => 1, 'seed_strategy' => 0, 'rule_strategy' => 0,
+        'theme' => 2
       )
     end
 
@@ -70,7 +71,7 @@ RSpec.describe 'API V1 Profile', type: :request do
         'drzewko_mode' => false, 'bet_lock' => true, 'push_enabled' => false,
         'push_results' => true, 'push_reminders' => true, 'theme' => 'light',
         'favorite_user_ids' => [], 'match_order_by_ranking' => false,
-        'virtual_players' => false, 'seed_strategy' => false
+        'virtual_players' => false, 'seed_strategy' => false, 'rule_strategy' => false
       )
       expect(user.reload.bet_lock?).to be(true)
     end
@@ -100,6 +101,15 @@ RSpec.describe 'API V1 Profile', type: :request do
       expect(response).to have_http_status(:ok)
       expect(json['settings']).to include('seed_strategy' => true)
       expect(user.reload.seed_strategy?).to be(true)
+    end
+
+    it 'updates the rule-strategy preference' do
+      patch '/api/v1/me/settings', params: { settings: { rule_strategy: true } },
+            headers: auth_headers(user), as: :json
+
+      expect(response).to have_http_status(:ok)
+      expect(json['settings']).to include('rule_strategy' => true)
+      expect(user.reload.rule_strategy?).to be(true)
     end
 
     it 'accepts a valid theme preference' do

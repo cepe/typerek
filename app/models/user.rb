@@ -28,7 +28,10 @@ class User < ApplicationRecord
     'virtual_players' => false,
     # Show the experimental seed-driven strategy in the ranking (inside the virtual
     # players overlay). Opt-in, off by default.
-    'seed_strategy' => false
+    'seed_strategy' => false,
+    # Show the experimental rule-driven strategy in the ranking (inside the virtual
+    # players overlay). Opt-in, off by default.
+    'rule_strategy' => false
   }.freeze
 
   # Allowed values for the `theme` setting. Anything else falls back to 'light'.
@@ -38,7 +41,7 @@ class User < ApplicationRecord
   # The push sub-toggles are excluded: they default on, so a raw `= 'true'` count
   # would be meaningless for them.
   COUNTED_SETTINGS = %w[drzewko_mode bet_lock push_enabled match_order_by_ranking virtual_players
-                        seed_strategy].freeze
+                        seed_strategy rule_strategy].freeze
 
   has_secure_password validations: false
 
@@ -116,6 +119,10 @@ class User < ApplicationRecord
 
   def seed_strategy?
     settings_with_defaults['seed_strategy'] == true
+  end
+
+  def rule_strategy?
+    settings_with_defaults['rule_strategy'] == true
   end
 
   def push_enabled?

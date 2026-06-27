@@ -26,6 +26,7 @@ type SettingsStats = {
   match_order_by_ranking: number
   virtual_players: number
   seed_strategy: number
+  rule_strategy: number
   // How many users have dark mode on (theme 'dark' or 'auto').
   theme: number
 }
@@ -89,6 +90,8 @@ export default function SettingsPage() {
     setVirtualPlayers,
     seedStrategy,
     setSeedStrategy,
+    ruleStrategy,
+    setRuleStrategy,
     pushResults,
     setPushResults,
     pushReminders,
@@ -393,24 +396,45 @@ export default function SettingsPage() {
           </label>
 
           {virtualPlayers && (
-            <div className="border-t border-line/40 bg-surface/40 px-4 py-3 pl-12 sm:px-5 sm:pl-14">
-              <label className="flex cursor-pointer items-start gap-3">
-                <input
-                  type="checkbox"
-                  className="mt-0.5 h-4 w-4 shrink-0 accent-brand"
-                  checked={seedStrategy}
-                  onChange={(event) => toggle('seed_strategy', setSeedStrategy, event.target.checked)}
-                />
-                <span className="leading-snug">
-                  <span className="block text-sm font-medium text-ink">Strategia z seeda</span>
-                  <span className="block text-xs text-muted">
-                    Eksperymentalna strategia sterowana słowem — z jego seeda losowane są typy 1/X/2.
-                    Pojawia się w rankingu jako dodatkowy gracz. Domyślnie ukryta.
+            <>
+              <div className="border-t border-line/40 bg-surface/40 px-4 py-3 pl-12 sm:px-5 sm:pl-14">
+                <label className="flex cursor-pointer items-start gap-3">
+                  <input
+                    type="checkbox"
+                    className="mt-0.5 h-4 w-4 shrink-0 accent-brand"
+                    checked={seedStrategy}
+                    onChange={(event) => toggle('seed_strategy', setSeedStrategy, event.target.checked)}
+                  />
+                  <span className="leading-snug">
+                    <span className="block text-sm font-medium text-ink">Strategia z seeda</span>
+                    <span className="block text-xs text-muted">
+                      Eksperymentalna strategia sterowana słowem — z jego seeda losowane są typy 1/X/2.
+                      Pojawia się w rankingu jako dodatkowy gracz. Domyślnie ukryta.
+                    </span>
+                    <UsageHint count={stats?.seed_strategy} />
                   </span>
-                  <UsageHint count={stats?.seed_strategy} />
-                </span>
-              </label>
-            </div>
+                </label>
+              </div>
+
+              <div className="border-t border-line/40 bg-surface/40 px-4 py-3 pl-12 sm:px-5 sm:pl-14">
+                <label className="flex cursor-pointer items-start gap-3">
+                  <input
+                    type="checkbox"
+                    className="mt-0.5 h-4 w-4 shrink-0 accent-brand"
+                    checked={ruleStrategy}
+                    onChange={(event) => toggle('rule_strategy', setRuleStrategy, event.target.checked)}
+                  />
+                  <span className="leading-snug">
+                    <span className="block text-sm font-medium text-ink">Strategia regułowa</span>
+                    <span className="block text-xs text-muted">
+                      Eksperymentalna strategia sterowana regułami „warunek =&gt; typ” (np. w1 &lt; 1.3 &amp; r &gt; 5
+                      =&gt; r). Pojawia się w rankingu jako dodatkowy gracz. Domyślnie ukryta.
+                    </span>
+                    <UsageHint count={stats?.rule_strategy} />
+                  </span>
+                </label>
+              </div>
+            </>
           )}
         </div>
       </section>

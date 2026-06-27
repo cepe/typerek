@@ -41,6 +41,9 @@ interface Settings {
   // Show the experimental seed-driven strategy in the ranking (within the virtual
   // players overlay). Opt-in, off by default.
   seedStrategy: boolean
+  // Show the experimental rule-driven strategy in the ranking (within the virtual
+  // players overlay). Opt-in, off by default.
+  ruleStrategy: boolean
 }
 
 const DEFAULTS: Settings = {
@@ -54,6 +57,7 @@ const DEFAULTS: Settings = {
   matchOrderByRanking: false,
   virtualPlayers: false,
   seedStrategy: false,
+  ruleStrategy: false,
 }
 
 // Map between the server shape (snake_case, the API contract) and ours (camelCase).
@@ -73,6 +77,7 @@ function fromServer(settings: UserSettings | undefined): Settings {
     matchOrderByRanking: settings?.match_order_by_ranking ?? DEFAULTS.matchOrderByRanking,
     virtualPlayers: settings?.virtual_players ?? DEFAULTS.virtualPlayers,
     seedStrategy: settings?.seed_strategy ?? DEFAULTS.seedStrategy,
+    ruleStrategy: settings?.rule_strategy ?? DEFAULTS.ruleStrategy,
   }
 }
 
@@ -90,6 +95,7 @@ interface SettingsState extends Settings {
   setMatchOrderByRanking: (value: boolean) => Promise<void>
   setVirtualPlayers: (value: boolean) => Promise<void>
   setSeedStrategy: (value: boolean) => Promise<void>
+  setRuleStrategy: (value: boolean) => Promise<void>
 }
 
 const SettingsContext = createContext<SettingsState | undefined>(undefined)
@@ -152,6 +158,7 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
     setVirtualPlayers: (virtualPlayers) =>
       persist({ virtualPlayers }, { virtual_players: virtualPlayers }),
     setSeedStrategy: (seedStrategy) => persist({ seedStrategy }, { seed_strategy: seedStrategy }),
+    setRuleStrategy: (ruleStrategy) => persist({ ruleStrategy }, { rule_strategy: ruleStrategy }),
   }
 
   return <SettingsContext.Provider value={value}>{children}</SettingsContext.Provider>
