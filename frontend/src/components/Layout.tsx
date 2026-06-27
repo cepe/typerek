@@ -2,7 +2,6 @@ import { useState, type ReactNode } from 'react'
 import { Link, NavLink, useNavigate } from 'react-router-dom'
 import { useAuth } from '@/auth/AuthContext'
 import { pointsDisplay } from '@/lib/format'
-import { useSwipeNav } from '@/lib/useSwipeNav'
 
 // Header + top navigation + footer, ported from the Rails application layout and
 // shared/_menu.html.erb.
@@ -11,9 +10,6 @@ export default function Layout({ children }: { children: ReactNode }) {
   const navigate = useNavigate()
   const [open, setOpen] = useState(false)
   const standing = user?.standing
-  // Mobile: swipe left/right to move between Mecze and Ranking. navKey changes only
-  // on a swipe, so the slide-in animation replays for swipes but not click nav.
-  const { dir, navKey } = useSwipeNav()
 
   const handleSignOut = () => {
     signOut()
@@ -22,8 +18,17 @@ export default function Layout({ children }: { children: ReactNode }) {
 
   const linkClass = ({ isActive }: { isActive: boolean }) => `nav-link${isActive ? ' nav-link-active' : ''}`
 
+  // Mobile bottom tab bar links: a column-stacked icon + label, brand-tinted when
+  // active.
+  const bottomLinkClass = ({ isActive }: { isActive: boolean }) =>
+    `flex flex-1 flex-col items-center justify-center gap-0.5 py-2 text-xs font-medium transition-colors ${
+      isActive ? 'text-brand' : 'text-muted hover:text-ink'
+    }`
+
   return (
-    <div className="flex min-h-screen flex-col">
+    // Reserve space at the bottom on mobile so the fixed tab bar never covers the
+    // footer or the last content row (plus the iOS home-indicator safe area).
+    <div className="flex min-h-screen flex-col pb-[calc(4rem+env(safe-area-inset-bottom))] lg:pb-0">
       <header className="bg-header text-white shadow-sm">
         <nav className="container-app flex flex-wrap items-center justify-between gap-x-8 gap-y-2 py-3">
           <div className="flex w-full items-center justify-between lg:w-auto">
@@ -102,15 +107,22 @@ export default function Layout({ children }: { children: ReactNode }) {
         </nav>
       </header>
 
-      <main className="container-app flex-1 py-6">
-        <div key={navKey} className={dir === 'right' ? 'swipe-from-right' : dir === 'left' ? 'swipe-from-left' : ''}>
-          {children}
-        </div>
-      </main>
+      <main className="container-app flex-1 py-6">{children}</main>
 
       <footer className="border-t border-line/70 py-4 text-center text-xs text-muted">
         Typerek &middot; Mistrzostwa Świata 2026
       </footer>
+
+      {/* Mobile bottom tab bar: the two most-used views (Mecze, Ranking) under the
+          thumb. Hidden on desktop (≥lg), where the top nav already carries them. */}
+      <nav className="fixed inset-x-0 bottom-0 z-40 flex border-t border-line bg-raised pb-[env(safe-area-inset-bottom)] shadow-[0_-1px_3px_rgba(0,0,0,0.06)] lg:hidden">
+        <NavLink to="/matches" className={bottomLinkClass}>
+          <i className="fas fa-futbol text-lg" aria-hidden="true" /> Mecze
+        </NavLink>
+        <NavLink to="/ranking" className={bottomLinkClass}>
+          <i className="fas fa-trophy text-lg" aria-hidden="true" /> Ranking
+        </NavLink>
+      </nav>
     </div>
   )
 }
