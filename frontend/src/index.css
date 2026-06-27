@@ -140,6 +140,24 @@
   .bet-lock-on { @apply text-brand hover:text-brand; }
 }
 
+/* Page enter animation for the mobile swipe between Mecze and Ranking: the incoming
+   page slides in from the side the swipe carried it from (see useSwipeNav). */
+@keyframes swipe-in-right {
+  from { transform: translateX(28px); opacity: 0; }
+  to   { transform: translateX(0);    opacity: 1; }
+}
+@keyframes swipe-in-left {
+  from { transform: translateX(-28px); opacity: 0; }
+  to   { transform: translateX(0);     opacity: 1; }
+}
+.swipe-from-right { animation: swipe-in-right 0.22s ease-out; }
+.swipe-from-left  { animation: swipe-in-left 0.22s ease-out; }
+
+@media (prefers-reduced-motion: reduce) {
+  .swipe-from-right,
+  .swipe-from-left { animation: none; }
+}
+
 /* "Drzewko mode" (opt-in via Ustawienia → Dostępność): the current user's row in
    the ranking flashes through vivid colors so it's impossible to miss. Every
    keyframe background is bright, so the dark ink text stays readable throughout. */
