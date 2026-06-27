@@ -13,6 +13,7 @@ import { useDocumentTitle } from '@/lib/useDocumentTitle'
 import { rankEntries, parseRankSort, type RankSort } from '@/lib/ranking'
 import { scoreSeed } from '@/lib/seedStrategy'
 import { parseRules, scoreRules } from '@/lib/ruleStrategy'
+import { usePersistentState } from '@/lib/usePersistentState'
 import type { RankingEntry } from '@/api/types'
 
 // Colour of the round position badge. Gold / silver / bronze for the podium, a
@@ -115,8 +116,9 @@ export default function RankingPage() {
     return trimmedSeed === '' || finishedMatches.length === 0 ? null : scoreSeed(trimmedSeed, finishedMatches)
   }, [trimmedSeed, matchData])
   // The rule strategy rides the same overlay as the seed; its program lives here so
-  // it can also be scored into a ranking row. Only a parseable program scores.
-  const [rules, setRules] = useState('')
+  // it can also be scored into a ranking row. Only a parseable program scores. Kept
+  // in localStorage so the bot you wrote survives a refresh (it isn't on the server).
+  const [rules, setRules] = usePersistentState('typerek.ruleStrategy', '')
   const ruleScore = useMemo(() => {
     const finishedMatches = matchData?.finished ?? []
     const parsed = parseRules(rules)
