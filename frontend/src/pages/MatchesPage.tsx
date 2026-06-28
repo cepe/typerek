@@ -5,6 +5,7 @@ import { BET_LEGEND, BET_TYPES } from '@/lib/bets'
 import MatchLine from '@/components/MatchLine'
 import { useLocalStarted } from '@/lib/useLocalStarted'
 import BetGrid from '@/components/BetGrid'
+import InfoNote from '@/components/InfoNote'
 import LockToggle from '@/components/LockToggle'
 import { ErrorBox, Loading } from '@/components/Status'
 import type { BetType, Match } from '@/api/types'
@@ -117,6 +118,11 @@ export default function MatchesPage() {
       <h1 className="mb-4 flex items-center gap-2">
         <i className="fas fa-futbol text-brand" aria-hidden="true" /> Mecze
       </h1>
+
+      <InfoNote storageKey="typerek.notice.noExtraTime">
+        Typujemy wynik <strong>bez dogrywki</strong> — liczy się rezultat po 90 minutach, wliczając doliczony czas gry
+        (jeśli jest).
+      </InfoNote>
 
       <div className="mb-5 flex border-b border-line">
         <button type="button" onClick={() => selectTab('future')} className={`tab${tab === 'future' ? ' tab-active' : ''}`}>
